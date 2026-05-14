@@ -1,0 +1,12 @@
+src/main/java/com/classroompb/model/Administrador.java
+src/main/java/com/classroompb/model/Aluno.java
+src/main/java/com/classroompb/model/Coordenador.java
+src/main/java/com/classroompb/model/Professor.java
+src/main/java/com/classroompb/model/TipoUsuario.java
+src/main/java/com/classroompb/model/Usuario.java
+src/main/java/com/classroompb/repository/UsuarioRepository.java
+src/main/java/com/classroompb/service/UsuarioService.java
+src/main/java/com/classroompb/ui/Main.java
+src/main/java/com/classroompb/ui/ConsoleUI.java
+src/main/java/com/classroompb/util/JsonUtil.java
+src/main/java/com/classroompb/util/MatriculaGenerator.java

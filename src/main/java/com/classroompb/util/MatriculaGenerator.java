@@ -1,0 +1,75 @@
+package com.classroompb.util;
+
+import java.util.List;
+
+import com.classroompb.model.TipoUsuario;
+import com.classroompb.model.Usuario;
+
+/**
+ * Gerador automático de matrículas sequenciais por tipo de usuário.
+ *
+ * Formato das matrículas:
+ * - ALUNO:         A{NNNN}  (ex: A0001)
+ * - PROFESSOR:     P{NNNN}  (ex: P0001)
+ * - COORDENADOR:   C{NNNN}  (ex: C0001)
+ * - ADMINISTRADOR: AD{NNNN} (ex: AD0001)
+ */
+
+public class MatriculaGenerator {
+
+    /**
+     * Gera uma matrícula única baseada no tipo de usuário.
+     * Percorre os usuários existentes para determinar o próximo número sequencial.
+     *
+     * @param tipo               Tipo de usuário
+     * @param usuariosExistentes Lista de usuários já cadastrados para cálculo do sequencial
+     * @return Matrícula gerada no formato apropriado
+     */
+    public static String gerarMatricula(TipoUsuario tipo, List<Usuario> usuariosExistentes) {
+        String prefixo = obterPrefixo(tipo);
+        int proximoSequencial = calcularProximoSequencial(usuariosExistentes, prefixo);
+        return prefixo + String.format("%04d", proximoSequencial);
+    }
+
+    /**
+     * Retorna o prefixo de matrícula correspondente ao tipo de usuário.
+     */
+    private static String obterPrefixo(TipoUsuario tipo) {
+        switch (tipo) {
+            case ALUNO:          return "A";
+            case PROFESSOR:      return "P";
+            case COORDENADOR:    return "C";
+            case ADMINISTRADOR:  return "AD";
+            default:
+                throw new IllegalArgumentException("Tipo de usuário inválido: " + tipo);
+        }
+    }
+
+    /**
+     * Percorre os usuários existentes, filtra os que têm o mesmo prefixo,
+     * extrai a parte numérica e retorna o maior valor encontrado + 1.
+     *
+     * Usa prefixo.length() para extrair a parte numérica corretamente,
+     * evitando erro com o prefixo "AD" que tem 2 caracteres.
+     */
+    private static int calcularProximoSequencial(List<Usuario> usuariosExistentes, String prefixo) {
+        int maiorSequencial = 0;
+
+        for (Usuario usuario : usuariosExistentes) {
+            String matricula = usuario.getMatricula();
+            if (matricula != null && matricula.startsWith(prefixo)) {
+                try {
+                    String sequencialStr = matricula.substring(prefixo.length());
+                    int sequencial = Integer.parseInt(sequencialStr);
+                    if (sequencial > maiorSequencial) {
+                        maiorSequencial = sequencial;
+                    }
+                } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
+                    // Ignora matrículas com formato inválido
+                }
+            }
+        }
+
+        return maiorSequencial + 1;
+    }
+}
