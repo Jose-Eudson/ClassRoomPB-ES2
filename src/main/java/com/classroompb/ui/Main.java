@@ -97,11 +97,19 @@ public class Main {
      * Cada controller e responsavel pelo proprio menu e loop de navegacao.
      */
     private static void rotearPorPerfil(Usuario usuario) {
+        if (usuario == null || usuario.getTipo() == null) {
+            ConsoleUI.exibirMensagem("Erro: Perfil de acesso inválido.", true);
+            return;
+        }
+
         switch (usuario.getTipo()) {
             case ALUNO:         alunoController.exibirMenu(usuario);         break;
             case PROFESSOR:     professorController.exibirMenu(usuario);     break;
             case COORDENADOR:   coordenadorController.exibirMenu(usuario);   break;
             case ADMINISTRADOR: adminController.exibirMenu(usuario);         break;
+            default:
+                ConsoleUI.exibirMensagem("Erro: Perfil de acesso inválido.", true);
+                break;
         }
     }
 }

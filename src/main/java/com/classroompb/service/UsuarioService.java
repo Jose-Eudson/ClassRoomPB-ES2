@@ -180,6 +180,9 @@ public class UsuarioService {
         if (!usuario.getSenha().equals(senha)) {
             throw new Exception("Erro: Senha incorreta.");
         }
+        if (!matriculaCompativelComTipo(usuario.getMatricula(), usuario.getTipo())) {
+            throw new Exception("Erro: Dados de acesso inválidos para o perfil do usuário.");
+        }
 
         return usuario;
     }
@@ -229,5 +232,39 @@ public class UsuarioService {
             case ADMINISTRADOR: return new Administrador(matricula, nome, email, senha);
             default:            throw new Exception("Erro: Tipo de usuário inválido.");
         }
+    }
+
+    /**
+     * Garante consistência entre tipo de usuário e formato da matrícula.
+     * ALUNO: A0001 | PROFESSOR: P0001 | COORDENADOR: C0001 | ADMINISTRADOR: AD0001
+     */
+    private boolean matriculaCompativelComTipo(String matricula, TipoUsuario tipo) {
+        if (matricula == null || tipo == null) {
+            return false;
+        }
+        String prefixoEsperado;
+        switch (tipo) {
+            case ALUNO:
+                prefixoEsperado = "A";
+                break;
+            case PROFESSOR:
+                prefixoEsperado = "P";
+                break;
+            case COORDENADOR:
+                prefixoEsperado = "C";
+                break;
+            case ADMINISTRADOR:
+                prefixoEsperado = "AD";
+                break;
+            default:
+                return false;
+        }
+
+        if (!matricula.startsWith(prefixoEsperado)) {
+            return false;
+        }
+
+        String parteNumerica = matricula.substring(prefixoEsperado.length());
+        return !parteNumerica.isEmpty() && parteNumerica.matches("\\d+");
     }
 }

@@ -163,6 +163,7 @@ O projeto segue a arquitetura em camadas padrão:
 | Jackson Databind | 2.15.2 | Serialização/deserialização JSON |
 | Jackson JSR310 | 2.15.2 | Suporte a tipos de data Java 8 |
 | JUnit Jupiter | 5.10.0 | Framework de testes |
-| Mockito | 5.5.0 | Mocks para testes unitários |
+| Mockito | 4.11.0 | Mocks para testes unitários (compatível com Java 8+) |
+| Byte Buddy | 1.17.8 | Suporte de instrumentação para JDKs mais novos (ex.: 22/23) |
 | JaCoCo | 0.8.10 | Cobertura de testes |
 | Maven Shade Plugin | 3.2.4 | Empacotamento do JAR com dependências |

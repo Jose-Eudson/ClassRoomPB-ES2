@@ -238,8 +238,7 @@ public class UsuarioServiceTest {
         @Test
         @DisplayName("Deve realizar login com sucesso")
         void deveFazerLoginComSucesso() throws Exception {
-            Usuario usuario = mock(Usuario.class);
-            when(usuario.getSenha()).thenReturn("senha123");
+            Usuario usuario = new Aluno("A001", "Login", "login@teste.com", "senha123");
             when(repository.buscarPorEmail("login@teste.com")).thenReturn(Optional.of(usuario));
 
             Usuario logado = service.login("login@teste.com", "senha123");
@@ -262,8 +261,7 @@ public class UsuarioServiceTest {
         @Test
         @DisplayName("Não deve fazer login com senha incorreta")
         void naoDeveFazerLoginComSenhaIncorreta() {
-            Usuario usuario = mock(Usuario.class);
-            when(usuario.getSenha()).thenReturn("correta");
+            Usuario usuario = new Aluno("A001", "Login", "login@teste.com", "correta");
             when(repository.buscarPorEmail("login@teste.com")).thenReturn(Optional.of(usuario));
 
             Exception ex = assertThrows(Exception.class, () ->
@@ -303,8 +301,7 @@ public class UsuarioServiceTest {
         @Test
         @DisplayName("Login deve ser case-insensitive para o e-mail")
         void loginDeveSerCaseInsensitiveParaEmail() throws Exception {
-            Usuario usuario = mock(Usuario.class);
-            when(usuario.getSenha()).thenReturn("123");
+            Usuario usuario = new Aluno("A001", "Usuario", "usuario@teste.com", "123");
             when(repository.buscarPorEmail("usuario@teste.com")).thenReturn(Optional.of(usuario));
 
             Usuario logado = service.login("usuario@teste.com", "123");

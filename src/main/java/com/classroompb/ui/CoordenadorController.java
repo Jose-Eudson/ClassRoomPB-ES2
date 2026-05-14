@@ -3,7 +3,9 @@ package com.classroompb.ui;
 import java.util.Arrays;
 import java.util.List;
 
+import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
+import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.UsuarioService;
 
 /**
@@ -21,6 +23,13 @@ public class CoordenadorController {
 
     /** Exibe o menu principal do coordenador e permanece em loop até logout. */
     public void exibirMenu(Usuario usuario) {
+        try {
+            PerfilAcessoService.validarPerfil(usuario, TipoUsuario.COORDENADOR);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+            return;
+        }
+
         while (true) {
             List<String> opcoes = Arrays.asList(
                 "Cadastrar disciplinas",

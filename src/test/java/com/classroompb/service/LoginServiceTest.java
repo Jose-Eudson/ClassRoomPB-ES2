@@ -11,12 +11,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.classroompb.model.Administrador;
 import com.classroompb.model.Aluno;
+import com.classroompb.model.Coordenador;
 import com.classroompb.model.Professor;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
@@ -54,14 +55,13 @@ public class LoginServiceTest {
         void deveFazerLoginPorEmailComSucesso() throws Exception {
             String email = "usuario@teste.com";
             String senha = "senha123";
-            Usuario usuarioMock = mock(Usuario.class);
-            when(usuarioMock.getSenha()).thenReturn(senha);
-            when(repository.buscarPorEmail(email)).thenReturn(Optional.of(usuarioMock));
+            Usuario usuario = new Aluno("A0001", "Carlos", email, senha);
+            when(repository.buscarPorEmail(email)).thenReturn(Optional.of(usuario));
 
             Usuario resultado = service.login(email, senha);
 
             assertNotNull(resultado);
-            assertEquals(usuarioMock, resultado);
+            assertEquals(usuario, resultado);
             verify(repository).buscarPorEmail(email);
         }
 
@@ -95,9 +95,8 @@ public class LoginServiceTest {
         @Test
         @DisplayName("Nao deve fazer login com senha incorreta via e-mail")
         void deveFalharLoginComSenhaIncorretaViaEmail() {
-            Usuario usuarioMock = mock(Usuario.class);
-            when(usuarioMock.getSenha()).thenReturn("correta");
-            when(repository.buscarPorEmail("usuario@teste.com")).thenReturn(Optional.of(usuarioMock));
+            Usuario usuario = new Aluno("A0001", "Carlos", "usuario@teste.com", "correta");
+            when(repository.buscarPorEmail("usuario@teste.com")).thenReturn(Optional.of(usuario));
 
             Exception ex = assertThrows(Exception.class, () ->
                     service.login("usuario@teste.com", "errada"));
@@ -109,9 +108,8 @@ public class LoginServiceTest {
         @DisplayName("Login por e-mail e buscado de forma case-insensitive no repositorio")
         void loginEmailRepassadoAoRepositorioSemAlteracao() throws Exception {
             String emailLogin = "Usuario@Teste.com";
-            Usuario usuarioMock = mock(Usuario.class);
-            when(usuarioMock.getSenha()).thenReturn("123");
-            when(repository.buscarPorEmail(emailLogin)).thenReturn(Optional.of(usuarioMock));
+            Usuario usuario = new Aluno("A0001", "Carlos", emailLogin, "123");
+            when(repository.buscarPorEmail(emailLogin)).thenReturn(Optional.of(usuario));
 
             Usuario resultado = service.login(emailLogin, "123");
 
@@ -163,9 +161,8 @@ public class LoginServiceTest {
         @DisplayName("Deve fazer login com matricula de coordenador")
         void deveFazerLoginPorMatriculaDeCoordenador() throws Exception {
             String matricula = "C0001";
-            Usuario mock = mock(Usuario.class);
-            when(mock.getSenha()).thenReturn("coord");
-            when(repository.buscarPorMatricula(matricula)).thenReturn(Optional.of(mock));
+            Usuario coordenador = new Coordenador(matricula, "Ana", "ana@teste.com", "coord");
+            when(repository.buscarPorMatricula(matricula)).thenReturn(Optional.of(coordenador));
 
             assertNotNull(service.login(matricula, "coord"));
         }
@@ -174,9 +171,8 @@ public class LoginServiceTest {
         @DisplayName("Deve fazer login com matricula de administrador")
         void deveFazerLoginPorMatriculaDeAdministrador() throws Exception {
             String matricula = "AD0001";
-            Usuario mock = mock(Usuario.class);
-            when(mock.getSenha()).thenReturn("admin");
-            when(repository.buscarPorMatricula(matricula)).thenReturn(Optional.of(mock));
+            Usuario admin = new Administrador(matricula, "Root", "root@teste.com", "admin");
+            when(repository.buscarPorMatricula(matricula)).thenReturn(Optional.of(admin));
 
             assertNotNull(service.login(matricula, "admin"));
         }
@@ -195,9 +191,8 @@ public class LoginServiceTest {
         @Test
         @DisplayName("Nao deve fazer login com senha incorreta via matricula")
         void deveFalharLoginComSenhaIncorretaViaMatricula() {
-            Usuario usuarioMock = mock(Usuario.class);
-            when(usuarioMock.getSenha()).thenReturn("correta");
-            when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuarioMock));
+            Usuario usuario = new Aluno("A0001", "Carlos", "carlos@teste.com", "correta");
+            when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuario));
 
             Exception ex = assertThrows(Exception.class, () ->
                     service.login("A0001", "errada"));
@@ -208,14 +203,25 @@ public class LoginServiceTest {
         @Test
         @DisplayName("Senha e case-sensitive no login por matricula")
         void senhaECaseSensitiveNoLoginPorMatricula() {
-            Usuario usuarioMock = mock(Usuario.class);
-            when(usuarioMock.getSenha()).thenReturn("Senha123");
-            when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuarioMock));
+            Usuario usuario = new Aluno("A0001", "Carlos", "carlos@teste.com", "Senha123");
+            when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuario));
 
             Exception ex = assertThrows(Exception.class, () ->
                     service.login("A0001", "senha123"));
 
             assertEquals("Erro: Senha incorreta.", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Nao deve permitir login com tipo e matricula inconsistentes")
+        void naoDevePermitirLoginComTipoEMatriculaInconsistentes() {
+            Usuario adulterado = new Administrador("P0001", "Fake", "fake@teste.com", "admin");
+            when(repository.buscarPorMatricula("P0001")).thenReturn(Optional.of(adulterado));
+
+            Exception ex = assertThrows(Exception.class, () ->
+                    service.login("P0001", "admin"));
+
+            assertEquals("Erro: Dados de acesso inválidos para o perfil do usuário.", ex.getMessage());
         }
     }
 
