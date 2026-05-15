@@ -125,7 +125,7 @@ public class UsuarioRepositoryTest {
         @Test
         @DisplayName("Deve retornar vazio para matrícula inexistente")
         void deveRetornarVazioParaMatriculaInexistente() {
-            assertTrue(repository.buscarPorMatricula("X999").isEmpty());
+            assertTrue(!repository.buscarPorMatricula("X999").isPresent());
         }
 
         @Test
@@ -142,7 +142,7 @@ public class UsuarioRepositoryTest {
         @Test
         @DisplayName("Deve retornar vazio para e-mail inexistente")
         void deveRetornarVazioParaEmailInexistente() {
-            assertTrue(repository.buscarPorEmail("naoexiste@email.com").isEmpty());
+            assertTrue(!repository.buscarPorEmail("naoexiste@email.com").isPresent());
         }
     }
 
@@ -173,7 +173,7 @@ public class UsuarioRepositoryTest {
     }
 
     @Nested
-    @DisplayName("Deletar")
+    @DisplayName("Deleção de usuário")
     class Deletar {
 
         @Test
@@ -208,6 +208,79 @@ public class UsuarioRepositoryTest {
             repository.deletar("A001");
 
             assertThrows(IllegalArgumentException.class, () -> repository.deletar("A001"));
+        }
+    }
+
+    // =========================================================================
+    // RF04: PREVENÇÃO DE CADASTRO DUPLICADO
+    // =========================================================================
+
+    @Nested
+    @DisplayName("RF04 — Prevenção de cadastro duplicado")
+    class PrevenirCadastroDuplicado {
+
+        @Test
+        @DisplayName("existePorMatricula deve retornar true para matrícula já cadastrada")
+        void existePorMatriculaRetornaTrueParaDuplicata() {
+            repository.salvar(new Aluno("A001", "João", "joao@email.com", "123"));
+            assertTrue(repository.existePorMatricula("A001"));
+        }
+
+        @Test
+        @DisplayName("existePorMatricula deve retornar false para matrícula inexistente")
+        void existePorMatriculaRetornaFalseParaInexistente() {
+            org.junit.jupiter.api.Assertions.assertFalse(repository.existePorMatricula("A999"));
+        }
+
+        @Test
+        @DisplayName("existePorEmail deve retornar true para e-mail já cadastrado")
+        void existePorEmailRetornaTrueParaDuplicata() {
+            repository.salvar(new Aluno("A001", "João", "joao@email.com", "123"));
+            assertTrue(repository.existePorEmail("joao@email.com"));
+        }
+
+        @Test
+        @DisplayName("existePorEmail é case-insensitive")
+        void existePorEmailEhCaseInsensitive() {
+            repository.salvar(new Aluno("A001", "João", "joao@email.com", "123"));
+            assertTrue(repository.existePorEmail("JOAO@EMAIL.COM"));
+            assertTrue(repository.existePorEmail("Joao@Email.Com"));
+        }
+
+        @Test
+        @DisplayName("existePorEmail deve retornar false para e-mail inexistente")
+        void existePorEmailRetornaFalseParaInexistente() {
+            org.junit.jupiter.api.Assertions.assertFalse(repository.existePorEmail("naoexiste@email.com"));
+        }
+
+        @Test
+        @DisplayName("RF04 — Repositório vazio: métodos de existência retornam false")
+        void retornamFalseEmRepositorioVazio() {
+            org.junit.jupiter.api.Assertions.assertFalse(repository.existePorMatricula("A001"));
+            org.junit.jupiter.api.Assertions.assertFalse(repository.existePorEmail("qualquer@email.com"));
+        }
+
+        @Test
+        @DisplayName("RF04 — Múltiplos usuários: cada matrícula deve ser detectada individualmente")
+        void multiplosUsuariosMatriculasUnicas() {
+            repository.salvar(new Aluno("A001", "João", "joao@email.com", "123"));
+            repository.salvar(new Professor("P001", "Maria", "maria@email.com", "456"));
+            repository.salvar(new Coordenador("C001", "Carlos", "carlos@email.com", "789"));
+
+            assertTrue(repository.existePorMatricula("A001"));
+            assertTrue(repository.existePorMatricula("P001"));
+            assertTrue(repository.existePorMatricula("C001"));
+            org.junit.jupiter.api.Assertions.assertFalse(repository.existePorMatricula("A002"));
+        }
+
+        @Test
+        @DisplayName("RF04 — Após deleção, matrícula e e-mail não devem mais existir")
+        void aposDelecaoMatriculaNaoExisteMais() {
+            repository.salvar(new Aluno("A001", "João", "joao@email.com", "123"));
+            repository.deletar("A001");
+
+            org.junit.jupiter.api.Assertions.assertFalse(repository.existePorMatricula("A001"));
+            org.junit.jupiter.api.Assertions.assertFalse(repository.existePorEmail("joao@email.com"));
         }
     }
 }

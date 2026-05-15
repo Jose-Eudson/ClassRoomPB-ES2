@@ -2,6 +2,7 @@ package com.classroompb.service;
 
 import java.util.List;
 
+import com.classroompb.exception.CadastroDuplicadoException;
 import com.classroompb.model.Administrador;
 import com.classroompb.model.Aluno;
 import com.classroompb.model.Coordenador;
@@ -34,11 +35,11 @@ public class UsuarioService {
             throw new Exception("Erro: Tipo de usuário não pode ser nulo.");
         }
 
-        if (repository.buscarPorMatricula(matricula).isPresent()) {
-            throw new Exception("Erro: Já existe um usuário com esta matrícula.");
+        if (repository.existePorMatricula(matricula)) {
+            throw new CadastroDuplicadoException(CadastroDuplicadoException.Campo.MATRICULA, matricula);
         }
-        if (repository.buscarPorEmail(email).isPresent()) {
-            throw new Exception("Erro: Já existe um usuário com este e-mail.");
+        if (repository.existePorEmail(email)) {
+            throw new CadastroDuplicadoException(CadastroDuplicadoException.Campo.EMAIL, email);
         }
 
         Usuario novoUsuario = criarUsuario(matricula, nome, email, senha, tipo);
@@ -55,8 +56,8 @@ public class UsuarioService {
         if (tipo == null) {
             throw new Exception("Erro: Tipo de usuário não pode ser nulo.");
         }
-        if (repository.buscarPorEmail(email).isPresent()) {
-            throw new Exception("Erro: Já existe um usuário com este e-mail.");
+        if (repository.existePorEmail(email)) {
+            throw new CadastroDuplicadoException(CadastroDuplicadoException.Campo.EMAIL, email);
         }
 
         String matricula = MatriculaGenerator.gerarMatricula(tipo, repository.listarTodos());
@@ -76,8 +77,8 @@ public class UsuarioService {
         Usuario usuario = repository.buscarPorMatricula(matricula)
                 .orElseThrow(() -> new Exception("Erro: Usuário com matrícula " + matricula + " não encontrado."));
 
-        if (!usuario.getEmail().equalsIgnoreCase(novoEmail) && repository.buscarPorEmail(novoEmail).isPresent()) {
-            throw new Exception("Erro: Já existe um usuário com este e-mail.");
+        if (!usuario.getEmail().equalsIgnoreCase(novoEmail) && repository.existePorEmail(novoEmail)) {
+            throw new CadastroDuplicadoException(CadastroDuplicadoException.Campo.EMAIL, novoEmail);
         }
 
         usuario.setNome(novoNome);
@@ -102,16 +103,16 @@ public class UsuarioService {
         Usuario usuarioAntigo = repository.buscarPorMatricula(matricula)
                 .orElseThrow(() -> new Exception("Erro: Usuário com matrícula " + matricula + " não encontrado."));
 
-        if (!usuarioAntigo.getEmail().equalsIgnoreCase(novoEmail) && repository.buscarPorEmail(novoEmail).isPresent()) {
-            throw new Exception("Erro: Já existe um usuário com este e-mail.");
+        if (!usuarioAntigo.getEmail().equalsIgnoreCase(novoEmail) && repository.existePorEmail(novoEmail)) {
+            throw new CadastroDuplicadoException(CadastroDuplicadoException.Campo.EMAIL, novoEmail);
         }
 
         String novaMatricula = matricula;
         boolean tipoMudou = usuarioAntigo.getTipo() != novoTipo;
 
         if (tipoMudou) {
-            novaMatricula = MatriculaGenerator.gerarMatricula(novoTipo, repository.listarTodos());
             repository.deletar(matricula);
+            novaMatricula = MatriculaGenerator.gerarMatricula(novoTipo, repository.listarTodos());
         }
 
         Usuario usuarioAtualizado = criarUsuario(novaMatricula, novoNome, novoEmail, novaSenha, novoTipo);

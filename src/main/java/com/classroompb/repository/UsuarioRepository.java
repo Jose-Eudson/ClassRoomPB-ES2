@@ -79,6 +79,24 @@ public class UsuarioRepository {
     }
 
     /**
+     * RF04 — Verifica se já existe um usuário com a matrícula informada.
+     * Semântica positiva evita o uso de Optional.isPresent() espalhado pelo service.
+     */
+    public boolean existePorMatricula(String matricula) {
+        return usuarios.stream()
+                .anyMatch(u -> u.getMatricula().equals(matricula));
+    }
+
+    /**
+     * RF04 — Verifica se já existe um usuário com o e-mail informado,
+     * ignorando diferenças de maiúsculas/minúsculas.
+     */
+    public boolean existePorEmail(String email) {
+        return usuarios.stream()
+                .anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
+    }
+
+    /**
      * Substitui o usuário existente com a mesma matrícula pelos novos dados e persiste.
      * Lança exceção se a matrícula não for encontrada.
      */
