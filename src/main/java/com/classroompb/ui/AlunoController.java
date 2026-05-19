@@ -15,6 +15,7 @@ import com.classroompb.service.UsuarioService;
  */
 public class AlunoController {
 
+@SuppressWarnings("unused")
     private final UsuarioService service;
 
     public AlunoController(UsuarioService service) {

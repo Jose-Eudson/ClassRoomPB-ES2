@@ -15,6 +15,7 @@ import com.classroompb.service.UsuarioService;
  */
 public class CoordenadorController {
 
+@SuppressWarnings("unused")
     private final UsuarioService service;
 
     public CoordenadorController(UsuarioService service) {
