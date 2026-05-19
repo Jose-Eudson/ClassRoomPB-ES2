@@ -18,9 +18,9 @@ O **ClassRoomPB** é um sistema de controle acadêmico simplificado, executado v
 | **Aluno** | `A0001` | Consultar disciplinas, solicitar matrícula, ver frequência e notas |
 | **Professor** | `P0001` | Visualizar turmas, registrar frequência, lançar notas |
 | **Coordenador** | `C0001` | Cadastrar disciplinas, ofertar turmas, aprovar/cancelar matrículas |
-| **Administrador** | `AD0001` | Gerenciar todos os usuários (CRUD completo) |
+| **Administrador** | `AD0001` | Gerenciar usuários (CRUD completo) e cadastrar cursos |
 
-Os dados são persistidos localmente em um arquivo `usuarios.json`, gerado automaticamente na primeira execução.
+Os dados são persistidos localmente em arquivos JSON (`usuarios.json` e `cursos.json`), gerados automaticamente na primeira execução.
 
 ---
 
@@ -30,7 +30,7 @@ Os dados são persistidos localmente em um arquivo `usuarios.json`, gerado autom
 ClassRoomPB-ES2/
 ├── src/
 │   ├── main/java/com/classroompb/
-│   │   ├── model/        # Entidades: Usuario, Aluno, Professor, Coordenador, Administrador
+│   │   ├── model/        # Entidades: Usuario, Aluno, Professor, Coordenador, Administrador, Curso
 │   │   ├── repository/   # Persistência de dados (leitura/escrita no JSON)
 │   │   ├── service/      # Regras de negócio e validações
 │   │   ├── ui/           # Interface com o usuário (menus, entrada de dados)

@@ -165,4 +165,47 @@ public class ModelTest {
             assertEquals(TipoUsuario.ADMINISTRADOR, TipoUsuario.valueOf("ADMINISTRADOR"));
         }
     }
+
+    @Nested
+    @DisplayName("Curso")
+    class CursoTest {
+
+        @Test
+        @DisplayName("Deve criar Curso com construtor padrao")
+        void deveCriarCursoPadrao() {
+            assertNotNull(new Curso());
+        }
+
+        @Test
+        @DisplayName("Deve criar Curso com construtor completo")
+        void deveCriarCursoCompleto() {
+            Curso curso = new Curso("ADS", "Análise e Desenvolvimento de Sistemas", 3200);
+            assertEquals("ADS", curso.getCodigo());
+            assertEquals("Análise e Desenvolvimento de Sistemas", curso.getNome());
+            assertEquals(3200, curso.getCargaHoraria());
+        }
+
+        @Test
+        @DisplayName("Deve atualizar Curso via setters")
+        void deveAtualizarCursoViaSetters() {
+            Curso curso = new Curso();
+            curso.setCodigo("SI");
+            curso.setNome("Sistemas de Informação");
+            curso.setCargaHoraria(3000);
+
+            assertEquals("SI", curso.getCodigo());
+            assertEquals("Sistemas de Informação", curso.getNome());
+            assertEquals(3000, curso.getCargaHoraria());
+        }
+
+        @Test
+        @DisplayName("toString de Curso deve conter codigo, nome e carga horaria")
+        void toStringCursoDeveConterDados() {
+            Curso curso = new Curso("ADS", "Análise e Desenvolvimento de Sistemas", 3200);
+            String str = curso.toString();
+            assertTrue(str.contains("ADS"));
+            assertTrue(str.contains("Análise e Desenvolvimento de Sistemas"));
+            assertTrue(str.contains("3200"));
+        }
+    }
 }

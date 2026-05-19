@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.classroompb.model.Curso;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
+import com.classroompb.service.CursoService;
 import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.UsuarioService;
 
@@ -16,9 +18,11 @@ import com.classroompb.service.UsuarioService;
 public class AdminController {
 
     private final UsuarioService service;
+    private final CursoService cursoService;
 
-    public AdminController(UsuarioService service) {
+    public AdminController(UsuarioService service, CursoService cursoService) {
         this.service = service;
+        this.cursoService = cursoService;
     }
 
     /** Exibe o menu principal do administrador e permanece em loop até logout. */
@@ -33,6 +37,7 @@ public class AdminController {
         while (true) {
             List<String> opcoes = Arrays.asList(
                 "Gerenciar usuários",
+                "Gerenciar cursos",
                 "Listar todos os usuários",
                 "Logout"
             );
@@ -42,7 +47,8 @@ public class AdminController {
 
             switch (escolha) {
                 case 0: gerenciarUsuarios(); break;
-                case 1: listarUsuarios();    break;
+                case 1: gerenciarCursos();   break;
+                case 2: listarUsuarios();    break;
             }
         }
     }
@@ -69,6 +75,24 @@ public class AdminController {
                 case 1: editarUsuario();    break;
                 case 2: deletarUsuario();   break;
                 case 3: listarUsuarios();   break;
+            }
+        }
+    }
+
+    private void gerenciarCursos() {
+        while (true) {
+            List<String> opcoes = Arrays.asList(
+                "Cadastrar novo curso",
+                "Listar cursos",
+                "Voltar"
+            );
+            int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR CURSOS", opcoes);
+
+            if (escolha == 2 || escolha == -1) break;
+
+            switch (escolha) {
+                case 0: cadastrarCurso(); break;
+                case 1: listarCursos();   break;
             }
         }
     }
@@ -179,6 +203,47 @@ public class AdminController {
 
         ConsoleUI.exibirTabela(colunas, linhas);
         System.out.println("\nTotal: " + usuarios.size());
+        ConsoleUI.exibirMensagem("Fim da lista.", false);
+    }
+
+    /** Coleta dados e cadastra um novo curso. */
+    private void cadastrarCurso() {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("CADASTRAR NOVO CURSO");
+        try {
+            String codigo = ConsoleUI.lerEntrada("Código do curso: ");
+            String nome = ConsoleUI.lerEntrada("Nome do curso: ");
+            String cargaHorariaTexto = ConsoleUI.lerEntrada("Carga horária (horas): ");
+
+            int cargaHoraria = Integer.parseInt(cargaHorariaTexto);
+            cursoService.cadastrarCurso(codigo, nome, cargaHoraria);
+            ConsoleUI.exibirMensagem("Curso cadastrado com sucesso!", false);
+        } catch (NumberFormatException e) {
+            ConsoleUI.exibirMensagem("Erro: Carga horária deve ser um número inteiro.", true);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    /** Exibe todos os cursos em tabela formatada. */
+    private void listarCursos() {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("LISTA DE CURSOS");
+        List<Curso> cursos = cursoService.obterTodosCursos();
+
+        if (cursos.isEmpty()) {
+            ConsoleUI.exibirMensagem("Nenhum curso cadastrado.", true);
+            return;
+        }
+
+        String[] colunas = {"Código", "Nome", "Carga Horária"};
+        List<String[]> linhas = new ArrayList<>();
+        for (Curso c : cursos) {
+            linhas.add(new String[]{c.getCodigo(), c.getNome(), c.getCargaHoraria() + "h"});
+        }
+
+        ConsoleUI.exibirTabela(colunas, linhas);
+        System.out.println("\nTotal: " + cursos.size());
         ConsoleUI.exibirMensagem("Fim da lista.", false);
     }
 }
