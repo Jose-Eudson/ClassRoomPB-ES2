@@ -208,4 +208,47 @@ public class ModelTest {
             assertTrue(str.contains("3200"));
         }
     }
+
+    @Nested
+    @DisplayName("Disciplina")
+    class DisciplinaTest {
+
+        @Test
+        @DisplayName("Deve criar Disciplina com construtor padrao")
+        void deveCriarDisciplinaPadrao() {
+            assertNotNull(new Disciplina());
+        }
+
+        @Test
+        @DisplayName("Deve criar Disciplina com construtor completo")
+        void deveCriarDisciplinaCompleta() {
+            Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 60);
+            assertEquals("ES2", disciplina.getCodigo());
+            assertEquals("Engenharia de Software 2", disciplina.getNome());
+            assertEquals(60, disciplina.getCargaHoraria());
+        }
+
+        @Test
+        @DisplayName("Deve atualizar Disciplina via setters")
+        void deveAtualizarDisciplinaViaSetters() {
+            Disciplina disciplina = new Disciplina();
+            disciplina.setCodigo("BD");
+            disciplina.setNome("Banco de Dados");
+            disciplina.setCargaHoraria(80);
+
+            assertEquals("BD", disciplina.getCodigo());
+            assertEquals("Banco de Dados", disciplina.getNome());
+            assertEquals(80, disciplina.getCargaHoraria());
+        }
+
+        @Test
+        @DisplayName("toString de Disciplina deve conter codigo, nome e carga horaria")
+        void toStringDisciplinaDeveConterDados() {
+            Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 60);
+            String str = disciplina.toString();
+            assertTrue(str.contains("ES2"));
+            assertTrue(str.contains("Engenharia de Software 2"));
+            assertTrue(str.contains("60"));
+        }
+    }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
+import com.classroompb.service.DisciplinaService;
 import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.UsuarioService;
 
@@ -17,9 +18,11 @@ public class CoordenadorController {
 
 @SuppressWarnings("unused")
     private final UsuarioService service;
+    private final DisciplinaService disciplinaService;
 
-    public CoordenadorController(UsuarioService service) {
+    public CoordenadorController(UsuarioService service, DisciplinaService disciplinaService) {
         this.service = service;
+        this.disciplinaService = disciplinaService;
     }
 
     /** Exibe o menu principal do coordenador e permanece em loop até logout. */
@@ -45,8 +48,33 @@ public class CoordenadorController {
 
             if (escolha == -1 || escolha == opcoes.size() - 1) break;
 
-            // Funcionalidades implementadas nas próximas releases
-            ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
+            switch (escolha) {
+                case 0:
+                    cadastrarDisciplina();
+                    break;
+                default:
+                    // Funcionalidades implementadas nas próximas releases
+                    ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
+                    break;
+            }
+        }
+    }
+
+    private void cadastrarDisciplina() {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("CADASTRAR DISCIPLINA");
+        try {
+            String codigo = ConsoleUI.lerEntrada("Codigo da disciplina: ");
+            String nome = ConsoleUI.lerEntrada("Nome da disciplina: ");
+            String cargaHorariaTexto = ConsoleUI.lerEntrada("Carga horaria (horas): ");
+
+            int cargaHoraria = Integer.parseInt(cargaHorariaTexto);
+            disciplinaService.cadastrarDisciplina(codigo, nome, cargaHoraria);
+            ConsoleUI.exibirMensagem("Disciplina cadastrada com sucesso!", false);
+        } catch (NumberFormatException e) {
+            ConsoleUI.exibirMensagem("Erro: Carga horaria deve ser um numero inteiro.", true);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
         }
     }
 }

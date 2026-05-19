@@ -6,8 +6,10 @@ import java.util.List;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.CursoRepository;
+import com.classroompb.repository.DisciplinaRepository;
 import com.classroompb.repository.UsuarioRepository;
 import com.classroompb.service.CursoService;
+import com.classroompb.service.DisciplinaService;
 import com.classroompb.service.UsuarioService;
 
 /**
@@ -20,6 +22,7 @@ public class Main {
 
     private static UsuarioService service;
     private static CursoService cursoService;
+    private static DisciplinaService disciplinaService;
 
     private static AlunoController       alunoController;
     private static ProfessorController   professorController;
@@ -29,12 +32,14 @@ public class Main {
     public static void main(String[] args) {
         UsuarioRepository repository = new UsuarioRepository();
         CursoRepository cursoRepository = new CursoRepository();
+        DisciplinaRepository disciplinaRepository = new DisciplinaRepository();
         service = new UsuarioService(repository);
         cursoService = new CursoService(cursoRepository);
+        disciplinaService = new DisciplinaService(disciplinaRepository);
 
         alunoController       = new AlunoController(service);
         professorController   = new ProfessorController(service);
-        coordenadorController = new CoordenadorController(service);
+        coordenadorController = new CoordenadorController(service, disciplinaService);
         adminController       = new AdminController(service, cursoService);
 
         while (true) {
