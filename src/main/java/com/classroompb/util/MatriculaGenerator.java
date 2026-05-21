@@ -33,16 +33,17 @@ public class MatriculaGenerator {
 
     /**
      * Retorna o prefixo de matrícula correspondente ao tipo de usuário.
+     * Usa if-else para evitar geração de classe anônima sintética pelo compilador.
      */
     private static String obterPrefixo(TipoUsuario tipo) {
-        switch (tipo) {
-            case ALUNO:          return "A";
-            case PROFESSOR:      return "P";
-            case COORDENADOR:    return "C";
-            case ADMINISTRADOR:  return "AD";
-            default:
-                throw new IllegalArgumentException("Tipo de usuário inválido: " + tipo);
+        if (tipo == null) {
+            throw new NullPointerException("Tipo de usuário não pode ser nulo");
         }
+        if (tipo == TipoUsuario.ALUNO)          return "A";
+        if (tipo == TipoUsuario.PROFESSOR)       return "P";
+        if (tipo == TipoUsuario.COORDENADOR)     return "C";
+        if (tipo == TipoUsuario.ADMINISTRADOR)   return "AD";
+        throw new IllegalArgumentException("Tipo de usuário inválido: " + tipo);
     }
 
     /**
