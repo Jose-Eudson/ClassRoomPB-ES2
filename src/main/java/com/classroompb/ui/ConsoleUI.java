@@ -60,64 +60,11 @@ public class ConsoleUI {
     }
 
     /**
-     * Exibe um menu interativo navegável por setas do teclado (ou W/S como alternativa).
+     * Exibe um menu interativo por numeração.
      * Retorna o índice da opção selecionada.
      */
     public static int exibirMenuInterativo(String titulo, List<String> opcoes) {
-        return exibirMenuSetas(titulo, opcoes);
-    }
-
-    /**
-     * Implementação do menu com navegação por setas/W/S e seleção com ENTER.
-     * Lê bytes diretamente do System.in para capturar teclas sem aguardar ENTER.
-     * Faz fallback para o menu numérico em caso de erro de leitura.
-     */
-    private static int exibirMenuSetas(String titulo, List<String> opcoes) {
-        int selecionado = 0;
-        try {
-            while (true) {
-                limparTela();
-                exibirCabecalho(titulo);
-                System.out.println(YELLOW + " Use as setas (UP/DOWN) e ENTER para selecionar" + RESET);
-                System.out.println(YELLOW + " (Se as setas nao funcionarem, use W/S e ENTER)" + RESET);
-                System.out.println();
-
-                for (int i = 0; i < opcoes.size(); i++) {
-                    if (i == selecionado) {
-                        System.out.println(REVERSE + " > " + opcoes.get(i) + " " + RESET);
-                    } else {
-                        System.out.println("   " + opcoes.get(i));
-                    }
-                }
-
-                int tecla = System.in.read();
-                
-                // Interpreta sequências de escape ANSI para setas (ex: ESC [ A = UP)
-                while (System.in.available() > 0) {
-                    int extra = System.in.read();
-                    if (tecla == 27 && extra == 91) {
-                        int seta = System.in.read();
-                        if (seta == 65) { // UP
-                            selecionado = (selecionado - 1 + opcoes.size()) % opcoes.size();
-                            tecla = -1; break;
-                        } else if (seta == 66) { // DOWN
-                            selecionado = (selecionado + 1) % opcoes.size();
-                            tecla = -1; break;
-                        }
-                    }
-                }
-
-                if (tecla == 10 || tecla == 13) { // ENTER
-                    return selecionado;
-                } else if (tecla == 'w' || tecla == 'W') {
-                    selecionado = (selecionado - 1 + opcoes.size()) % opcoes.size();
-                } else if (tecla == 's' || tecla == 'S') {
-                    selecionado = (selecionado + 1) % opcoes.size();
-                }
-            }
-        } catch (Exception e) {
-            return exibirMenuNumerico(titulo, opcoes);
-        }
+        return exibirMenuNumerico(titulo, opcoes);
     }
 
     /**

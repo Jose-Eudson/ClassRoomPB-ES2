@@ -112,4 +112,29 @@ public class PeriodoLetivoService {
 
         repository.atualizarDados();
     }
+
+    public java.util.List<PeriodoLetivo> listarPeriodos() {
+        return repository.listarTodos();
+    }
+
+    public PeriodoLetivo buscarPorCodigo(String codigo) throws Exception {
+        PeriodoLetivo periodo = repository.buscarPorCodigo(codigo);
+        if (periodo == null) {
+            throw new Exception("Erro: Periodo nao encontrado.");
+        }
+        return periodo;
+    }
+
+    public void editarPeriodo(String codigo, LocalDate novaDataInicio, LocalDate novaDataFim) throws Exception {
+        PeriodoLetivo periodo = repository.buscarPorCodigo(codigo);
+        if (periodo == null) {
+            throw new Exception("Erro: Periodo nao encontrado.");
+        }
+        if (novaDataInicio.isAfter(novaDataFim)) {
+            throw new Exception("Erro: Data inicial nao pode ser maior que data final.");
+        }
+        periodo.setDataInicio(novaDataInicio);
+        periodo.setDataFim(novaDataFim);
+        repository.atualizarDados();
+    }
 }

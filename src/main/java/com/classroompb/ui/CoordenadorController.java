@@ -40,9 +40,7 @@ public class CoordenadorController {
         while (true) {
             List<String> opcoes = Arrays.asList(
                 "Gerenciar disciplinas",
-                "Cadastrar período letivo",
-                "Ativar período",
-                "Encerrar período",
+                "Gerenciar período letivo",
                 "Ofertar turmas",
                 "Gerenciar vagas e horários",
                 "Aprovar/cancelar matrículas",
@@ -56,9 +54,7 @@ public class CoordenadorController {
 
             switch (escolha) {
                 case 0: gerenciarDisciplinas(); break;
-                case 1: cadastrarPeriodoLetivo(usuario); break;
-                case 2: ativarPeriodo(usuario); break;
-                case 3: encerrarPeriodo(usuario); break;
+                case 1: gerenciarPeriodoLetivo(usuario); break;
                 default:
                     ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
                     break;
@@ -203,8 +199,94 @@ public class CoordenadorController {
         }
     }
 
-    private void cadastrarPeriodoLetivo(Usuario usuario) {
+    // -------------------------------------------------------------------------
+    // Submenu de período letivo
+    // -------------------------------------------------------------------------
 
+    private void gerenciarPeriodoLetivo(Usuario usuario) {
+        while (true) {
+            List<String> opcoes = Arrays.asList(
+                "Cadastrar período letivo",
+                "Listar períodos letivos",
+                "Editar período letivo",
+                "Ativar período",
+                "Encerrar período",
+                "Voltar"
+            );
+            int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR PERÍODO LETIVO", opcoes);
+
+            if (escolha == 5 || escolha == -1) break;
+
+            switch (escolha) {
+                case 0: cadastrarPeriodoLetivo(usuario); break;
+                case 1: listarPeriodos();                break;
+                case 2: editarPeriodoLetivo(usuario);    break;
+                case 3: ativarPeriodo(usuario);          break;
+                case 4: encerrarPeriodo(usuario);        break;
+            }
+        }
+    }
+
+    private void listarPeriodos() {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("LISTA DE PERÍODOS LETIVOS");
+        List<com.classroompb.model.PeriodoLetivo> periodos = periodoService.listarPeriodos();
+
+        if (periodos.isEmpty()) {
+            ConsoleUI.exibirMensagem("Nenhum período letivo cadastrado.", true);
+            return;
+        }
+
+        String[] colunas = {"Código", "Ano", "Semestre", "Início", "Fim", "Ativo"};
+        List<String[]> linhas = new ArrayList<String[]>();
+        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        for (com.classroompb.model.PeriodoLetivo p : periodos) {
+            linhas.add(new String[]{
+                p.getCodigo(),
+                String.valueOf(p.getAno()),
+                String.valueOf(p.getSemestre()),
+                p.getDataInicio().format(fmt),
+                p.getDataFim().format(fmt),
+                p.isAtivo() ? "Sim" : "Não"
+            });
+        }
+
+        ConsoleUI.exibirTabela(colunas, linhas);
+        System.out.println("\nTotal: " + periodos.size());
+        ConsoleUI.exibirMensagem("Fim da lista.", false);
+    }
+
+    private void editarPeriodoLetivo(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("EDITAR PERÍODO LETIVO");
+        try {
+            String codigo = ConsoleUI.lerEntrada("Código do período (ex: 2025.1): ");
+            com.classroompb.model.PeriodoLetivo atual = periodoService.buscarPorCodigo(codigo);
+
+            java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            System.out.println("\nDados atuais: " + atual.getCodigo()
+                    + " | " + atual.getDataInicio().format(fmt)
+                    + " até " + atual.getDataFim().format(fmt)
+                    + " | Ativo: " + (atual.isAtivo() ? "Sim" : "Não"));
+
+            String inicioTexto = ConsoleUI.lerEntrada("Nova data início (dd/mm/aaaa, vazio para manter): ");
+            java.time.LocalDate novoInicio = inicioTexto.trim().isEmpty()
+                    ? atual.getDataInicio()
+                    : java.time.LocalDate.parse(inicioTexto.trim(), fmt);
+
+            String fimTexto = ConsoleUI.lerEntrada("Nova data fim (dd/mm/aaaa, vazio para manter): ");
+            java.time.LocalDate novoFim = fimTexto.trim().isEmpty()
+                    ? atual.getDataFim()
+                    : java.time.LocalDate.parse(fimTexto.trim(), fmt);
+
+            periodoService.editarPeriodo(codigo, novoInicio, novoFim);
+            ConsoleUI.exibirMensagem("Período letivo atualizado com sucesso!", false);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void cadastrarPeriodoLetivo(Usuario usuario) {
         ConsoleUI.limparTela();
 
         ConsoleUI.exibirCabecalho(

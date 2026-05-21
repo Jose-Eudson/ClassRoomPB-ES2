@@ -38,7 +38,6 @@ public class AdminController {
             List<String> opcoes = Arrays.asList(
                 "Gerenciar usuários",
                 "Gerenciar cursos",
-                "Listar todos os usuários",
                 "Logout"
             );
             int escolha = ConsoleUI.exibirMenuInterativo("MENU ADMINISTRADOR", opcoes);
@@ -48,7 +47,6 @@ public class AdminController {
             switch (escolha) {
                 case 0: gerenciarUsuarios(); break;
                 case 1: gerenciarCursos();   break;
-                case 2: listarUsuarios();    break;
             }
         }
     }
