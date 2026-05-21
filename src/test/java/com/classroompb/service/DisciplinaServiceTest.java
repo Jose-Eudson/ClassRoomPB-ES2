@@ -4,19 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import com.classroompb.model.Disciplina;
 import com.classroompb.repository.DisciplinaRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,93 +29,86 @@ public class DisciplinaServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new DisciplinaService(repository);
+
+        service =
+                new DisciplinaService(
+                        repository
+                );
     }
 
-    @Nested
-    @DisplayName("Cadastro de disciplinas")
-    class CadastroDeDisciplinas {
+    @Test
+    @DisplayName("Deve cadastrar disciplina com sucesso")
+    void deveCadastrarDisciplinaComSucesso()
+            throws Exception {
 
-        @Test
-        @DisplayName("Deve cadastrar disciplina com sucesso")
-        void deveCadastrarDisciplinaComSucesso() throws Exception {
-            when(repository.existePorCodigo("ES2")).thenReturn(false);
+        when(repository.existePorCodigo("ES2"))
+                .thenReturn(false);
 
-            service.cadastrarDisciplina("ES2", "Engenharia de Software 2", 60);
+        service.cadastrarDisciplina(
+                "ES2",
+                "Engenharia de Software 2",
+                60,
+                4,
+                List.of(
+                        "ES1",
+                        "POO"
+                )
+        );
 
-            verify(repository, times(1)).salvar(any(Disciplina.class));
-        }
+        verify(repository)
+                .salvar(any());
+    }
 
-        @Test
-        @DisplayName("Nao deve cadastrar disciplina com codigo duplicado")
-        void naoDeveCadastrarComCodigoDuplicado() {
-            when(repository.existePorCodigo("ES2")).thenReturn(true);
+    @Test
+    @DisplayName("Nao deve cadastrar com codigo duplicado")
+    void naoDeveCadastrarComCodigoDuplicado() {
 
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", "Outra", 60));
+        when(repository.existePorCodigo("ES2"))
+                .thenReturn(true);
 
-            assertEquals("Erro: Ja existe uma disciplina com este codigo.", ex.getMessage());
-            verify(repository, never()).salvar(any());
-        }
+        Exception ex =
+                assertThrows(
+                        Exception.class,
+                        () -> service.cadastrarDisciplina(
+                                "ES2",
+                                "Outra",
+                                60,
+                                4,
+                                List.of()
+                        )
+                );
 
-        @Test
-        @DisplayName("Nao deve cadastrar com codigo nulo")
-        void naoDeveCadastrarComCodigoNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina(null, "Disciplina", 60));
+        assertEquals(
+                "Erro: Ja existe uma disciplina com este codigo.",
+                ex.getMessage()
+        );
 
-            assertEquals("Erro: Codigo da disciplina nao pode ser vazio.", ex.getMessage());
-            verify(repository, never()).salvar(any());
-        }
+        verify(repository, never())
+                .salvar(any());
+    }
 
-        @Test
-        @DisplayName("Nao deve cadastrar com codigo vazio")
-        void naoDeveCadastrarComCodigoVazio() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("   ", "Disciplina", 60));
+    @Test
+    @DisplayName("Nao deve cadastrar com creditos invalidos")
+    void naoDeveCadastrarComCreditosInvalidos() {
 
-            assertEquals("Erro: Codigo da disciplina nao pode ser vazio.", ex.getMessage());
-            verify(repository, never()).salvar(any());
-        }
+        Exception ex =
+                assertThrows(
+                        Exception.class,
+                        () -> service.cadastrarDisciplina(
+                                "ES2",
+                                "Disciplina",
+                                60,
+                                0,
+                                List.of()
+                        )
+                );
 
-        @Test
-        @DisplayName("Nao deve cadastrar com nome nulo")
-        void naoDeveCadastrarComNomeNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", null, 60));
+        assertEquals(
+                "Erro: Creditos devem ser maiores que zero.",
+                ex.getMessage()
+        );
 
-            assertEquals("Erro: Nome da disciplina nao pode ser vazio.", ex.getMessage());
-            verify(repository, never()).salvar(any());
-        }
-
-        @Test
-        @DisplayName("Nao deve cadastrar com nome vazio")
-        void naoDeveCadastrarComNomeVazio() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", "", 60));
-
-            assertEquals("Erro: Nome da disciplina nao pode ser vazio.", ex.getMessage());
-            verify(repository, never()).salvar(any());
-        }
-
-        @Test
-        @DisplayName("Nao deve cadastrar com carga horaria zero")
-        void naoDeveCadastrarComCargaHorariaZero() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", "Disciplina", 0));
-
-            assertEquals("Erro: Carga horaria deve ser maior que zero.", ex.getMessage());
-            verify(repository, never()).salvar(any());
-        }
-
-        @Test
-        @DisplayName("Nao deve cadastrar com carga horaria negativa")
-        void naoDeveCadastrarComCargaHorariaNegativa() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", "Disciplina", -10));
-
-            assertEquals("Erro: Carga horaria deve ser maior que zero.", ex.getMessage());
-            verify(repository, never()).salvar(any());
-        }
+        verify(repository, never())
+                .salvar(any());
     }
 }

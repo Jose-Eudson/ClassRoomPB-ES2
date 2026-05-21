@@ -3,6 +3,9 @@ package com.classroompb.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -222,7 +225,7 @@ public class ModelTest {
         @Test
         @DisplayName("Deve criar Disciplina com construtor completo")
         void deveCriarDisciplinaCompleta() {
-            Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 60);
+            Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 60, 4, List.of("ES1", "POO"));
             assertEquals("ES2", disciplina.getCodigo());
             assertEquals("Engenharia de Software 2", disciplina.getNome());
             assertEquals(60, disciplina.getCargaHoraria());
@@ -244,7 +247,8 @@ public class ModelTest {
         @Test
         @DisplayName("toString de Disciplina deve conter codigo, nome e carga horaria")
         void toStringDisciplinaDeveConterDados() {
-            Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 60);
+            Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 
+            		60, 4, List.of("ES1", "POO"));
             String str = disciplina.toString();
             assertTrue(str.contains("ES2"));
             assertTrue(str.contains("Engenharia de Software 2"));
