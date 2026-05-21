@@ -53,4 +53,35 @@ public class CursoRepository {
     public boolean existePorCodigo(String codigo) {
         return cursos.stream().anyMatch(c -> c.getCodigo().equalsIgnoreCase(codigo));
     }
+
+    public Curso buscarPorCodigo(String codigo) {
+        return cursos.stream()
+                .filter(c -> c.getCodigo().equalsIgnoreCase(codigo))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public void atualizar(Curso atualizado) {
+        for (int i = 0; i < cursos.size(); i++) {
+            if (cursos.get(i).getCodigo().equalsIgnoreCase(atualizado.getCodigo())) {
+                cursos.set(i, atualizado);
+                salvarDados();
+                return;
+            }
+        }
+        throw new IllegalArgumentException(
+                "Curso com codigo " + atualizado.getCodigo() + " nao encontrado."
+        );
+    }
+
+    public void deletar(String codigo) {
+        boolean removido = cursos.removeIf(c -> c.getCodigo().equalsIgnoreCase(codigo));
+        if (removido) {
+            salvarDados();
+        } else {
+            throw new IllegalArgumentException(
+                    "Curso com codigo " + codigo + " nao encontrado."
+            );
+        }
+    }
 }

@@ -89,4 +89,41 @@ public class DisciplinaRepository {
                                 .equalsIgnoreCase(codigo)
                 );
     }
+
+    public Disciplina buscarPorCodigo(String codigo) {
+
+        return disciplinas.stream()
+                .filter(d -> d.getCodigo().equalsIgnoreCase(codigo))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public void atualizar(Disciplina atualizada) {
+
+        for (int i = 0; i < disciplinas.size(); i++) {
+            if (disciplinas.get(i).getCodigo().equalsIgnoreCase(atualizada.getCodigo())) {
+                disciplinas.set(i, atualizada);
+                salvarDados();
+                return;
+            }
+        }
+        throw new IllegalArgumentException(
+                "Disciplina com codigo " + atualizada.getCodigo() + " nao encontrada."
+        );
+    }
+
+    public void deletar(String codigo) {
+
+        boolean removida = disciplinas.removeIf(
+                d -> d.getCodigo().equalsIgnoreCase(codigo)
+        );
+
+        if (removida) {
+            salvarDados();
+        } else {
+            throw new IllegalArgumentException(
+                    "Disciplina com codigo " + codigo + " nao encontrada."
+            );
+        }
+    }
 }

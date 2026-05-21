@@ -1,20 +1,20 @@
 package com.classroompb.service;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.classroompb.repository.DisciplinaRepository;
 
@@ -49,7 +49,7 @@ public class DisciplinaServiceTest {
                 "Engenharia de Software 2",
                 60,
                 4,
-                List.of(
+                Arrays.asList(
                         "ES1",
                         "POO"
                 )
@@ -74,7 +74,7 @@ public class DisciplinaServiceTest {
                                 "Outra",
                                 60,
                                 4,
-                                List.of()
+                                Collections.emptyList()
                         )
                 );
 
@@ -99,7 +99,7 @@ public class DisciplinaServiceTest {
                                 "Disciplina",
                                 60,
                                 0,
-                                List.of()
+                                Collections.emptyList()
                         )
                 );
 

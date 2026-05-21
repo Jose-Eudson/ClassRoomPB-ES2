@@ -74,4 +74,53 @@ public class DisciplinaService {
 
         return repository.listarTodos();
     }
+
+    public Disciplina buscarPorCodigo(String codigo) throws Exception {
+
+        if (codigo == null || codigo.trim().isEmpty()) {
+            throw new Exception("Erro: Codigo nao pode ser vazio.");
+        }
+
+        Disciplina d = repository.buscarPorCodigo(codigo);
+
+        if (d == null) {
+            throw new Exception("Erro: Disciplina com codigo " + codigo + " nao encontrada.");
+        }
+
+        return d;
+    }
+
+    public void editarDisciplina(
+            String codigo,
+            String novoNome,
+            int novaCargaHoraria,
+            int novosCreditos,
+            List<String> novosPreRequisitos
+    ) throws Exception {
+
+        Disciplina existente = buscarPorCodigo(codigo);
+
+        if (novoNome == null || novoNome.trim().isEmpty()) {
+            throw new Exception("Erro: Nome da disciplina nao pode ser vazio.");
+        }
+        if (novaCargaHoraria <= 0) {
+            throw new Exception("Erro: Carga horaria deve ser maior que zero.");
+        }
+        if (novosCreditos <= 0) {
+            throw new Exception("Erro: Creditos devem ser maiores que zero.");
+        }
+
+        existente.setNome(novoNome);
+        existente.setCargaHoraria(novaCargaHoraria);
+        existente.setCreditos(novosCreditos);
+        existente.setPreRequisitos(novosPreRequisitos);
+
+        repository.atualizar(existente);
+    }
+
+    public void deletarDisciplina(String codigo) throws Exception {
+
+        buscarPorCodigo(codigo);
+        repository.deletar(codigo);
+    }
 }

@@ -60,12 +60,12 @@ public class Disciplina implements Serializable {
     
     @Override
     public String toString() {
-        return String.format("[DISCIPLINA] %s - %s (%dh)", 
-        		codigo, 
-        		nome, 
-        		cargaHoraria,
-        		creditos,
-        		pre_requisitos
+        return String.format("[DISCIPLINA] %s - %s (%dh, %d créditos) pré-requisitos: %s",
+                codigo,
+                nome,
+                cargaHoraria,
+                creditos,
+                pre_requisitos
         );
     }
 }

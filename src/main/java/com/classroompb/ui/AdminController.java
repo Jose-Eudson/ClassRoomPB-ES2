@@ -83,16 +83,20 @@ public class AdminController {
         while (true) {
             List<String> opcoes = Arrays.asList(
                 "Cadastrar novo curso",
+                "Editar curso",
                 "Listar cursos",
+                "Deletar curso",
                 "Voltar"
             );
             int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR CURSOS", opcoes);
 
-            if (escolha == 2 || escolha == -1) break;
+            if (escolha == 4 || escolha == -1) break;
 
             switch (escolha) {
                 case 0: cadastrarCurso(); break;
-                case 1: listarCursos();   break;
+                case 1: editarCurso();    break;
+                case 2: listarCursos();   break;
+                case 3: deletarCurso();   break;
             }
         }
     }
@@ -220,6 +224,57 @@ public class AdminController {
             ConsoleUI.exibirMensagem("Curso cadastrado com sucesso!", false);
         } catch (NumberFormatException e) {
             ConsoleUI.exibirMensagem("Erro: Carga horária deve ser um número inteiro.", true);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    /** Edita nome e carga horária de um curso existente. Campos em branco mantêm o valor atual. */
+    private void editarCurso() {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("EDITAR CURSO");
+        try {
+            String codigo = ConsoleUI.lerEntrada("Código do curso: ");
+            com.classroompb.model.Curso atual = cursoService.buscarPorCodigo(codigo);
+
+            System.out.println("\nDados atuais: " + atual.getNome()
+                    + " | " + atual.getCargaHoraria() + "h");
+
+            String novoNome = ConsoleUI.lerEntrada("Novo nome (vazio para manter): ");
+            if (novoNome.trim().isEmpty()) novoNome = atual.getNome();
+
+            String cargaTexto = ConsoleUI.lerEntrada("Nova carga horária (vazio para manter): ");
+            int novaCarga = cargaTexto.trim().isEmpty()
+                    ? atual.getCargaHoraria()
+                    : Integer.parseInt(cargaTexto);
+
+            cursoService.editarCurso(codigo, novoNome, novaCarga);
+            ConsoleUI.exibirMensagem("Curso atualizado com sucesso!", false);
+        } catch (NumberFormatException e) {
+            ConsoleUI.exibirMensagem("Erro: Carga horária deve ser um número inteiro.", true);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    /** Solicita código, exibe o curso e pede confirmação antes de deletar. */
+    private void deletarCurso() {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("DELETAR CURSO");
+        try {
+            String codigo = ConsoleUI.lerEntrada("Código do curso: ");
+            com.classroompb.model.Curso curso = cursoService.buscarPorCodigo(codigo);
+
+            System.out.println("\nCurso: " + curso.getNome() + " [" + curso.getCodigo() + "]");
+            int escolha = ConsoleUI.exibirMenuInterativo("Tem certeza?",
+                    Arrays.asList("Sim, deletar", "Não, cancelar"));
+
+            if (escolha == 0) {
+                cursoService.deletarCurso(codigo);
+                ConsoleUI.exibirMensagem("Curso deletado com sucesso!", false);
+            } else {
+                ConsoleUI.exibirMensagem("Operação cancelada.", false);
+            }
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }

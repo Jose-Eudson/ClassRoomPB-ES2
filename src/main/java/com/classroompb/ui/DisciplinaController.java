@@ -1,6 +1,7 @@
 package com.classroompb.ui;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -55,8 +56,8 @@ public class DisciplinaController {
                     scanner.nextLine();
 
             List<String> preRequisitos =
-                    entrada.isBlank()
-                            ? List.of()
+                    entrada.trim().isEmpty()
+                            ? Collections.emptyList()
                             : Arrays.asList(
                                     entrada.split(",")
                             );

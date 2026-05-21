@@ -1,11 +1,10 @@
 package com.classroompb.repository;
 
+import java.io.File;
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.io.File;
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,7 +45,7 @@ public class DisciplinaRepositoryTest {
                         "Banco de Dados",
                         60,
                         4,
-                        List.of("POO")
+                        Arrays.asList("POO")
                 );
 
         repository.salvar(disciplina);
@@ -67,7 +66,7 @@ public class DisciplinaRepositoryTest {
                         "Linguagem de Programacao 2",
                         80,
                         5,
-                        List.of("LP1")
+                        Arrays.asList("LP1")
                 )
         );
 

@@ -1,9 +1,8 @@
 package com.classroompb.model;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +18,7 @@ public class DisciplinaModelTest {
                         "Engenharia de Software 2",
                         60,
                         4,
-                        List.of(
+                        Arrays.asList(
                                 "ES1",
                                 "POO"
                         )
