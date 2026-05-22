@@ -6,10 +6,12 @@ import java.util.List;
 
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.TipoUsuario;
+import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
 import com.classroompb.service.DisciplinaService;
 import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.PeriodoLetivoService;
+import com.classroompb.service.TurmaService;
 import com.classroompb.service.UsuarioService;
 
 /**
@@ -21,11 +23,18 @@ public class CoordenadorController {
     private final UsuarioService service;
     private final DisciplinaService disciplinaService;
     private final PeriodoLetivoService periodoService;
+    private final TurmaService turmaService;
 
-    public CoordenadorController(UsuarioService service, DisciplinaService disciplinaService, PeriodoLetivoService periodoService) {
+    public CoordenadorController(
+            UsuarioService service,
+            DisciplinaService disciplinaService,
+            PeriodoLetivoService periodoService,
+            TurmaService turmaService
+    ) {
         this.service = service;
         this.disciplinaService = disciplinaService;
         this.periodoService = periodoService;
+        this.turmaService = turmaService;
     }
 
     /** Exibe o menu principal do coordenador e permanece em loop até logout. */
@@ -42,10 +51,6 @@ public class CoordenadorController {
                 "Gerenciar disciplinas",
                 "Gerenciar período letivo",
                 "Ofertar turmas",
-                "Gerenciar vagas e horários",
-                "Aprovar/cancelar matrículas",
-                "Visualizar listas de espera",
-                "Gerar relatórios acadêmicos",
                 "Logout"
             );
             int escolha = ConsoleUI.exibirMenuInterativo("MENU COORDENADOR", opcoes);
@@ -55,11 +60,124 @@ public class CoordenadorController {
             switch (escolha) {
                 case 0: gerenciarDisciplinas(); break;
                 case 1: gerenciarPeriodoLetivo(usuario); break;
+                case 2: gerenciarTurmas(usuario); break;
                 default:
                     ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
                     break;
             }
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Submenu de turmas (RF10)
+    // -------------------------------------------------------------------------
+
+    private void gerenciarTurmas(Usuario usuario) {
+        while (true) {
+            List<String> opcoes = Arrays.asList(
+                "Ofertar turma",
+                "Listar turmas por período",
+                "Listar turmas por disciplina e período",
+                "Voltar"
+            );
+            int escolha = ConsoleUI.exibirMenuInterativo("OFERTAR TURMAS", opcoes);
+
+            if (escolha == 3 || escolha == -1) break;
+
+            switch (escolha) {
+                case 0: ofertarTurma(usuario);                    break;
+                case 1: listarTurmasPorPeriodo();                 break;
+                case 2: listarTurmasPorDisciplinaEPeriodo();      break;
+            }
+        }
+    }
+
+    private void ofertarTurma(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("OFERTAR TURMA");
+        try {
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ");
+            String codigoPeriodo    = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
+            String codigoTurma      = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
+            int vagas               = Integer.parseInt(ConsoleUI.lerEntrada("Número de vagas: "));
+            String horario          = ConsoleUI.lerEntrada("Horário (ex: Seg/Qua 10h-12h): ");
+            String professor        = ConsoleUI.lerEntrada("Matrícula do professor (vazio para deixar em aberto): ");
+
+            turmaService.ofertarTurma(
+                    usuario,
+                    codigoDisciplina,
+                    codigoPeriodo,
+                    codigoTurma,
+                    vagas,
+                    horario,
+                    professor
+            );
+
+            ConsoleUI.exibirMensagem("Turma ofertada com sucesso!", false);
+        } catch (NumberFormatException e) {
+            ConsoleUI.exibirMensagem("Erro: O número de vagas deve ser um inteiro.", true);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void listarTurmasPorPeriodo() {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("TURMAS POR PERÍODO");
+        try {
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
+            List<Turma> turmas = turmaService.listarTurmasPorPeriodo(codigoPeriodo);
+
+            if (turmas.isEmpty()) {
+                ConsoleUI.exibirMensagem("Nenhuma turma ofertada neste período.", true);
+                return;
+            }
+
+            exibirTabelaTurmas(turmas);
+            System.out.println("\nTotal: " + turmas.size());
+            ConsoleUI.exibirMensagem("Fim da lista.", false);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void listarTurmasPorDisciplinaEPeriodo() {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("TURMAS POR DISCIPLINA E PERÍODO");
+        try {
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ");
+            String codigoPeriodo    = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
+            List<Turma> turmas = turmaService.listarTurmasPorDisciplinaEPeriodo(codigoDisciplina, codigoPeriodo);
+
+            if (turmas.isEmpty()) {
+                ConsoleUI.exibirMensagem("Nenhuma turma encontrada para esta disciplina neste período.", true);
+                return;
+            }
+
+            exibirTabelaTurmas(turmas);
+            System.out.println("\nTotal: " + turmas.size());
+            ConsoleUI.exibirMensagem("Fim da lista.", false);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void exibirTabelaTurmas(List<Turma> turmas) {
+        String[] colunas = {"Código", "Disciplina", "Período", "Vagas", "Horário", "Professor"};
+        List<String[]> linhas = new ArrayList<String[]>();
+        for (Turma t : turmas) {
+            linhas.add(new String[]{
+                t.getCodigo(),
+                t.getCodigoDisciplina(),
+                t.getCodigoPeriodo(),
+                String.valueOf(t.getVagas()),
+                t.getHorario(),
+                (t.getMatriculaProfessor() == null || t.getMatriculaProfessor().isEmpty())
+                        ? "-"
+                        : t.getMatriculaProfessor()
+            });
+        }
+        ConsoleUI.exibirTabela(colunas, linhas);
     }
 
     // -------------------------------------------------------------------------
