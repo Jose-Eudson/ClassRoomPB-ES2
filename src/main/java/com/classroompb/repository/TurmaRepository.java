@@ -93,4 +93,46 @@ public class TurmaRepository {
                 .findFirst()
                 .orElse(null);
     }
+
+    /**
+     * Substitui uma turma existente pela versão atualizada,
+     * identificando-a pela chave única composta.
+     *
+     * @param atualizada turma com os dados novos (chave deve coincidir com a existente)
+     * @throws IllegalArgumentException se a turma não for encontrada
+     */
+    public void atualizar(Turma atualizada) {
+        for (int i = 0; i < turmas.size(); i++) {
+            if (turmas.get(i).getChaveUnica().equalsIgnoreCase(atualizada.getChaveUnica())) {
+                turmas.set(i, atualizada);
+                salvarDados();
+                return;
+            }
+        }
+        throw new IllegalArgumentException(
+                "Turma com chave " + atualizada.getChaveUnica() + " nao encontrada."
+        );
+    }
+
+    /**
+     * Remove a turma identificada pela chave única composta.
+     *
+     * @param codigoDisciplina código da disciplina
+     * @param codigoPeriodo    código do período letivo
+     * @param codigo           código da turma
+     * @throws IllegalArgumentException se a turma não for encontrada
+     */
+    public void deletar(String codigoDisciplina, String codigoPeriodo, String codigo) {
+        String chave = codigoDisciplina + "_" + codigoPeriodo + "_" + codigo;
+        boolean removida = turmas.removeIf(
+                t -> t.getChaveUnica().equalsIgnoreCase(chave)
+        );
+        if (removida) {
+            salvarDados();
+        } else {
+            throw new IllegalArgumentException(
+                    "Turma com chave " + chave + " nao encontrada."
+            );
+        }
+    }
 }

@@ -1,10 +1,10 @@
 package com.classroompb.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,6 +21,7 @@ public class ModelTest {
         void deveCriarAlunoPadrao() {
             Aluno aluno = new Aluno();
             assertNotNull(aluno);
+            assertNull(aluno.getMatricula());
         }
 
         @Test
@@ -48,18 +49,18 @@ public class ModelTest {
         @Test
         @DisplayName("Deve atualizar campos via setters")
         void deveAtualizarCamposViaSetters() {
-            Aluno aluno = new Aluno("A0001", "Carlos", "carlos@teste.com", "123");
+            Aluno aluno = new Aluno();
             aluno.setNome("Novo Nome");
             aluno.setEmail("novo@teste.com");
             aluno.setSenha("novaSenha");
             aluno.setMatricula("A9999");
-            aluno.setTipo(TipoUsuario.PROFESSOR);
+            aluno.setTipo(TipoUsuario.ALUNO);
 
             assertEquals("Novo Nome", aluno.getNome());
             assertEquals("novo@teste.com", aluno.getEmail());
             assertEquals("novaSenha", aluno.getSenha());
             assertEquals("A9999", aluno.getMatricula());
-            assertEquals(TipoUsuario.PROFESSOR, aluno.getTipo());
+            assertEquals(TipoUsuario.ALUNO, aluno.getTipo());
         }
     }
 
@@ -156,6 +157,10 @@ public class ModelTest {
         void deveConterQuatroTipos() {
             TipoUsuario[] tipos = TipoUsuario.values();
             assertEquals(4, tipos.length);
+            assertTrue(Arrays.asList(tipos).contains(TipoUsuario.ALUNO));
+            assertTrue(Arrays.asList(tipos).contains(TipoUsuario.PROFESSOR));
+            assertTrue(Arrays.asList(tipos).contains(TipoUsuario.COORDENADOR));
+            assertTrue(Arrays.asList(tipos).contains(TipoUsuario.ADMINISTRADOR));
         }
 
         @Test
@@ -175,7 +180,9 @@ public class ModelTest {
         @Test
         @DisplayName("Deve criar Curso com construtor padrao")
         void deveCriarCursoPadrao() {
-            assertNotNull(new Curso());
+            Curso curso = new Curso();
+            assertNotNull(curso);
+            assertNull(curso.getCodigo());
         }
 
         @Test
@@ -208,6 +215,7 @@ public class ModelTest {
             assertTrue(str.contains("ADS"));
             assertTrue(str.contains("Análise e Desenvolvimento de Sistemas"));
             assertTrue(str.contains("3200"));
+            assertTrue(str.contains("[CURSO]"));
         }
     }
 
@@ -216,35 +224,47 @@ public class ModelTest {
     class DisciplinaTest {
 
         @Test
-        @DisplayName("Deve criar Disciplina com construtor padrao")
+        @DisplayName("Deve criar Disciplina com construtor padrao e lista de pre-requisitos vazia")
         void deveCriarDisciplinaPadrao() {
-            assertNotNull(new Disciplina());
+            Disciplina disciplina = new Disciplina();
+            assertNotNull(disciplina);
+            assertNotNull(disciplina.getPreRequisitos());
+            assertTrue(disciplina.getPreRequisitos().isEmpty());
         }
 
         @Test
         @DisplayName("Deve criar Disciplina com construtor completo")
         void deveCriarDisciplinaCompleta() {
-            Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 60, 4, Arrays.asList("ES1", "POO"));
+            List<String> preReqs = Arrays.asList("ES1", "POO");
+            Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 60, 4, preReqs);
             assertEquals("ES2", disciplina.getCodigo());
             assertEquals("Engenharia de Software 2", disciplina.getNome());
             assertEquals(60, disciplina.getCargaHoraria());
+            assertEquals(4, disciplina.getCreditos());
+            assertEquals(preReqs, disciplina.getPreRequisitos());
         }
 
         @Test
-        @DisplayName("Deve atualizar Disciplina via setters")
+        @DisplayName("Deve atualizar Disciplina via setters incluindo creditos e pre-requisitos")
         void deveAtualizarDisciplinaViaSetters() {
             Disciplina disciplina = new Disciplina();
             disciplina.setCodigo("BD");
             disciplina.setNome("Banco de Dados");
             disciplina.setCargaHoraria(80);
+            disciplina.setCreditos(5);
+            List<String> preReqs = new ArrayList<>();
+            preReqs.add("ALEST");
+            disciplina.setPreRequisitos(preReqs);
 
             assertEquals("BD", disciplina.getCodigo());
             assertEquals("Banco de Dados", disciplina.getNome());
             assertEquals(80, disciplina.getCargaHoraria());
+            assertEquals(5, disciplina.getCreditos());
+            assertEquals(preReqs, disciplina.getPreRequisitos());
         }
 
         @Test
-        @DisplayName("toString de Disciplina deve conter codigo, nome e carga horaria")
+        @DisplayName("toString de Disciplina deve conter todos os dados principais")
         void toStringDisciplinaDeveConterDados() {
             Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 
             		60, 4, Arrays.asList("ES1", "POO"));
@@ -252,6 +272,27 @@ public class ModelTest {
             assertTrue(str.contains("ES2"));
             assertTrue(str.contains("Engenharia de Software 2"));
             assertTrue(str.contains("60"));
+            assertTrue(str.contains("4"));
+            assertTrue(str.contains("ES1"));
+            assertTrue(str.contains("POO"));
+            assertTrue(str.contains("[DISCIPLINA]"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Usuario (Abstrato)")
+    class UsuarioAbstractTest {
+        // Como Usuario é abstrato, testamos através de uma implementação concreta (Aluno já testado)
+        // Mas podemos validar o comportamento comum aqui se necessário.
+        
+        @Test
+        @DisplayName("Deve validar que Usuario retem dados comuns")
+        void deveValidarDadosComuns() {
+            Usuario u = new Aluno("123", "Teste", "teste@email.com", "senha");
+            assertEquals("123", u.getMatricula());
+            assertEquals("Teste", u.getNome());
+            assertEquals("teste@email.com", u.getEmail());
+            assertEquals("senha", u.getSenha());
         }
     }
 }

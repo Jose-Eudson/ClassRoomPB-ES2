@@ -76,18 +76,22 @@ public class CoordenadorController {
         while (true) {
             List<String> opcoes = Arrays.asList(
                 "Ofertar turma",
+                "Editar turma",
+                "Excluir turma",
                 "Listar turmas por período",
                 "Listar turmas por disciplina e período",
                 "Voltar"
             );
-            int escolha = ConsoleUI.exibirMenuInterativo("OFERTAR TURMAS", opcoes);
+            int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR TURMAS", opcoes);
 
-            if (escolha == 3 || escolha == -1) break;
+            if (escolha == 5 || escolha == -1) break;
 
             switch (escolha) {
                 case 0: ofertarTurma(usuario);                    break;
-                case 1: listarTurmasPorPeriodo();                 break;
-                case 2: listarTurmasPorDisciplinaEPeriodo();      break;
+                case 1: editarTurma(usuario);                     break;
+                case 2: excluirTurma(usuario);                    break;
+                case 3: listarTurmasPorPeriodo();                 break;
+                case 4: listarTurmasPorDisciplinaEPeriodo();      break;
             }
         }
     }
@@ -101,6 +105,7 @@ public class CoordenadorController {
             String codigoTurma      = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
             int vagas               = Integer.parseInt(ConsoleUI.lerEntrada("Número de vagas: "));
             String horario          = ConsoleUI.lerEntrada("Horário (ex: Seg/Qua 10h-12h): ");
+            String sala             = ConsoleUI.lerEntrada("Sala (ex: Bloco A - 101): ");
             String professor        = ConsoleUI.lerEntrada("Matrícula do professor (vazio para deixar em aberto): ");
 
             turmaService.ofertarTurma(
@@ -110,12 +115,87 @@ public class CoordenadorController {
                     codigoTurma,
                     vagas,
                     horario,
+                    sala,
                     professor
             );
 
             ConsoleUI.exibirMensagem("Turma ofertada com sucesso!", false);
         } catch (NumberFormatException e) {
             ConsoleUI.exibirMensagem("Erro: O número de vagas deve ser um inteiro.", true);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void editarTurma(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("EDITAR TURMA");
+        try {
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ");
+            String codigoPeriodo    = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
+            String codigoTurma      = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
+
+            Turma atual = turmaService.buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+
+            System.out.println("\nDados atuais:");
+            System.out.println("  Vagas  : " + atual.getVagas());
+            System.out.println("  Horário: " + atual.getHorario());
+            System.out.println("  Sala   : " + atual.getSala());
+            System.out.println("  Prof   : " + (atual.getMatriculaProfessor() == null
+                    ? "sem professor" : atual.getMatriculaProfessor()));
+
+            String vagasTexto = ConsoleUI.lerEntrada("\nNovas vagas (vazio para manter): ");
+            int novasVagas = vagasTexto.trim().isEmpty() ? 0 : Integer.parseInt(vagasTexto);
+
+            String novoHorario = ConsoleUI.lerEntrada("Novo horário (vazio para manter): ");
+            String novaSala    = ConsoleUI.lerEntrada("Nova sala (vazio para manter): ");
+            String novoProf    = ConsoleUI.lerEntrada(
+                    "Nova matrícula do professor (vazio para manter, espaço para remover): ");
+
+            // Distingue "vazio = manter" de "espaço = remover professor"
+            String matriculaProf = novoProf.isEmpty() ? null : novoProf;
+
+            turmaService.editarTurma(
+                    usuario,
+                    codigoDisciplina,
+                    codigoPeriodo,
+                    codigoTurma,
+                    novasVagas,
+                    novoHorario,
+                    novaSala,
+                    matriculaProf
+            );
+
+            ConsoleUI.exibirMensagem("Turma atualizada com sucesso!", false);
+        } catch (NumberFormatException e) {
+            ConsoleUI.exibirMensagem("Erro: O número de vagas deve ser um inteiro.", true);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void excluirTurma(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("EXCLUIR TURMA");
+        try {
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ");
+            String codigoPeriodo    = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
+            String codigoTurma      = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
+
+            Turma turma = turmaService.buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+
+            System.out.println("\n" + turma);
+            int escolha = ConsoleUI.exibirMenuInterativo(
+                    "Tem certeza que deseja excluir esta turma?",
+                    Arrays.asList("Sim, excluir", "Não, cancelar")
+            );
+
+            if (escolha == 0) {
+                turmaService.excluirTurma(usuario, codigoDisciplina, codigoPeriodo, codigoTurma);
+                ConsoleUI.exibirMensagem("Turma excluída com sucesso!", false);
+            } else {
+                ConsoleUI.exibirMensagem("Operação cancelada.", false);
+            }
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }
@@ -163,7 +243,7 @@ public class CoordenadorController {
     }
 
     private void exibirTabelaTurmas(List<Turma> turmas) {
-        String[] colunas = {"Código", "Disciplina", "Período", "Vagas", "Horário", "Professor"};
+        String[] colunas = {"Código", "Disciplina", "Período", "Vagas", "Horário", "Sala", "Professor"};
         List<String[]> linhas = new ArrayList<String[]>();
         for (Turma t : turmas) {
             linhas.add(new String[]{
@@ -172,6 +252,7 @@ public class CoordenadorController {
                 t.getCodigoPeriodo(),
                 String.valueOf(t.getVagas()),
                 t.getHorario(),
+                (t.getSala() == null || t.getSala().isEmpty()) ? "-" : t.getSala(),
                 (t.getMatriculaProfessor() == null || t.getMatriculaProfessor().isEmpty())
                         ? "-"
                         : t.getMatriculaProfessor()

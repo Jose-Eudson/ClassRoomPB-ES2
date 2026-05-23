@@ -5,12 +5,15 @@ import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * RF10: Entidade de domínio que representa uma turma ofertada
+ * RF10/RF11: Entidade de domínio que representa uma turma ofertada
  * para uma disciplina em um período letivo.
  *
  * Uma turma é identificada de forma única pela combinação
  * (codigoDisciplina + codigoPeriodo + codigo), permitindo que
  * a mesma disciplina tenha múltiplas turmas no mesmo período.
+ *
+ * RF11: Cada turma possui professor responsável, limite de vagas,
+ * horário e sala.
  */
 public class Turma implements Serializable {
 
@@ -25,26 +28,30 @@ public class Turma implements Serializable {
     /** Código do período letivo associado (FK lógica para PeriodoLetivo). */
     private String codigoPeriodo;
 
-    /** Número máximo de alunos que podem se matricular. */
+    /** Número máximo de alunos que podem se matricular. RF11. */
     private int vagas;
 
-    /** Horário das aulas (ex: "Seg/Qua 10h-12h"). */
+    /** Horário das aulas (ex: "Seg/Qua 10h-12h"). RF11. */
     private String horario;
 
-    /** Matrícula do professor responsável pela turma (pode ser nulo). */
+    /** Sala onde as aulas serão realizadas (ex: "Bloco A - 101"). RF11. */
+    private String sala;
+
+    /** Matrícula do professor responsável pela turma (pode ser nulo). RF11. */
     private String matriculaProfessor;
 
     /** Construtor padrão necessário para desserialização JSON. */
     public Turma() {}
 
     /**
-     * Construtor completo para criação de turmas.
+     * Construtor completo para criação de turmas (RF11).
      *
      * @param codigo             identificador da turma (ex: "T01")
      * @param codigoDisciplina   código da disciplina ofertada
      * @param codigoPeriodo      código do período letivo (ex: "2026.1")
      * @param vagas              número máximo de vagas
      * @param horario            descrição do horário das aulas
+     * @param sala               sala onde as aulas serão realizadas
      * @param matriculaProfessor matrícula do professor (nullable)
      */
     public Turma(
@@ -53,6 +60,7 @@ public class Turma implements Serializable {
             String codigoPeriodo,
             int vagas,
             String horario,
+            String sala,
             String matriculaProfessor
     ) {
         this.codigo = codigo;
@@ -60,6 +68,7 @@ public class Turma implements Serializable {
         this.codigoPeriodo = codigoPeriodo;
         this.vagas = vagas;
         this.horario = horario;
+        this.sala = sala;
         this.matriculaProfessor = matriculaProfessor;
     }
 
@@ -81,6 +90,9 @@ public class Turma implements Serializable {
 
     public String getHorario() { return horario; }
     public void setHorario(String horario) { this.horario = horario; }
+
+    public String getSala() { return sala; }
+    public void setSala(String sala) { this.sala = sala; }
 
     public String getMatriculaProfessor() { return matriculaProfessor; }
     public void setMatriculaProfessor(String matriculaProfessor) { this.matriculaProfessor = matriculaProfessor; }
@@ -104,9 +116,10 @@ public class Turma implements Serializable {
         String prof = (matriculaProfessor == null || matriculaProfessor.trim().isEmpty())
                 ? "sem professor"
                 : matriculaProfessor;
+        String salaStr = (sala == null || sala.trim().isEmpty()) ? "sem sala" : sala;
         return String.format(
-                "[TURMA] %s | Disciplina: %s | Período: %s | %d vagas | %s | Prof: %s",
-                codigo, codigoDisciplina, codigoPeriodo, vagas, horario, prof
+                "[TURMA] %s | Disciplina: %s | Período: %s | %d vagas | %s | Sala: %s | Prof: %s",
+                codigo, codigoDisciplina, codigoPeriodo, vagas, horario, salaStr, prof
         );
     }
 }

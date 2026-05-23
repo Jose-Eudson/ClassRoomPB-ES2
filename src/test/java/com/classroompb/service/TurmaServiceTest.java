@@ -111,7 +111,7 @@ public class TurmaServiceTest {
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(false);
 
             assertDoesNotThrow(() ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg/Qua 10h-12h", "P0001")
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg/Qua 10h-12h", "A-101", "P0001")
             );
 
             verify(turmaRepository).salvar(any(Turma.class));
@@ -125,7 +125,7 @@ public class TurmaServiceTest {
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(false);
 
             assertDoesNotThrow(() ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 30, "Ter/Qui 14h-16h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 30, "Ter/Qui 14h-16h", "A-101", null)
             );
 
             verify(turmaRepository).salvar(any(Turma.class));
@@ -139,7 +139,7 @@ public class TurmaServiceTest {
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T02")).thenReturn(false);
 
             assertDoesNotThrow(() ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T02", 25, "Sex 08h-12h", "")
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T02", 25, "Sex 08h-12h", "A-101", "")
             );
 
             verify(turmaRepository).salvar(any(Turma.class));
@@ -153,7 +153,7 @@ public class TurmaServiceTest {
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T02")).thenReturn(false);
 
             assertDoesNotThrow(() ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T02", 40, "Ter/Qui 10h-12h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T02", 40, "Ter/Qui 10h-12h", "A-101", null)
             );
 
             verify(turmaRepository).salvar(any(Turma.class));
@@ -167,7 +167,7 @@ public class TurmaServiceTest {
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(false);
 
             assertDoesNotThrow(() ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 1, "Seg 08h-10h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 1, "Seg 08h-10h", "A-101", null)
             );
 
             verify(turmaRepository).salvar(any(Turma.class));
@@ -180,7 +180,7 @@ public class TurmaServiceTest {
             when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "  T01  ")).thenReturn(false);
 
-            service.ofertarTurma(coordenador, "MAT001", "2026.1", "  T01  ", 30, "Seg 10h", null);
+            service.ofertarTurma(coordenador, "MAT001", "2026.1", "  T01  ", 30, "Seg 10h", "A-101", null);
 
             ArgumentCaptor<Turma> captor = forClass(Turma.class);
             verify(turmaRepository).salvar(captor.capture());
@@ -194,7 +194,7 @@ public class TurmaServiceTest {
             when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(false);
 
-            service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 30, "Seg 10h", "");
+            service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 30, "Seg 10h", "A-101", "");
 
             ArgumentCaptor<Turma> captor = forClass(Turma.class);
             verify(turmaRepository).salvar(captor.capture());
@@ -208,7 +208,7 @@ public class TurmaServiceTest {
             when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(false);
 
-            service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg/Qua 10h-12h", "P0001");
+            service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg/Qua 10h-12h", "A-101", "P0001");
 
             ArgumentCaptor<Turma> captor = forClass(Turma.class);
             verify(turmaRepository).salvar(captor.capture());
@@ -219,6 +219,7 @@ public class TurmaServiceTest {
             assertEquals("2026.1",        salva.getCodigoPeriodo());
             assertEquals(40,              salva.getVagas());
             assertEquals("Seg/Qua 10h-12h", salva.getHorario());
+            assertEquals("A-101",         salva.getSala());
             assertEquals("P0001",         salva.getMatriculaProfessor());
         }
     }
@@ -235,7 +236,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve permitir que Aluno oferte turma")
         void naoDevePermitirAluno() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(aluno, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", null)
+                service.ofertarTurma(aluno, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Apenas coordenadores podem ofertar turmas.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -245,7 +246,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve permitir que Professor oferte turma")
         void naoDevePermitirProfessor() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(professor, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", null)
+                service.ofertarTurma(professor, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Apenas coordenadores podem ofertar turmas.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -255,7 +256,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve permitir que Administrador oferte turma")
         void naoDevePermitirAdministrador() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(administrador, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", null)
+                service.ofertarTurma(administrador, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Apenas coordenadores podem ofertar turmas.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -265,7 +266,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve permitir usuário nulo")
         void naoDevePermitirUsuarioNulo() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(null, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", null)
+                service.ofertarTurma(null, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Apenas coordenadores podem ofertar turmas.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -284,7 +285,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com código vazio")
         void naoDeveOfertarComCodigoVazio() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "", 40, "Seg 10h-12h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "", 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Código da turma não pode ser vazio.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -294,7 +295,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com código nulo")
         void naoDeveOfertarComCodigoNulo() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", null, 40, "Seg 10h-12h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", null, 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Código da turma não pode ser vazio.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -304,7 +305,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com código apenas de espaços em branco")
         void naoDeveOfertarComCodigoBranco() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "   ", 40, "Seg 10h-12h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "   ", 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Código da turma não pode ser vazio.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -314,7 +315,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com código da disciplina vazio")
         void naoDeveOfertarComDisciplinaVazia() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "", "2026.1", "T01", 40, "Seg 10h-12h", null)
+                service.ofertarTurma(coordenador, "", "2026.1", "T01", 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Código da disciplina não pode ser vazio.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -324,7 +325,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com código da disciplina nulo")
         void naoDeveOfertarComDisciplinaNula() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, null, "2026.1", "T01", 40, "Seg 10h-12h", null)
+                service.ofertarTurma(coordenador, null, "2026.1", "T01", 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Código da disciplina não pode ser vazio.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -334,7 +335,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com código do período vazio")
         void naoDeveOfertarComPeriodoVazio() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "", "T01", 40, "Seg 10h-12h", null)
+                service.ofertarTurma(coordenador, "MAT001", "", "T01", 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Código do período letivo não pode ser vazio.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -344,7 +345,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com código do período nulo")
         void naoDeveOfertarComPeriodoNulo() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", null, "T01", 40, "Seg 10h-12h", null)
+                service.ofertarTurma(coordenador, "MAT001", null, "T01", 40, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: Código do período letivo não pode ser vazio.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -354,7 +355,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com vagas zero")
         void naoDeveOfertarComVagasZero() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 0, "Seg 10h-12h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 0, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: O número de vagas deve ser maior que zero.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -364,7 +365,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com vagas negativas")
         void naoDeveOfertarComVagasNegativas() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", -5, "Seg 10h-12h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", -5, "Seg 10h-12h", "A-101", null)
             );
             assertEquals("Erro: O número de vagas deve ser maior que zero.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -374,7 +375,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com horário vazio")
         void naoDeveOfertarComHorarioVazio() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "", "A-101", null)
             );
             assertEquals("Erro: Horário da turma não pode ser vazio.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -384,7 +385,7 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com horário nulo")
         void naoDeveOfertarComHorarioNulo() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, null, null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, null, "A-101", null)
             );
             assertEquals("Erro: Horário da turma não pode ser vazio.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -394,9 +395,39 @@ public class TurmaServiceTest {
         @DisplayName("Não deve ofertar turma com horário apenas de espaços em branco")
         void naoDeveOfertarComHorarioBranco() {
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "    ", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "    ", "A-101", null)
             );
             assertEquals("Erro: Horário da turma não pode ser vazio.", ex.getMessage());
+            verify(turmaRepository, never()).salvar(any());
+        }
+
+        @Test
+        @DisplayName("Não deve ofertar turma com sala vazia (RF11)")
+        void naoDeveOfertarComSalaVazia() {
+            Exception ex = assertThrows(Exception.class, () ->
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg 10h", "", null)
+            );
+            assertEquals("Erro: Sala da turma não pode ser vazia.", ex.getMessage());
+            verify(turmaRepository, never()).salvar(any());
+        }
+
+        @Test
+        @DisplayName("Não deve ofertar turma com sala nula (RF11)")
+        void naoDeveOfertarComSalaNula() {
+            Exception ex = assertThrows(Exception.class, () ->
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg 10h", null, null)
+            );
+            assertEquals("Erro: Sala da turma não pode ser vazia.", ex.getMessage());
+            verify(turmaRepository, never()).salvar(any());
+        }
+
+        @Test
+        @DisplayName("Não deve ofertar turma com sala apenas de espaços em branco (RF11)")
+        void naoDeveOfertarComSalaBranca() {
+            Exception ex = assertThrows(Exception.class, () ->
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg 10h", "   ", null)
+            );
+            assertEquals("Erro: Sala da turma não pode ser vazia.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
         }
     }
@@ -415,7 +446,7 @@ public class TurmaServiceTest {
             when(disciplinaRepository.buscarPorCodigo("INEXISTENTE")).thenReturn(null);
 
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "INEXISTENTE", "2026.1", "T01", 40, "Seg 10h", null)
+                service.ofertarTurma(coordenador, "INEXISTENTE", "2026.1", "T01", 40, "Seg 10h", "A-101", null)
             );
             assertEquals("Erro: Disciplina com código 'INEXISTENTE' não encontrada.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -428,7 +459,7 @@ public class TurmaServiceTest {
             when(periodoRepository.buscarPorCodigo("9999.9")).thenReturn(null);
 
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "9999.9", "T01", 40, "Seg 10h", null)
+                service.ofertarTurma(coordenador, "MAT001", "9999.9", "T01", 40, "Seg 10h", "A-101", null)
             );
             assertEquals("Erro: Período letivo '9999.9' não encontrado.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -441,7 +472,7 @@ public class TurmaServiceTest {
             when(periodoRepository.buscarPorCodigo("2025.2")).thenReturn(periodoInativo);
 
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "2025.2", "T01", 40, "Seg 10h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2025.2", "T01", 40, "Seg 10h", "A-101", null)
             );
             assertEquals("Erro: Não é possível ofertar turmas em um período letivo inativo.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
@@ -455,7 +486,7 @@ public class TurmaServiceTest {
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(true);
 
             Exception ex = assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg 10h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg 10h", "A-101", null)
             );
             assertEquals(
                 "Erro: Já existe uma turma 'T01' para a disciplina 'MAT001' no período '2026.1'.",
@@ -471,7 +502,7 @@ public class TurmaServiceTest {
             when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(false);
 
-            service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 30, "Seg 10h", null);
+            service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 30, "Seg 10h", "A-101", null);
 
             verify(turmaRepository).existePorChaveUnica("MAT001", "2026.1", "T01");
         }
@@ -489,7 +520,7 @@ public class TurmaServiceTest {
             when(turmaRepository.existePorChaveUnica("MAT001", "2026.2", "T01")).thenReturn(false);
 
             assertDoesNotThrow(() ->
-                service.ofertarTurma(coordenador, "MAT001", "2026.2", "T01", 40, "Seg 10h", null)
+                service.ofertarTurma(coordenador, "MAT001", "2026.2", "T01", 40, "Seg 10h", "A-101", null)
             );
 
             verify(turmaRepository).salvar(any(Turma.class));
@@ -507,7 +538,7 @@ public class TurmaServiceTest {
             when(turmaRepository.existePorChaveUnica("FIS001", "2026.1", "T01")).thenReturn(false);
 
             assertDoesNotThrow(() ->
-                service.ofertarTurma(coordenador, "FIS001", "2026.1", "T01", 35, "Ter 14h", null)
+                service.ofertarTurma(coordenador, "FIS001", "2026.1", "T01", 35, "Ter 14h", "A-101", null)
             );
 
             verify(turmaRepository).salvar(any(Turma.class));
@@ -519,7 +550,7 @@ public class TurmaServiceTest {
             when(disciplinaRepository.buscarPorCodigo("XXX")).thenReturn(null);
 
             assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "XXX", "2026.1", "T01", 30, "Seg 10h", null)
+                service.ofertarTurma(coordenador, "XXX", "2026.1", "T01", 30, "Seg 10h", "A-101", null)
             );
 
             verify(turmaRepository, never()).existePorChaveUnica(any(), any(), any());
@@ -533,7 +564,7 @@ public class TurmaServiceTest {
             when(periodoRepository.buscarPorCodigo("9999.9")).thenReturn(null);
 
             assertThrows(Exception.class, () ->
-                service.ofertarTurma(coordenador, "MAT001", "9999.9", "T01", 30, "Seg 10h", null)
+                service.ofertarTurma(coordenador, "MAT001", "9999.9", "T01", 30, "Seg 10h", "A-101", null)
             );
 
             verify(turmaRepository, never()).existePorChaveUnica(any(), any(), any());
@@ -553,8 +584,8 @@ public class TurmaServiceTest {
         @DisplayName("Deve listar turmas por período")
         void deveListarTurmasPorPeriodo() {
             List<Turma> turmasEsperadas = Arrays.asList(
-                new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h", null),
-                new Turma("T01", "FIS001", "2026.1", 35, "Ter 14h", null)
+                new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h", "A-101", null),
+                new Turma("T01", "FIS001", "2026.1", 35, "Ter 14h", "A-101", null)
             );
             when(turmaRepository.listarPorPeriodo("2026.1")).thenReturn(turmasEsperadas);
 
@@ -568,8 +599,8 @@ public class TurmaServiceTest {
         @DisplayName("Deve listar turmas por disciplina e período")
         void deveListarTurmasPorDisciplinaEPeriodo() {
             List<Turma> turmasEsperadas = Arrays.asList(
-                new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h", null),
-                new Turma("T02", "MAT001", "2026.1", 30, "Qua 10h", null)
+                new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h", "A-101", null),
+                new Turma("T02", "MAT001", "2026.1", 30, "Qua 10h", "A-101", null)
             );
             when(turmaRepository.listarPorDisciplinaEPeriodo("MAT001", "2026.1")).thenReturn(turmasEsperadas);
 
@@ -583,9 +614,9 @@ public class TurmaServiceTest {
         @DisplayName("Deve listar todas as turmas cadastradas")
         void deveListarTodasAsTurmas() {
             List<Turma> todas = Arrays.asList(
-                new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h", null),
-                new Turma("T01", "FIS001", "2026.1", 35, "Ter 14h", null),
-                new Turma("T01", "MAT001", "2025.2", 30, "Qua 08h", "P0001")
+                new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h", "A-101", null),
+                new Turma("T01", "FIS001", "2026.1", 35, "Ter 14h", "A-101", null),
+                new Turma("T01", "MAT001", "2025.2", 30, "Qua 08h", "A-101", "P0001")
             );
             when(turmaRepository.listarTodos()).thenReturn(todas);
 
@@ -648,6 +679,234 @@ public class TurmaServiceTest {
             service.listarTurmasPorDisciplinaEPeriodo("MAT001", "2026.1");
 
             verify(turmaRepository).listarPorDisciplinaEPeriodo("MAT001", "2026.1");
+        }
+    }
+
+    // =========================================================================
+    // buscarTurma()
+    // =========================================================================
+
+    @Nested
+    @DisplayName("buscarTurma()")
+    class BuscarTurma {
+
+        @Test
+        @DisplayName("Deve retornar a turma quando encontrada")
+        void deveRetornarTurmaEncontrada() throws Exception {
+            Turma t = new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h", "A-101", null);
+            when(turmaRepository.buscarPorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(t);
+
+            Turma resultado = service.buscarTurma("MAT001", "2026.1", "T01");
+            assertNotNull(resultado);
+            assertEquals("T01", resultado.getCodigo());
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando turma não encontrada")
+        void deveLancarExcecaoParaTurmaInexistente() {
+            when(turmaRepository.buscarPorChaveUnica("MAT001", "2026.1", "T99")).thenReturn(null);
+
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.buscarTurma("MAT001", "2026.1", "T99"));
+            assertTrue(ex.getMessage().contains("não encontrada"));
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando código da disciplina for vazio")
+        void deveLancarExcecaoParaDisciplinaVazia() {
+            assertThrows(Exception.class, () -> service.buscarTurma("", "2026.1", "T01"));
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando código do período for nulo")
+        void deveLancarExcecaoParaPeriodoNulo() {
+            assertThrows(Exception.class, () -> service.buscarTurma("MAT001", null, "T01"));
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando código da turma for vazio")
+        void deveLancarExcecaoParaCodigoTurmaVazio() {
+            assertThrows(Exception.class, () -> service.buscarTurma("MAT001", "2026.1", ""));
+        }
+    }
+
+    // =========================================================================
+    // editarTurma()
+    // =========================================================================
+
+    @Nested
+    @DisplayName("editarTurma()")
+    class EditarTurma {
+
+        private Turma turmaExistente;
+
+        @BeforeEach
+        void setUpTurma() {
+            turmaExistente = new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h", "A-101", "P0001");
+        }
+
+        private void mockTurmaExistente() {
+            when(turmaRepository.buscarPorChaveUnica("MAT001", "2026.1", "T01"))
+                    .thenReturn(turmaExistente);
+        }
+
+        @Test
+        @DisplayName("Coordenador deve conseguir editar vagas")
+        void deveEditarVagas() throws Exception {
+            mockTurmaExistente();
+            service.editarTurma(coordenador, "MAT001", "2026.1", "T01", 60, "", "", null);
+            assertEquals(60, turmaExistente.getVagas());
+            verify(turmaRepository).atualizar(turmaExistente);
+        }
+
+        @Test
+        @DisplayName("Coordenador deve conseguir editar horário")
+        void deveEditarHorario() throws Exception {
+            mockTurmaExistente();
+            service.editarTurma(coordenador, "MAT001", "2026.1", "T01", 0, "Qui 14h-18h", "", null);
+            assertEquals("Qui 14h-18h", turmaExistente.getHorario());
+            verify(turmaRepository).atualizar(turmaExistente);
+        }
+
+        @Test
+        @DisplayName("Coordenador deve conseguir editar sala")
+        void deveEditarSala() throws Exception {
+            mockTurmaExistente();
+            service.editarTurma(coordenador, "MAT001", "2026.1", "T01", 0, "", "Bloco Z - 999", null);
+            assertEquals("Bloco Z - 999", turmaExistente.getSala());
+            verify(turmaRepository).atualizar(turmaExistente);
+        }
+
+        @Test
+        @DisplayName("Coordenador deve conseguir atribuir professor")
+        void deveAtribuirProfessor() throws Exception {
+            mockTurmaExistente();
+            service.editarTurma(coordenador, "MAT001", "2026.1", "T01", 0, "", "", "P9999");
+            assertEquals("P9999", turmaExistente.getMatriculaProfessor());
+            verify(turmaRepository).atualizar(turmaExistente);
+        }
+
+        @Test
+        @DisplayName("String vazia para professor deve remover o professor")
+        void deveRemoverProfessorComStringVazia() throws Exception {
+            mockTurmaExistente();
+            service.editarTurma(coordenador, "MAT001", "2026.1", "T01", 0, "", "", "");
+            assertNull(turmaExistente.getMatriculaProfessor());
+            verify(turmaRepository).atualizar(turmaExistente);
+        }
+
+        @Test
+        @DisplayName("null para professor deve manter o professor atual")
+        void deveManter_ProfessorComNull() throws Exception {
+            mockTurmaExistente();
+            service.editarTurma(coordenador, "MAT001", "2026.1", "T01", 0, "", "", null);
+            assertEquals("P0001", turmaExistente.getMatriculaProfessor());
+            verify(turmaRepository).atualizar(turmaExistente);
+        }
+
+        @Test
+        @DisplayName("Vagas zero não devem alterar as vagas atuais")
+        void vagasZeroNaoDeveAlterar() throws Exception {
+            mockTurmaExistente();
+            service.editarTurma(coordenador, "MAT001", "2026.1", "T01", 0, "", "", null);
+            assertEquals(40, turmaExistente.getVagas());
+        }
+
+        @Test
+        @DisplayName("Vagas negativas devem lançar exceção")
+        void vagasNegativasDevemLancarExcecao() {
+            mockTurmaExistente();
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.editarTurma(coordenador, "MAT001", "2026.1", "T01", -1, "", "", null));
+            assertTrue(ex.getMessage().contains("negativo"));
+            verify(turmaRepository, never()).atualizar(any());
+        }
+
+        @Test
+        @DisplayName("Não-coordenador não pode editar turma")
+        void naoCoordenadorNaoPodeEditar() {
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.editarTurma(aluno, "MAT001", "2026.1", "T01", 0, "", "", null));
+            assertTrue(ex.getMessage().contains("coordenadores"));
+            verify(turmaRepository, never()).atualizar(any());
+        }
+
+        @Test
+        @DisplayName("null como coordenador deve lançar exceção de permissão")
+        void coordenadorNuloDeveLancarExcecao() {
+            assertThrows(Exception.class,
+                    () -> service.editarTurma(null, "MAT001", "2026.1", "T01", 0, "", "", null));
+        }
+
+        @Test
+        @DisplayName("Turma inexistente deve lançar exceção antes de atualizar")
+        void turmaInexistenteDeveLancarExcecao() {
+            when(turmaRepository.buscarPorChaveUnica("MAT001", "2026.1", "T99")).thenReturn(null);
+            assertThrows(Exception.class,
+                    () -> service.editarTurma(coordenador, "MAT001", "2026.1", "T99", 0, "", "", null));
+            verify(turmaRepository, never()).atualizar(any());
+        }
+    }
+
+    // =========================================================================
+    // excluirTurma()
+    // =========================================================================
+
+    @Nested
+    @DisplayName("excluirTurma()")
+    class ExcluirTurma {
+
+        private Turma turmaExistente;
+
+        @BeforeEach
+        void setUpTurma() {
+            turmaExistente = new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h", "A-101", "P0001");
+        }
+
+        private void mockTurmaExistente() {
+            when(turmaRepository.buscarPorChaveUnica("MAT001", "2026.1", "T01"))
+                    .thenReturn(turmaExistente);
+        }
+
+        @Test
+        @DisplayName("Coordenador deve conseguir excluir turma existente")
+        void deveExcluirTurmaExistente() throws Exception {
+            mockTurmaExistente();
+            service.excluirTurma(coordenador, "MAT001", "2026.1", "T01");
+            verify(turmaRepository).deletar("MAT001", "2026.1", "T01");
+        }
+
+        @Test
+        @DisplayName("Não-coordenador não pode excluir turma")
+        void naoCoordenadorNaoPodeExcluir() {
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.excluirTurma(professor, "MAT001", "2026.1", "T01"));
+            assertTrue(ex.getMessage().contains("coordenadores"));
+            verify(turmaRepository, never()).deletar(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("null como coordenador deve lançar exceção de permissão")
+        void coordenadorNuloDeveLancarExcecao() {
+            assertThrows(Exception.class,
+                    () -> service.excluirTurma(null, "MAT001", "2026.1", "T01"));
+            verify(turmaRepository, never()).deletar(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Turma inexistente deve lançar exceção antes de deletar")
+        void turmaInexistenteDeveLancarExcecao() {
+            when(turmaRepository.buscarPorChaveUnica("MAT001", "2026.1", "T99")).thenReturn(null);
+            assertThrows(Exception.class,
+                    () -> service.excluirTurma(coordenador, "MAT001", "2026.1", "T99"));
+            verify(turmaRepository, never()).deletar(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Administrador não pode excluir turma")
+        void administradorNaoPodeExcluir() {
+            assertThrows(Exception.class,
+                    () -> service.excluirTurma(administrador, "MAT001", "2026.1", "T01"));
         }
     }
 }

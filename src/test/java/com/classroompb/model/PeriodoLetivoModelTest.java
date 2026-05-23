@@ -49,6 +49,8 @@ public class PeriodoLetivoModelTest {
         assertEquals("2027.1", periodo.getCodigo());
         assertEquals(2027, periodo.getAno());
         assertEquals(1, periodo.getSemestre());
+        assertEquals(LocalDate.of(2027, 2, 1), periodo.getDataInicio());
+        assertEquals(LocalDate.of(2027, 6, 30), periodo.getDataFim());
         assertFalse(periodo.isAtivo());
     }
 
@@ -65,6 +67,7 @@ public class PeriodoLetivoModelTest {
                 true
         );
 
+        // Corrigindo o formato esperado de acordo com a implementação: [PERIODO LETIVO] codigo - ano.semestre | inicio ate fim | status
         String esperado = "[PERIODO LETIVO] 2026.1 - 2026.1 | 2026-02-01 ate 2026-06-30 | ATIVO";
 
         assertEquals(esperado, periodo.toString());

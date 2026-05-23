@@ -58,6 +58,18 @@ public class DisciplinaService {
             );
         }
 
+        // RF07/RN04: valida que cada pré-requisito informado existe no sistema
+        if (preRequisitos != null) {
+            for (String codigoPreReq : preRequisitos) {
+                String codigoTrimmed = codigoPreReq.trim();
+                if (!codigoTrimmed.isEmpty() && repository.buscarPorCodigo(codigoTrimmed) == null) {
+                    throw new Exception(
+                            "Erro: Pré-requisito '" + codigoTrimmed + "' não encontrado. Cadastre a disciplina antes de usá-la como pré-requisito."
+                    );
+                }
+            }
+        }
+
         Disciplina disciplina =
                 new Disciplina(
                         codigo,
@@ -108,6 +120,22 @@ public class DisciplinaService {
         }
         if (novosCreditos <= 0) {
             throw new Exception("Erro: Creditos devem ser maiores que zero.");
+        }
+
+        // RF07/RN04: valida que cada pré-requisito informado existe no sistema
+        if (novosPreRequisitos != null) {
+            for (String codigoPreReq : novosPreRequisitos) {
+                String codigoTrimmed = codigoPreReq.trim();
+                // Um pré-requisito não pode ser a própria disciplina
+                if (codigoTrimmed.equalsIgnoreCase(codigo)) {
+                    throw new Exception(
+                            "Erro: Uma disciplina não pode ser pré-requisito de si mesma.");
+                }
+                if (!codigoTrimmed.isEmpty() && repository.buscarPorCodigo(codigoTrimmed) == null) {
+                    throw new Exception(
+                            "Erro: Pré-requisito '" + codigoTrimmed + "' não encontrado.");
+                }
+            }
         }
 
         existente.setNome(novoNome);

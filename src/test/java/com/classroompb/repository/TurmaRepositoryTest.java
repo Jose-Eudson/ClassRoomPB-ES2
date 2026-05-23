@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -57,19 +58,19 @@ public class TurmaRepositoryTest {
     // =========================================================================
 
     private Turma turmaMAT_2026_T01() {
-        return new Turma("T01", "MAT001", "2026.1", 40, "Seg/Qua 10h-12h", "P0001");
+        return new Turma("T01", "MAT001", "2026.1", 40, "Seg/Qua 10h-12h", "Bloco A - 101", "P0001");
     }
 
     private Turma turmaMAT_2026_T02() {
-        return new Turma("T02", "MAT001", "2026.1", 30, "Ter/Qui 14h-16h", null);
+        return new Turma("T02", "MAT001", "2026.1", 30, "Ter/Qui 14h-16h", "Bloco A - 102", null);
     }
 
     private Turma turmaFIS_2026_T01() {
-        return new Turma("T01", "FIS001", "2026.1", 35, "Sex 08h-12h", "P0002");
+        return new Turma("T01", "FIS001", "2026.1", 35, "Sex 08h-12h", "Bloco B - 201", "P0002");
     }
 
     private Turma turmaMAT_2025_T01() {
-        return new Turma("T01", "MAT001", "2025.2", 40, "Seg 10h", null);
+        return new Turma("T01", "MAT001", "2025.2", 40, "Seg 10h", "Bloco C - 301", null);
     }
 
     // =========================================================================
@@ -142,7 +143,7 @@ public class TurmaRepositoryTest {
         @Test
         @DisplayName("Deve salvar turma sem professor (professor nulo)")
         void deveSalvarTurmaSemProfessor() {
-            Turma semProf = new Turma("T03", "MAT001", "2026.1", 20, "Qui 08h", null);
+            Turma semProf = new Turma("T03", "MAT001", "2026.1", 20, "Qui 08h", "Bloco D - 401", null);
             repository.salvar(semProf);
             Turma recuperada = repository.buscarPorChaveUnica("MAT001", "2026.1", "T03");
             assertNotNull(recuperada);
@@ -440,6 +441,126 @@ public class TurmaRepositoryTest {
             List<Turma> resultado = repository.listarPorDisciplinaEPeriodo("MAT001", "2026.1");
             assertEquals(1, resultado.size());
             assertEquals("MAT001", resultado.get(0).getCodigoDisciplina());
+        }
+    }
+
+    // =========================================================================
+    // atualizar()
+    // =========================================================================
+
+    @Nested
+    @DisplayName("atualizar()")
+    class Atualizar {
+
+        @Test
+        @DisplayName("Deve atualizar os campos de uma turma existente")
+        void deveAtualizarTurmaExistente() {
+            repository.salvar(turmaMAT_2026_T01());
+
+            Turma atualizada = repository.buscarPorChaveUnica("MAT001", "2026.1", "T01");
+            atualizada.setVagas(99);
+            atualizada.setHorario("Sex 14h-18h");
+            atualizada.setSala("Bloco Z - 999");
+            atualizada.setMatriculaProfessor("P9999");
+
+            repository.atualizar(atualizada);
+
+            Turma recuperada = repository.buscarPorChaveUnica("MAT001", "2026.1", "T01");
+            assertEquals(99,             recuperada.getVagas());
+            assertEquals("Sex 14h-18h", recuperada.getHorario());
+            assertEquals("Bloco Z - 999", recuperada.getSala());
+            assertEquals("P9999",        recuperada.getMatriculaProfessor());
+        }
+
+        @Test
+        @DisplayName("Deve persistir a atualização em nova instância do repositório")
+        void devePersistirAtualizacaoEntreInstancias() {
+            repository.salvar(turmaMAT_2026_T01());
+
+            Turma atualizada = repository.buscarPorChaveUnica("MAT001", "2026.1", "T01");
+            atualizada.setVagas(55);
+            repository.atualizar(atualizada);
+
+            TurmaRepository novaInstancia = new TurmaRepository(arquivoTemp());
+            assertEquals(55, novaInstancia.buscarPorChaveUnica("MAT001", "2026.1", "T01").getVagas());
+        }
+
+        @Test
+        @DisplayName("Atualizar turma inexistente deve lançar IllegalArgumentException")
+        void atualizarInexistenteLancaExcecao() {
+            Turma fantasma = new Turma("T99", "XXX", "9999.9", 10, "Seg 10h", "A-000", null);
+            assertThrows(IllegalArgumentException.class, () -> repository.atualizar(fantasma));
+        }
+
+        @Test
+        @DisplayName("Deve manter o número total de turmas após atualização")
+        void deveManterQuantidadeTurmasAposAtualizar() {
+            repository.salvar(turmaMAT_2026_T01());
+            repository.salvar(turmaMAT_2026_T02());
+
+            Turma atualizada = repository.buscarPorChaveUnica("MAT001", "2026.1", "T01");
+            atualizada.setVagas(88);
+            repository.atualizar(atualizada);
+
+            assertEquals(2, repository.listarTodos().size());
+        }
+    }
+
+    // =========================================================================
+    // deletar()
+    // =========================================================================
+
+    @Nested
+    @DisplayName("deletar()")
+    class Deletar {
+
+        @Test
+        @DisplayName("Deve remover a turma existente")
+        void deveRemoverTurmaExistente() {
+            repository.salvar(turmaMAT_2026_T01());
+            repository.deletar("MAT001", "2026.1", "T01");
+            assertNull(repository.buscarPorChaveUnica("MAT001", "2026.1", "T01"));
+            assertTrue(repository.listarTodos().isEmpty());
+        }
+
+        @Test
+        @DisplayName("Deve persistir a remoção em nova instância do repositório")
+        void devePersistirRemocaoEntreInstancias() {
+            repository.salvar(turmaMAT_2026_T01());
+            repository.deletar("MAT001", "2026.1", "T01");
+
+            TurmaRepository novaInstancia = new TurmaRepository(arquivoTemp());
+            assertTrue(novaInstancia.listarTodos().isEmpty());
+        }
+
+        @Test
+        @DisplayName("Deletar turma inexistente deve lançar IllegalArgumentException")
+        void deletarInexistenteLancaExcecao() {
+            assertThrows(IllegalArgumentException.class,
+                    () -> repository.deletar("INEXISTENTE", "9999.9", "T99"));
+        }
+
+        @Test
+        @DisplayName("Deve remover apenas a turma indicada, preservando as demais")
+        void deveRemoverApenasATurmaIndicada() {
+            repository.salvar(turmaMAT_2026_T01());
+            repository.salvar(turmaMAT_2026_T02());
+            repository.salvar(turmaFIS_2026_T01());
+
+            repository.deletar("MAT001", "2026.1", "T01");
+
+            assertEquals(2, repository.listarTodos().size());
+            assertNull(repository.buscarPorChaveUnica("MAT001", "2026.1", "T01"));
+            assertNotNull(repository.buscarPorChaveUnica("MAT001", "2026.1", "T02"));
+            assertNotNull(repository.buscarPorChaveUnica("FIS001", "2026.1", "T01"));
+        }
+
+        @Test
+        @DisplayName("deletar deve ser case-insensitive na chave")
+        void deveSerCaseInsensitive() {
+            repository.salvar(turmaMAT_2026_T01());
+            assertDoesNotThrow(() -> repository.deletar("mat001", "2026.1", "t01"));
+            assertTrue(repository.listarTodos().isEmpty());
         }
     }
 }
