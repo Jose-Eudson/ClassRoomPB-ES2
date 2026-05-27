@@ -17,7 +17,6 @@ public class ConsoleUI {
     private static final String YELLOW = "\u001B[33m";
     private static final String GREEN  = "\u001B[32m";
     private static final String RED    = "\u001B[31m";
-    private static final String REVERSE = "\u001B[7m";
 
     private static final Scanner scanner = new Scanner(System.in);
     private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");

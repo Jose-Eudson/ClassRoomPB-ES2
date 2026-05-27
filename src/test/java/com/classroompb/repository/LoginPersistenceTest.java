@@ -31,7 +31,6 @@ public class LoginPersistenceTest {
     Path tempDir;
 
     private UsuarioRepository repository;
-    private UsuarioService service;
 
     /** Retorna o caminho do arquivo JSON temporário isolado por teste. */
     private String arquivoTemp() {
@@ -42,7 +41,6 @@ public class LoginPersistenceTest {
     @BeforeEach
     void setUp() {
         repository = new UsuarioRepository(arquivoTemp());
-        service = new UsuarioService(repository);
     }
 
     /** Testes que simulam o comportamento após fechar e reabrir o programa. */

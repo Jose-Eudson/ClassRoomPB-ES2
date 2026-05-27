@@ -1,7 +1,10 @@
 package com.classroompb.service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.PeriodoLetivo;
@@ -154,26 +157,19 @@ public class TurmaService {
             throw new Exception("Erro: RF13 - Não é possível ofertar turma sem professor responsável.");
         }
 
+        String matriculaProfessorFinal = matriculaProfessor.trim();
+
         // Verifica se o professor existe e é do tipo PROFESSOR
-        Usuario prof = usuarioRepository.buscarPorMatricula(matriculaProfessor.trim())
+        Usuario prof = usuarioRepository.buscarPorMatricula(matriculaProfessorFinal)
                 .orElseThrow(() -> new Exception(
-                        "Erro: Professor com matrícula '" + matriculaProfessor.trim() + "' não encontrado."));
+                        "Erro: Professor com matrícula '" + matriculaProfessorFinal + "' não encontrado."));
         if (prof.getTipo() != TipoUsuario.PROFESSOR) {
             throw new Exception(
-                    "Erro: O usuário '" + matriculaProfessor.trim() + "' não é um professor.");
+                    "Erro: O usuário '" + matriculaProfessorFinal + "' não é um professor.");
         }
 
         // RF12: Professor não pode ministrar duas turmas no mesmo horário (RN06)
-        List<Turma> turmasExistentes = turmaRepository.listarPorPeriodo(codigoPeriodo.trim());
-        for (Turma t : turmasExistentes) {
-            if (matriculaProfessor.trim().equals(t.getMatriculaProfessor())
-                    && horario.trim().equalsIgnoreCase(t.getHorario())) {
-                throw new Exception(
-                        "Erro: RF12/RN06 - O professor '" + matriculaProfessor.trim()
-                        + "' já ministra uma turma no horário '" + horario.trim()
-                        + "' neste período.");
-            }
-        }
+        validarChoqueHorarioProfessor(codigoPeriodo.trim(), matriculaProfessorFinal, horario.trim(), null);
 
         Turma turma = new Turma(
                 codigoTurma.trim(),
@@ -182,7 +178,7 @@ public class TurmaService {
                 vagas,
                 horario.trim(),
                 sala.trim(),
-                matriculaProfessor.trim()
+                matriculaProfessorFinal
         );
 
         turmaRepository.salvar(turma);
@@ -324,26 +320,7 @@ public class TurmaService {
         // novaMatriculaProf == null significa "não alterar o professor"
 
         // RF12/RN06: professor não pode ministrar duas turmas no mesmo horário
-        String profFinal = turma.getMatriculaProfessor();
-        String horarioFinal = turma.getHorario();
-        if (profFinal != null && !profFinal.trim().isEmpty()) {
-            List<Turma> turmasNoPeriodo = turmaRepository.listarPorPeriodo(codigoPeriodo);
-            for (Turma t : turmasNoPeriodo) {
-                // ignora a própria turma
-                if (t.getCodigo().equals(codigoTurma)
-                        && t.getCodigoDisciplina().equals(codigoDisciplina)
-                        && t.getCodigoPeriodo().equals(codigoPeriodo)) {
-                    continue;
-                }
-                if (profFinal.equals(t.getMatriculaProfessor())
-                        && horarioFinal.equalsIgnoreCase(t.getHorario())) {
-                    throw new Exception(
-                            "Erro: RF12/RN06 - O professor '" + profFinal
-                            + "' já ministra uma turma no horário '" + horarioFinal
-                            + "' neste período.");
-                }
-            }
-        }
+        validarChoqueHorarioProfessor(codigoPeriodo.trim(), turma.getMatriculaProfessor(), turma.getHorario(), turma);
 
         turmaRepository.atualizar(turma);
     }
@@ -382,5 +359,228 @@ public class TurmaService {
         }
 
         turmaRepository.deletar(codigoDisciplina, codigoPeriodo, codigoTurma);
+    }
+
+    // -------------------------------------------------------------------------
+    // RF12: Choque de horario do professor
+    // -------------------------------------------------------------------------
+
+    private void validarChoqueHorarioProfessor(
+            String codigoPeriodo,
+            String matriculaProfessor,
+            String horario,
+            Turma turmaIgnorar
+    ) throws Exception {
+        String professorNormalizado = normalizarIdentificador(matriculaProfessor);
+        String horarioNormalizado = normalizarHorario(horario);
+        if (professorNormalizado.isEmpty() || horarioNormalizado.isEmpty()) {
+            return;
+        }
+
+        List<Turma> turmasExistentes = turmaRepository.listarPorPeriodo(codigoPeriodo);
+        for (Turma t : turmasExistentes) {
+            if (turmaIgnorar != null
+                    && t.getChaveUnica().equalsIgnoreCase(turmaIgnorar.getChaveUnica())) {
+                continue;
+            }
+            String professorTurma = normalizarIdentificador(t.getMatriculaProfessor());
+            if (!professorNormalizado.equalsIgnoreCase(professorTurma)) {
+                continue;
+            }
+            if (horariosConflitam(horarioNormalizado, t.getHorario())) {
+                throw new Exception(
+                        "Erro: RF12/RN06 - O professor '" + professorNormalizado
+                        + "' já ministra uma turma no horário '" + horarioNormalizado
+                        + "' neste período."
+                );
+            }
+        }
+    }
+
+    private static boolean horariosConflitam(String horarioA, String horarioB) {
+        String normalizadoA = normalizarHorario(horarioA);
+        String normalizadoB = normalizarHorario(horarioB);
+        if (normalizadoA.isEmpty() || normalizadoB.isEmpty()) {
+            return false;
+        }
+
+        HorarioInfo infoA = tryParseHorario(normalizadoA);
+        HorarioInfo infoB = tryParseHorario(normalizadoB);
+        if (infoA != null && infoB != null) {
+            return infoA.conflitaCom(infoB);
+        }
+
+        return normalizadoA.equalsIgnoreCase(normalizadoB);
+    }
+
+    private static HorarioInfo tryParseHorario(String horario) {
+        String[] partes = horario.split("\\s+", 2);
+        if (partes.length < 2) {
+            return null;
+        }
+        Set<DayOfWeek> dias = parseDias(partes[0]);
+        if (dias.isEmpty()) {
+            return null;
+        }
+        TimeRange range = parseTimeRange(partes[1]);
+        if (range == null) {
+            return null;
+        }
+        return new HorarioInfo(dias, range.inicio, range.fim);
+    }
+
+    private static Set<DayOfWeek> parseDias(String diasPart) {
+        String normalizado = diasPart.replace(",", "/");
+        String[] tokens = normalizado.split("/");
+        EnumSet<DayOfWeek> dias = EnumSet.noneOf(DayOfWeek.class);
+        for (String token : tokens) {
+            DayOfWeek dia = mapDia(token.trim().toLowerCase());
+            if (dia != null) {
+                dias.add(dia);
+            }
+        }
+        return dias;
+    }
+
+    private static DayOfWeek mapDia(String token) {
+        switch (token) {
+            case "seg":
+                return DayOfWeek.MONDAY;
+            case "ter":
+                return DayOfWeek.TUESDAY;
+            case "qua":
+                return DayOfWeek.WEDNESDAY;
+            case "qui":
+                return DayOfWeek.THURSDAY;
+            case "sex":
+                return DayOfWeek.FRIDAY;
+            case "sab":
+                return DayOfWeek.SATURDAY;
+            case "dom":
+                return DayOfWeek.SUNDAY;
+            default:
+                return null;
+        }
+    }
+
+    private static TimeRange parseTimeRange(String timePart) {
+        String[] partes = timePart.trim().split("\\s*-\\s*");
+        if (partes.length < 2) {
+            return null;
+        }
+        Integer inicio = parseHorarioEmMinutos(partes[0]);
+        Integer fim = parseHorarioEmMinutos(partes[1]);
+        if (inicio == null || fim == null || fim <= inicio) {
+            return null;
+        }
+        return new TimeRange(inicio, fim);
+    }
+
+    private static Integer parseHorarioEmMinutos(String token) {
+        if (token == null) {
+            return null;
+        }
+        String valor = token.trim().toLowerCase();
+        if (valor.isEmpty()) {
+            return null;
+        }
+        String horasStr;
+        String minutosStr = null;
+
+        if (valor.contains(":")) {
+            String[] partes = valor.split(":", -1);
+            if (partes.length != 2) {
+                return null;
+            }
+            horasStr = partes[0];
+            minutosStr = partes[1];
+        } else if (valor.contains("h")) {
+            String[] partes = valor.split("h", -1);
+            if (partes.length < 1 || partes.length > 2) {
+                return null;
+            }
+            horasStr = partes[0];
+            minutosStr = partes.length == 2 ? partes[1] : null;
+        } else {
+            horasStr = valor;
+        }
+
+        Integer horas = parseNumero(horasStr, 1, 2);
+        if (horas == null) {
+            return null;
+        }
+        int minutos = 0;
+        if (minutosStr != null && !minutosStr.isEmpty()) {
+            Integer parsedMinutos = parseNumero(minutosStr, 2, 2);
+            if (parsedMinutos == null) {
+                return null;
+            }
+            minutos = parsedMinutos;
+        }
+
+        if (horas < 0 || horas > 23 || minutos < 0 || minutos > 59) {
+            return null;
+        }
+        return horas * 60 + minutos;
+    }
+
+    private static Integer parseNumero(String valor, int minDigitos, int maxDigitos) {
+        if (valor == null) {
+            return null;
+        }
+        String pattern = "\\d{" + minDigitos + "," + maxDigitos + "}";
+        if (!valor.matches(pattern)) {
+            return null;
+        }
+        return Integer.parseInt(valor);
+    }
+
+    private static String normalizarHorario(String horario) {
+        if (horario == null) {
+            return "";
+        }
+        return horario.trim().replaceAll("\\s+", " ");
+    }
+
+    private static String normalizarIdentificador(String valor) {
+        return valor == null ? "" : valor.trim();
+    }
+
+    private static final class HorarioInfo {
+        private final Set<DayOfWeek> dias;
+        private final int inicio;
+        private final int fim;
+
+        private HorarioInfo(Set<DayOfWeek> dias, int inicio, int fim) {
+            this.dias = dias;
+            this.inicio = inicio;
+            this.fim = fim;
+        }
+
+        private boolean conflitaCom(HorarioInfo outro) {
+            if (!temDiaComum(outro)) {
+                return false;
+            }
+            return inicio < outro.fim && outro.inicio < fim;
+        }
+
+        private boolean temDiaComum(HorarioInfo outro) {
+            for (DayOfWeek dia : dias) {
+                if (outro.dias.contains(dia)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    private static final class TimeRange {
+        private final int inicio;
+        private final int fim;
+
+        private TimeRange(int inicio, int fim) {
+            this.inicio = inicio;
+            this.fim = fim;
+        }
     }
 }

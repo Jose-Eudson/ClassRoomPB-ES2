@@ -43,6 +43,10 @@ public class DisciplinaServiceTest {
         @DisplayName("Deve cadastrar disciplina com sucesso")
         void deveCadastrarDisciplinaComSucesso() throws Exception {
             when(repository.existePorCodigo("ES2")).thenReturn(false);
+            when(repository.buscarPorCodigo("ES1")).thenReturn(
+                    new Disciplina("ES1", "Engenharia de Software 1", 60, 4, Arrays.asList()));
+            when(repository.buscarPorCodigo("POO")).thenReturn(
+                    new Disciplina("POO", "Programação Orientada a Objetos", 60, 4, Arrays.asList()));
             service.cadastrarDisciplina("ES2", "Engenharia de Software 2", 60, 4, Arrays.asList("ES1", "POO"));
             verify(repository).salvar(any());
         }
@@ -173,6 +177,8 @@ public class DisciplinaServiceTest {
         void deveEditarDisciplinaComSucesso() throws Exception {
             Disciplina d = new Disciplina("ES2", "Antigo", 60, 4, Arrays.asList());
             when(repository.buscarPorCodigo("ES2")).thenReturn(d);
+            when(repository.buscarPorCodigo("ES1")).thenReturn(
+                    new Disciplina("ES1", "Engenharia de Software 1", 60, 4, Arrays.asList()));
             service.editarDisciplina("ES2", "Novo Nome", 80, 5, Arrays.asList("ES1"));
             verify(repository).atualizar(any());
         }
