@@ -230,6 +230,50 @@ public class TurmaServiceTest {
             assertEquals("A-101",         salva.getSala());
             assertEquals("P0001",         salva.getMatriculaProfessor());
         }
+
+        @Test
+        @DisplayName("Não deve ofertar turma com professor inexistente")
+        void naoDeveOfertarComProfessorInexistente() {
+            when(disciplinaRepository.buscarPorCodigo("MAT001")).thenReturn(disciplinaExistente);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
+            when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(false);
+            when(usuarioRepository.buscarPorMatricula("P9999")).thenReturn(Optional.empty());
+
+            Exception ex = assertThrows(Exception.class, () ->
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", "A-101", "P9999")
+            );
+            assertEquals("Erro: Professor com matrícula 'P9999' não encontrado.", ex.getMessage());
+            verify(turmaRepository, never()).salvar(any());
+        }
+
+        @Test
+        @DisplayName("Não deve ofertar turma com matrícula que não pertence a professor")
+        void naoDeveOfertarComMatriculaNaoProfessor() {
+            when(disciplinaRepository.buscarPorCodigo("MAT001")).thenReturn(disciplinaExistente);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
+            when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(false);
+            when(usuarioRepository.buscarPorMatricula("A0001")).thenReturn(Optional.of(aluno));
+
+            Exception ex = assertThrows(Exception.class, () ->
+                service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", "A-101", "A0001")
+            );
+            assertEquals("Erro: O usuário 'A0001' não é um professor.", ex.getMessage());
+            verify(turmaRepository, never()).salvar(any());
+        }
+
+        @Test
+        @DisplayName("Deve aplicar trim na matrícula do professor antes de salvar")
+        void deveAplicarTrimNaMatriculaProfessor() throws Exception {
+            when(disciplinaRepository.buscarPorCodigo("MAT001")).thenReturn(disciplinaExistente);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
+            when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(false);
+
+            service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 40, "Seg 10h-12h", "A-101", "  P0001  ");
+
+            ArgumentCaptor<Turma> captor = forClass(Turma.class);
+            verify(turmaRepository).salvar(captor.capture());
+            assertEquals("P0001", captor.getValue().getMatriculaProfessor());
+        }
     }
 
     // =========================================================================
@@ -685,6 +729,93 @@ public class TurmaServiceTest {
         }
 
         @Test
+        @DisplayName("Nao deve ofertar turma quando houver choque com minutos (formato h)")
+        void naoDeveOfertarComChoqueComMinutos() {
+            when(disciplinaRepository.buscarPorCodigo("MAT001")).thenReturn(disciplinaExistente);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
+            when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T04")).thenReturn(false);
+            when(turmaRepository.listarPorPeriodo("2026.1")).thenReturn(Arrays.asList(
+                    new Turma("T01", "MAT001", "2026.1", 40, "Seg,Qua 10h30-12h00", "A-101", "P0001")
+            ));
+            when(usuarioRepository.buscarPorMatricula("P0001"))
+                    .thenReturn(Optional.of(professor));
+
+            Exception ex = assertThrows(Exception.class, () ->
+                    serviceComUsuario.ofertarTurma(
+                            coordenador,
+                            "MAT001",
+                            "2026.1",
+                            "T04",
+                            30,
+                            "Qua 11h-13h",
+                            "B-201",
+                            "P0001"
+                    )
+            );
+
+            assertTrue(ex.getMessage().contains("RF12"));
+            verify(turmaRepository, never()).salvar(any());
+        }
+
+        @Test
+        @DisplayName("Nao deve ofertar quando houver choque usando formato numerico sem h")
+        void naoDeveOfertarComChoqueFormatoNumerico() {
+            when(disciplinaRepository.buscarPorCodigo("MAT001")).thenReturn(disciplinaExistente);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
+            when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T05")).thenReturn(false);
+            when(turmaRepository.listarPorPeriodo("2026.1")).thenReturn(Arrays.asList(
+                    new Turma("T01", "MAT001", "2026.1", 40, "Dom 8-10", "A-101", "P0001")
+            ));
+            when(usuarioRepository.buscarPorMatricula("P0001"))
+                    .thenReturn(Optional.of(professor));
+
+            Exception ex = assertThrows(Exception.class, () ->
+                    serviceComUsuario.ofertarTurma(
+                            coordenador,
+                            "MAT001",
+                            "2026.1",
+                            "T05",
+                            30,
+                            "Dom 09-11",
+                            "B-201",
+                            "P0001"
+                    )
+            );
+
+            assertTrue(ex.getMessage().contains("RF12"));
+            verify(turmaRepository, never()).salvar(any());
+        }
+
+        @Test
+        @DisplayName("Deve permitir oferta quando houver horarios existentes inválidos mas diferentes")
+        void devePermitirOfertaComHorariosExistentesInvalidos() {
+            when(disciplinaRepository.buscarPorCodigo("MAT001")).thenReturn(disciplinaExistente);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
+            when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T06")).thenReturn(false);
+            when(turmaRepository.listarPorPeriodo("2026.1")).thenReturn(Arrays.asList(
+                    new Turma("T01", "MAT001", "2026.1", 40, "Xxx 10h-12h", "A-101", "P0001"),
+                    new Turma("T02", "MAT001", "2026.1", 40, "Seg 10h", "A-101", "P0001")
+            ));
+            when(usuarioRepository.buscarPorMatricula("P0001"))
+                    .thenReturn(Optional.of(professor));
+
+            assertDoesNotThrow(() ->
+                    serviceComUsuario.ofertarTurma(
+                            coordenador,
+                            "MAT001",
+                            "2026.1",
+                            "T06",
+                            30,
+                            "Seg 10h-12h",
+                            "B-201",
+                            "P0001"
+                    )
+            );
+
+            verify(turmaRepository).salvar(any(Turma.class));
+        }
+
+        @Test
         @DisplayName("Nao deve permitir editar turma para horario conflitante")
         void naoDeveEditarParaHorarioConflitante() {
             Turma turmaExistente = new Turma("T02", "MAT001", "2026.1", 40, "Seg 08h-10h", "A-101", "P0001");
@@ -991,6 +1122,47 @@ public class TurmaServiceTest {
                     () -> service.editarTurma(coordenador, "MAT001", "2026.1", "T99", 0, "", "", null));
             verify(turmaRepository, never()).atualizar(any());
         }
+
+        @Test
+        @DisplayName("Não deve permitir editar após o início das aulas (RF14)")
+        void naoDeveEditarAposInicioAulas_RF14() {
+            mockTurmaExistente();
+            PeriodoLetivo iniciado = new PeriodoLetivo(
+                    "2026.1",
+                    2026,
+                    1,
+                    LocalDate.now().minusDays(1),
+                    LocalDate.now().plusDays(120),
+                    true
+            );
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(iniciado);
+
+            Exception ex = assertThrows(Exception.class, () ->
+                    service.editarTurma(coordenador, "MAT001", "2026.1", "T01", 0, "", "", null)
+            );
+            assertTrue(ex.getMessage().contains("RF14"));
+            verify(turmaRepository, never()).atualizar(any());
+        }
+
+        @Test
+        @DisplayName("Deve permitir editar antes do início das aulas (RF14)")
+        void devePermitirEditarAntesInicioAulas_RF14() throws Exception {
+            mockTurmaExistente();
+            PeriodoLetivo futuro = new PeriodoLetivo(
+                    "2026.1",
+                    2026,
+                    1,
+                    LocalDate.now().plusDays(1),
+                    LocalDate.now().plusDays(120),
+                    true
+            );
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(futuro);
+
+            service.editarTurma(coordenador, "MAT001", "2026.1", "T01", 45, null, null, null);
+
+            assertEquals(45, turmaExistente.getVagas());
+            verify(turmaRepository).atualizar(turmaExistente);
+        }
     }
 
     // =========================================================================
@@ -1052,6 +1224,46 @@ public class TurmaServiceTest {
         void administradorNaoPodeExcluir() {
             assertThrows(Exception.class,
                     () -> service.excluirTurma(administrador, "MAT001", "2026.1", "T01"));
+        }
+
+        @Test
+        @DisplayName("Não deve permitir excluir após o início das aulas (RF14)")
+        void naoDeveExcluirAposInicioAulas_RF14() {
+            mockTurmaExistente();
+            PeriodoLetivo iniciado = new PeriodoLetivo(
+                    "2026.1",
+                    2026,
+                    1,
+                    LocalDate.now().minusDays(1),
+                    LocalDate.now().plusDays(120),
+                    true
+            );
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(iniciado);
+
+            Exception ex = assertThrows(Exception.class, () ->
+                    service.excluirTurma(coordenador, "MAT001", "2026.1", "T01")
+            );
+            assertTrue(ex.getMessage().contains("RF14"));
+            verify(turmaRepository, never()).deletar(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Deve permitir excluir antes do início das aulas (RF14)")
+        void devePermitirExcluirAntesInicioAulas_RF14() throws Exception {
+            mockTurmaExistente();
+            PeriodoLetivo futuro = new PeriodoLetivo(
+                    "2026.1",
+                    2026,
+                    1,
+                    LocalDate.now().plusDays(1),
+                    LocalDate.now().plusDays(120),
+                    true
+            );
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(futuro);
+
+            service.excluirTurma(coordenador, "MAT001", "2026.1", "T01");
+
+            verify(turmaRepository).deletar("MAT001", "2026.1", "T01");
         }
     }
 }

@@ -71,7 +71,7 @@ public class TurmaService {
      * @param vagas              número máximo de vagas disponíveis
      * @param horario            descrição do horário das aulas
      * @param sala               sala onde as aulas serão realizadas (RF11)
-     * @param matriculaProfessor matrícula do professor responsável (pode ser null ou vazio)
+     * @param matriculaProfessor matrícula do professor responsável (obrigatória; não pode ser nula/vazia)
      * @throws Exception se qualquer regra de negócio for violada
      */
     public void ofertarTurma(

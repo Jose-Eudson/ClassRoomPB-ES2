@@ -106,7 +106,7 @@ public class CoordenadorController {
             int vagas               = Integer.parseInt(ConsoleUI.lerEntrada("Número de vagas: "));
             String horario          = ConsoleUI.lerEntrada("Horário (ex: Seg/Qua 10h-12h): ");
             String sala             = ConsoleUI.lerEntrada("Sala (ex: Bloco A - 101): ");
-            String professor        = ConsoleUI.lerEntrada("Matrícula do professor (vazio para deixar em aberto): ");
+            String professor        = ConsoleUI.lerEntrada("Matrícula do professor responsável: ");
 
             turmaService.ofertarTurma(
                     usuario,
@@ -150,10 +150,10 @@ public class CoordenadorController {
             String novoHorario = ConsoleUI.lerEntrada("Novo horário (vazio para manter): ");
             String novaSala    = ConsoleUI.lerEntrada("Nova sala (vazio para manter): ");
             String novoProf    = ConsoleUI.lerEntrada(
-                    "Nova matrícula do professor (vazio para manter, espaço para remover): ");
+                    "Nova matrícula do professor (vazio para manter): ");
 
-            // Distingue "vazio = manter" de "espaço = remover professor"
-            String matriculaProf = novoProf.isEmpty() ? null : novoProf;
+            // Vazio (ou só espaços) = manter o professor atual
+            String matriculaProf = (novoProf == null || novoProf.trim().isEmpty()) ? null : novoProf.trim();
 
             turmaService.editarTurma(
                     usuario,
