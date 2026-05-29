@@ -152,9 +152,9 @@ public class TurmaService {
             );
         }
 
-        // RF13: Professor responsável é obrigatório para ofertar turma
+        // Professor responsável é obrigatório para ofertar turma
         if (matriculaProfessor == null || matriculaProfessor.trim().isEmpty()) {
-            throw new Exception("Erro: RF13 - Não é possível ofertar turma sem professor responsável.");
+            throw new Exception("Erro: Não é possível ofertar turma sem professor responsável.");
         }
 
         String matriculaProfessorFinal = matriculaProfessor.trim();
@@ -168,7 +168,7 @@ public class TurmaService {
                     "Erro: O usuário '" + matriculaProfessorFinal + "' não é um professor.");
         }
 
-        // RF12: Professor não pode ministrar duas turmas no mesmo horário (RN06)
+        // Professor não pode ministrar duas turmas no mesmo horário
         validarChoqueHorarioProfessor(codigoPeriodo.trim(), matriculaProfessorFinal, horario.trim(), null);
 
         Turma turma = new Turma(
@@ -301,9 +301,9 @@ public class TurmaService {
             turma.setSala(novaSala.trim());
         }
 
-        // RF13/RN13: não permite remover o professor de uma turma existente
+        // Não permite remover o professor de uma turma existente
         if (novaMatriculaProf != null && novaMatriculaProf.trim().isEmpty()) {
-            throw new Exception("Erro: RF13 - Não é possível remover o professor de uma turma. Informe outro professor.");
+            throw new Exception("Erro: Não é possível remover o professor de uma turma. Informe outro professor.");
         }
 
         // Atualiza professor se informado, validando existência e tipo PROFESSOR
@@ -319,7 +319,7 @@ public class TurmaService {
         }
         // novaMatriculaProf == null significa "não alterar o professor"
 
-        // RF12/RN06: professor não pode ministrar duas turmas no mesmo horário
+        // Professor não pode ministrar duas turmas no mesmo horário
         validarChoqueHorarioProfessor(codigoPeriodo.trim(), turma.getMatriculaProfessor(), turma.getHorario(), turma);
 
         turmaRepository.atualizar(turma);
@@ -362,7 +362,7 @@ public class TurmaService {
     }
 
     // -------------------------------------------------------------------------
-    // RF12: Choque de horario do professor
+    // Choque de horario do professor
     // -------------------------------------------------------------------------
 
     private void validarChoqueHorarioProfessor(

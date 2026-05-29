@@ -135,7 +135,7 @@ public class TurmaServiceTest {
             Exception ex = assertThrows(Exception.class, () ->
                 service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 30, "Ter/Qui 14h-16h", "A-101", null)
             );
-            assertEquals("Erro: RF13 - Não é possível ofertar turma sem professor responsável.", ex.getMessage());
+            assertEquals("Erro: Não é possível ofertar turma sem professor responsável.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
         }
 
@@ -149,7 +149,7 @@ public class TurmaServiceTest {
             Exception ex = assertThrows(Exception.class, () ->
                 service.ofertarTurma(coordenador, "MAT001", "2026.1", "T02", 25, "Sex 08h-12h", "A-101", "")
             );
-            assertEquals("Erro: RF13 - Não é possível ofertar turma sem professor responsável.", ex.getMessage());
+            assertEquals("Erro: Não é possível ofertar turma sem professor responsável.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
         }
 
@@ -205,7 +205,7 @@ public class TurmaServiceTest {
             Exception ex = assertThrows(Exception.class, () ->
                 service.ofertarTurma(coordenador, "MAT001", "2026.1", "T01", 30, "Seg 10h", "A-101", "")
             );
-            assertEquals("Erro: RF13 - Não é possível ofertar turma sem professor responsável.", ex.getMessage());
+            assertEquals("Erro: Não é possível ofertar turma sem professor responsável.", ex.getMessage());
             verify(turmaRepository, never()).salvar(any());
         }
 
@@ -1066,7 +1066,7 @@ public class TurmaServiceTest {
             Exception ex = assertThrows(Exception.class, () ->
                     service.editarTurma(coordenador, "MAT001", "2026.1", "T01", 0, "", "", ""));
             assertEquals(
-                    "Erro: RF13 - Não é possível remover o professor de uma turma. Informe outro professor.",
+                    "Erro: Não é possível remover o professor de uma turma. Informe outro professor.",
                     ex.getMessage());
             verify(turmaRepository, never()).atualizar(any());
         }
