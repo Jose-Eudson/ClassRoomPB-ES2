@@ -19,7 +19,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.classroompb.model.Administrador;
+import com.classroompb.model.Aluno;
 import com.classroompb.model.Curso;
+import com.classroompb.model.Usuario;
 import com.classroompb.repository.CursoRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,10 +33,12 @@ public class CursoServiceTest {
     private CursoRepository repository;
 
     private CursoService service;
-
+    private Usuario admin;
+ 
     @BeforeEach
     void setUp() {
         service = new CursoService(repository);
+        admin = new Administrador("AD0001", "Admin", "admin@teste.com", "123");
     }
 
     @Nested
@@ -44,8 +49,18 @@ public class CursoServiceTest {
         @DisplayName("Deve cadastrar curso com sucesso")
         void deveCadastrarCursoComSucesso() throws Exception {
             when(repository.existePorCodigo("ADS")).thenReturn(false);
-            service.cadastrarCurso("ADS", "Analise e Desenvolvimento de Sistemas", 3200);
+            service.cadastrarCurso(admin, "ADS", "Analise e Desenvolvimento de Sistemas", 3200);
             verify(repository, times(1)).salvar(any(Curso.class));
+        }
+
+        @Test
+        @DisplayName("Nao deve cadastrar com usuario nao administrador")
+        void naoDeveCadastrarComUsuarioNaoAdmin() {
+            Usuario aluno = new Aluno("A0001", "Aluno", "aluno@teste.com", "123");
+            Exception ex = assertThrows(Exception.class, () ->
+                    service.cadastrarCurso(aluno, "ADS", "Curso", 1800));
+            assertEquals("Erro: Apenas administradores podem cadastrar cursos.", ex.getMessage());
+            verify(repository, never()).salvar(any());
         }
 
         @Test
@@ -53,7 +68,7 @@ public class CursoServiceTest {
         void naoDeveCadastrarComCodigoDuplicado() {
             when(repository.existePorCodigo("ADS")).thenReturn(true);
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso("ADS", "Outro Curso", 1800));
+                    service.cadastrarCurso(admin, "ADS", "Outro Curso", 1800));
             assertEquals("Erro: Já existe um curso com este código.", ex.getMessage());
             verify(repository, never()).salvar(any());
         }
@@ -62,7 +77,7 @@ public class CursoServiceTest {
         @DisplayName("Nao deve cadastrar com codigo nulo")
         void naoDeveCadastrarComCodigoNulo() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso(null, "Curso", 1800));
+                    service.cadastrarCurso(admin, null, "Curso", 1800));
             assertEquals("Erro: Código do curso não pode ser vazio.", ex.getMessage());
         }
 
@@ -70,7 +85,7 @@ public class CursoServiceTest {
         @DisplayName("Nao deve cadastrar com codigo vazio")
         void naoDeveCadastrarComCodigoVazio() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso("   ", "Curso", 1800));
+                    service.cadastrarCurso(admin, "   ", "Curso", 1800));
             assertEquals("Erro: Código do curso não pode ser vazio.", ex.getMessage());
         }
 
@@ -78,7 +93,7 @@ public class CursoServiceTest {
         @DisplayName("Nao deve cadastrar com nome nulo")
         void naoDeveCadastrarComNomeNulo() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso("ADS", null, 1800));
+                    service.cadastrarCurso(admin, "ADS", null, 1800));
             assertEquals("Erro: Nome do curso não pode ser vazio.", ex.getMessage());
         }
 
@@ -86,7 +101,7 @@ public class CursoServiceTest {
         @DisplayName("Nao deve cadastrar com nome vazio")
         void naoDeveCadastrarComNomeVazio() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso("ADS", "", 1800));
+                    service.cadastrarCurso(admin, "ADS", "", 1800));
             assertEquals("Erro: Nome do curso não pode ser vazio.", ex.getMessage());
         }
 
@@ -94,7 +109,7 @@ public class CursoServiceTest {
         @DisplayName("Nao deve cadastrar com carga horaria zero")
         void naoDeveCadastrarComCargaHorariaZero() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso("ADS", "Curso", 0));
+                    service.cadastrarCurso(admin, "ADS", "Curso", 0));
             assertEquals("Erro: Carga horária deve ser maior que zero.", ex.getMessage());
         }
 
@@ -102,7 +117,7 @@ public class CursoServiceTest {
         @DisplayName("Nao deve cadastrar com carga horaria negativa")
         void naoDeveCadastrarComCargaHorariaNegativa() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso("ADS", "Curso", -10));
+                    service.cadastrarCurso(admin, "ADS", "Curso", -10));
             assertEquals("Erro: Carga horária deve ser maior que zero.", ex.getMessage());
         }
     }
@@ -168,7 +183,7 @@ public class CursoServiceTest {
         void deveEditarCursoComSucesso() throws Exception {
             Curso curso = new Curso("ADS", "Antigo", 3200);
             when(repository.buscarPorCodigo("ADS")).thenReturn(curso);
-            service.editarCurso("ADS", "Novo Nome", 4000);
+            service.editarCurso(admin, "ADS", "Novo Nome", 4000);
             verify(repository).atualizar(any(Curso.class));
         }
 
@@ -178,7 +193,7 @@ public class CursoServiceTest {
             Curso curso = new Curso("ADS", "Antigo", 3200);
             when(repository.buscarPorCodigo("ADS")).thenReturn(curso);
             Exception ex = assertThrows(Exception.class, () ->
-                    service.editarCurso("ADS", "", 4000));
+                    service.editarCurso(admin, "ADS", "", 4000));
             assertEquals("Erro: Nome do curso não pode ser vazio.", ex.getMessage());
         }
 
@@ -188,7 +203,7 @@ public class CursoServiceTest {
             Curso curso = new Curso("ADS", "Antigo", 3200);
             when(repository.buscarPorCodigo("ADS")).thenReturn(curso);
             Exception ex = assertThrows(Exception.class, () ->
-                    service.editarCurso("ADS", null, 4000));
+                    service.editarCurso(admin, "ADS", null, 4000));
             assertEquals("Erro: Nome do curso não pode ser vazio.", ex.getMessage());
         }
 
@@ -198,7 +213,7 @@ public class CursoServiceTest {
             Curso curso = new Curso("ADS", "Antigo", 3200);
             when(repository.buscarPorCodigo("ADS")).thenReturn(curso);
             Exception ex = assertThrows(Exception.class, () ->
-                    service.editarCurso("ADS", "Novo", 0));
+                    service.editarCurso(admin, "ADS", "Novo", 0));
             assertEquals("Erro: Carga horária deve ser maior que zero.", ex.getMessage());
         }
 
@@ -206,7 +221,7 @@ public class CursoServiceTest {
         @DisplayName("editarCurso deve lancar excecao para curso inexistente")
         void editarCursoLancaExcecaoParaInexistente() {
             when(repository.buscarPorCodigo("XPTO")).thenReturn(null);
-            assertThrows(Exception.class, () -> service.editarCurso("XPTO", "Nome", 1000));
+            assertThrows(Exception.class, () -> service.editarCurso(admin, "XPTO", "Nome", 1000));
         }
     }
 
@@ -219,7 +234,7 @@ public class CursoServiceTest {
         void deveDeletarCursoExistente() throws Exception {
             Curso curso = new Curso("ADS", "Analise", 3200);
             when(repository.buscarPorCodigo("ADS")).thenReturn(curso);
-            service.deletarCurso("ADS");
+            service.deletarCurso(admin, "ADS");
             verify(repository).deletar("ADS");
         }
 
@@ -227,7 +242,7 @@ public class CursoServiceTest {
         @DisplayName("deletarCurso deve lancar excecao para curso inexistente")
         void deletarCursoLancaExcecaoParaInexistente() {
             when(repository.buscarPorCodigo("XPTO")).thenReturn(null);
-            assertThrows(Exception.class, () -> service.deletarCurso("XPTO"));
+            assertThrows(Exception.class, () -> service.deletarCurso(admin, "XPTO"));
         }
     }
 }

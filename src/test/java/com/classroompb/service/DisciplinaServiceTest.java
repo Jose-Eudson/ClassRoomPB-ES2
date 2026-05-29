@@ -18,7 +18,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.classroompb.model.Aluno;
+import com.classroompb.model.Coordenador;
 import com.classroompb.model.Disciplina;
+import com.classroompb.model.Usuario;
 import com.classroompb.repository.DisciplinaRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,10 +32,12 @@ public class DisciplinaServiceTest {
     private DisciplinaRepository repository;
 
     private DisciplinaService service;
+    private Usuario coordenador;
 
     @BeforeEach
     void setUp() {
         service = new DisciplinaService(repository);
+        coordenador = new Coordenador("C0001", "Coord", "coord@teste.com", "123");
     }
 
     @Nested
@@ -47,8 +52,18 @@ public class DisciplinaServiceTest {
                     new Disciplina("ES1", "Engenharia de Software 1", 60, 4, Arrays.asList()));
             when(repository.buscarPorCodigo("POO")).thenReturn(
                     new Disciplina("POO", "Programação Orientada a Objetos", 60, 4, Arrays.asList()));
-            service.cadastrarDisciplina("ES2", "Engenharia de Software 2", 60, 4, Arrays.asList("ES1", "POO"));
+            service.cadastrarDisciplina(coordenador, "ES2", "Engenharia de Software 2", 60, 4, Arrays.asList("ES1", "POO"));
             verify(repository).salvar(any());
+        }
+
+        @Test
+        @DisplayName("Nao deve cadastrar com usuario nao coordenador")
+        void naoDeveCadastrarComUsuarioNaoCoordenador() {
+            Usuario aluno = new Aluno("A0001", "Aluno", "aluno@teste.com", "123");
+            Exception ex = assertThrows(Exception.class, () ->
+                    service.cadastrarDisciplina(aluno, "ES2", "Disciplina", 60, 4, Collections.emptyList()));
+            assertEquals("Erro: Apenas coordenadores podem cadastrar disciplinas.", ex.getMessage());
+            verify(repository, never()).salvar(any());
         }
 
         @Test
@@ -56,7 +71,7 @@ public class DisciplinaServiceTest {
         void naoDeveCadastrarComCodigoDuplicado() {
             when(repository.existePorCodigo("ES2")).thenReturn(true);
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", "Outra", 60, 4, Collections.emptyList()));
+                    service.cadastrarDisciplina(coordenador, "ES2", "Outra", 60, 4, Collections.emptyList()));
             assertEquals("Erro: Ja existe uma disciplina com este codigo.", ex.getMessage());
             verify(repository, never()).salvar(any());
         }
@@ -65,7 +80,7 @@ public class DisciplinaServiceTest {
         @DisplayName("Nao deve cadastrar com codigo nulo")
         void naoDeveCadastrarComCodigoNulo() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina(null, "Disciplina", 60, 4, Collections.emptyList()));
+                    service.cadastrarDisciplina(coordenador, null, "Disciplina", 60, 4, Collections.emptyList()));
             assertEquals("Erro: Codigo da disciplina nao pode ser vazio.", ex.getMessage());
         }
 
@@ -73,7 +88,7 @@ public class DisciplinaServiceTest {
         @DisplayName("Nao deve cadastrar com codigo vazio")
         void naoDeveCadastrarComCodigoVazio() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("", "Disciplina", 60, 4, Collections.emptyList()));
+                    service.cadastrarDisciplina(coordenador, "", "Disciplina", 60, 4, Collections.emptyList()));
             assertEquals("Erro: Codigo da disciplina nao pode ser vazio.", ex.getMessage());
         }
 
@@ -81,7 +96,7 @@ public class DisciplinaServiceTest {
         @DisplayName("Nao deve cadastrar com nome nulo")
         void naoDeveCadastrarComNomeNulo() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", null, 60, 4, Collections.emptyList()));
+                    service.cadastrarDisciplina(coordenador, "ES2", null, 60, 4, Collections.emptyList()));
             assertEquals("Erro: Nome da disciplina nao pode ser vazio.", ex.getMessage());
         }
 
@@ -89,7 +104,7 @@ public class DisciplinaServiceTest {
         @DisplayName("Nao deve cadastrar com nome vazio")
         void naoDeveCadastrarComNomeVazio() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", "", 60, 4, Collections.emptyList()));
+                    service.cadastrarDisciplina(coordenador, "ES2", "", 60, 4, Collections.emptyList()));
             assertEquals("Erro: Nome da disciplina nao pode ser vazio.", ex.getMessage());
         }
 
@@ -97,7 +112,7 @@ public class DisciplinaServiceTest {
         @DisplayName("Nao deve cadastrar com creditos invalidos")
         void naoDeveCadastrarComCreditosInvalidos() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", "Disciplina", 60, 0, Collections.emptyList()));
+                    service.cadastrarDisciplina(coordenador, "ES2", "Disciplina", 60, 0, Collections.emptyList()));
             assertEquals("Erro: Creditos devem ser maiores que zero.", ex.getMessage());
         }
 
@@ -105,7 +120,7 @@ public class DisciplinaServiceTest {
         @DisplayName("Nao deve cadastrar com creditos negativos")
         void naoDeveCadastrarComCreditosNegativos() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", "Disciplina", 60, -1, Collections.emptyList()));
+                    service.cadastrarDisciplina(coordenador, "ES2", "Disciplina", 60, -1, Collections.emptyList()));
             assertEquals("Erro: Creditos devem ser maiores que zero.", ex.getMessage());
         }
 
@@ -113,7 +128,7 @@ public class DisciplinaServiceTest {
         @DisplayName("Nao deve cadastrar com carga horaria zero")
         void naoDeveCadastrarComCargaHorariaZero() {
             Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarDisciplina("ES2", "Disciplina", 0, 4, Collections.emptyList()));
+                    service.cadastrarDisciplina(coordenador, "ES2", "Disciplina", 0, 4, Collections.emptyList()));
             assertEquals("Erro: Carga horaria deve ser maior que zero.", ex.getMessage());
         }
     }
@@ -179,7 +194,7 @@ public class DisciplinaServiceTest {
             when(repository.buscarPorCodigo("ES2")).thenReturn(d);
             when(repository.buscarPorCodigo("ES1")).thenReturn(
                     new Disciplina("ES1", "Engenharia de Software 1", 60, 4, Arrays.asList()));
-            service.editarDisciplina("ES2", "Novo Nome", 80, 5, Arrays.asList("ES1"));
+            service.editarDisciplina(coordenador, "ES2", "Novo Nome", 80, 5, Arrays.asList("ES1"));
             verify(repository).atualizar(any());
         }
 
@@ -189,7 +204,7 @@ public class DisciplinaServiceTest {
             Disciplina d = new Disciplina("ES2", "Antigo", 60, 4, Arrays.asList());
             when(repository.buscarPorCodigo("ES2")).thenReturn(d);
             Exception ex = assertThrows(Exception.class, () ->
-                    service.editarDisciplina("ES2", "", 60, 4, Arrays.asList()));
+                    service.editarDisciplina(coordenador, "ES2", "", 60, 4, Arrays.asList()));
             assertEquals("Erro: Nome da disciplina nao pode ser vazio.", ex.getMessage());
         }
 
@@ -199,7 +214,7 @@ public class DisciplinaServiceTest {
             Disciplina d = new Disciplina("ES2", "Antigo", 60, 4, Arrays.asList());
             when(repository.buscarPorCodigo("ES2")).thenReturn(d);
             Exception ex = assertThrows(Exception.class, () ->
-                    service.editarDisciplina("ES2", "Nome", 0, 4, Arrays.asList()));
+                    service.editarDisciplina(coordenador, "ES2", "Nome", 0, 4, Arrays.asList()));
             assertEquals("Erro: Carga horaria deve ser maior que zero.", ex.getMessage());
         }
 
@@ -209,7 +224,7 @@ public class DisciplinaServiceTest {
             Disciplina d = new Disciplina("ES2", "Antigo", 60, 4, Arrays.asList());
             when(repository.buscarPorCodigo("ES2")).thenReturn(d);
             Exception ex = assertThrows(Exception.class, () ->
-                    service.editarDisciplina("ES2", "Nome", 60, 0, Arrays.asList()));
+                    service.editarDisciplina(coordenador, "ES2", "Nome", 60, 0, Arrays.asList()));
             assertEquals("Erro: Creditos devem ser maiores que zero.", ex.getMessage());
         }
 
@@ -218,7 +233,7 @@ public class DisciplinaServiceTest {
         void editarDisciplinaLancaExcecaoParaInexistente() {
             when(repository.buscarPorCodigo("XPTO")).thenReturn(null);
             assertThrows(Exception.class, () ->
-                    service.editarDisciplina("XPTO", "Nome", 60, 4, Arrays.asList()));
+                    service.editarDisciplina(coordenador, "XPTO", "Nome", 60, 4, Arrays.asList()));
         }
     }
 
@@ -231,7 +246,7 @@ public class DisciplinaServiceTest {
         void deveDeletarDisciplinaExistente() throws Exception {
             Disciplina d = new Disciplina("ES2", "Eng SW 2", 60, 4, Arrays.asList());
             when(repository.buscarPorCodigo("ES2")).thenReturn(d);
-            service.deletarDisciplina("ES2");
+            service.deletarDisciplina(coordenador, "ES2");
             verify(repository).deletar("ES2");
         }
 
@@ -239,7 +254,7 @@ public class DisciplinaServiceTest {
         @DisplayName("deletarDisciplina deve lancar excecao para disciplina inexistente")
         void deletarDisciplinaLancaExcecaoParaInexistente() {
             when(repository.buscarPorCodigo("XPTO")).thenReturn(null);
-            assertThrows(Exception.class, () -> service.deletarDisciplina("XPTO"));
+            assertThrows(Exception.class, () -> service.deletarDisciplina(coordenador, "XPTO"));
         }
     }
 }

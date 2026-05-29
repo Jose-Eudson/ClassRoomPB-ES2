@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.classroompb.model.Disciplina;
+import com.classroompb.model.Usuario;
 import com.classroompb.service.DisciplinaService;
 
 public class DisciplinaController {
@@ -22,7 +23,7 @@ public class DisciplinaController {
         this.service = service;
     }
 
-    public void cadastrarDisciplina() {
+    public void cadastrarDisciplina(Usuario usuario) {
 
         try {
 
@@ -63,6 +64,7 @@ public class DisciplinaController {
                             );
 
             service.cadastrarDisciplina(
+                    usuario,
                     codigo,
                     nome,
                     cargaHoraria,

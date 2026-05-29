@@ -46,7 +46,7 @@ public class AdminController {
 
             switch (escolha) {
                 case 0: gerenciarUsuarios(); break;
-                case 1: gerenciarCursos();   break;
+                case 1: gerenciarCursos(usuario);   break;
             }
         }
     }
@@ -77,7 +77,7 @@ public class AdminController {
         }
     }
 
-    private void gerenciarCursos() {
+    private void gerenciarCursos(Usuario usuario) {
         while (true) {
             List<String> opcoes = Arrays.asList(
                 "Cadastrar novo curso",
@@ -91,10 +91,10 @@ public class AdminController {
             if (escolha == 4 || escolha == -1) break;
 
             switch (escolha) {
-                case 0: cadastrarCurso(); break;
-                case 1: editarCurso();    break;
-                case 2: listarCursos();   break;
-                case 3: deletarCurso();   break;
+                case 0: cadastrarCurso(usuario); break;
+                case 1: editarCurso(usuario);    break;
+                case 2: listarCursos();          break;
+                case 3: deletarCurso(usuario);   break;
             }
         }
     }
@@ -209,7 +209,7 @@ public class AdminController {
     }
 
     /** Coleta dados e cadastra um novo curso. */
-    private void cadastrarCurso() {
+    private void cadastrarCurso(Usuario usuario) {
         ConsoleUI.limparTela();
         ConsoleUI.exibirCabecalho("CADASTRAR NOVO CURSO");
         try {
@@ -218,7 +218,7 @@ public class AdminController {
             String cargaHorariaTexto = ConsoleUI.lerEntrada("Carga horária (horas): ");
 
             int cargaHoraria = Integer.parseInt(cargaHorariaTexto);
-            cursoService.cadastrarCurso(codigo, nome, cargaHoraria);
+            cursoService.cadastrarCurso(usuario, codigo, nome, cargaHoraria);
             ConsoleUI.exibirMensagem("Curso cadastrado com sucesso!", false);
         } catch (NumberFormatException e) {
             ConsoleUI.exibirMensagem("Erro: Carga horária deve ser um número inteiro.", true);
@@ -228,7 +228,7 @@ public class AdminController {
     }
 
     /** Edita nome e carga horária de um curso existente. Campos em branco mantêm o valor atual. */
-    private void editarCurso() {
+    private void editarCurso(Usuario usuario) {
         ConsoleUI.limparTela();
         ConsoleUI.exibirCabecalho("EDITAR CURSO");
         try {
@@ -246,7 +246,7 @@ public class AdminController {
                     ? atual.getCargaHoraria()
                     : Integer.parseInt(cargaTexto);
 
-            cursoService.editarCurso(codigo, novoNome, novaCarga);
+            cursoService.editarCurso(usuario, codigo, novoNome, novaCarga);
             ConsoleUI.exibirMensagem("Curso atualizado com sucesso!", false);
         } catch (NumberFormatException e) {
             ConsoleUI.exibirMensagem("Erro: Carga horária deve ser um número inteiro.", true);
@@ -256,7 +256,7 @@ public class AdminController {
     }
 
     /** Solicita código, exibe o curso e pede confirmação antes de deletar. */
-    private void deletarCurso() {
+    private void deletarCurso(Usuario usuario) {
         ConsoleUI.limparTela();
         ConsoleUI.exibirCabecalho("DELETAR CURSO");
         try {
@@ -268,7 +268,7 @@ public class AdminController {
                     Arrays.asList("Sim, deletar", "Não, cancelar"));
 
             if (escolha == 0) {
-                cursoService.deletarCurso(codigo);
+                cursoService.deletarCurso(usuario, codigo);
                 ConsoleUI.exibirMensagem("Curso deletado com sucesso!", false);
             } else {
                 ConsoleUI.exibirMensagem("Operação cancelada.", false);

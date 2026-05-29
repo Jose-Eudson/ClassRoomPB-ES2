@@ -3,6 +3,8 @@ package com.classroompb.service;
 import java.util.List;
 
 import com.classroompb.model.Disciplina;
+import com.classroompb.model.TipoUsuario;
+import com.classroompb.model.Usuario;
 import com.classroompb.repository.DisciplinaRepository;
 
 public class DisciplinaService {
@@ -16,12 +18,17 @@ public class DisciplinaService {
     }
 
     public void cadastrarDisciplina(
+            Usuario coordenador,
             String codigo,
             String nome,
             int cargaHoraria,
             int creditos,
             List<String> preRequisitos
     ) throws Exception {
+
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem cadastrar disciplinas.");
+        }
 
         if (codigo == null || codigo.trim().isEmpty()) {
 
@@ -103,12 +110,17 @@ public class DisciplinaService {
     }
 
     public void editarDisciplina(
+            Usuario coordenador,
             String codigo,
             String novoNome,
             int novaCargaHoraria,
             int novosCreditos,
             List<String> novosPreRequisitos
     ) throws Exception {
+
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem editar disciplinas.");
+        }
 
         Disciplina existente = buscarPorCodigo(codigo);
 
@@ -146,7 +158,11 @@ public class DisciplinaService {
         repository.atualizar(existente);
     }
 
-    public void deletarDisciplina(String codigo) throws Exception {
+    public void deletarDisciplina(Usuario coordenador, String codigo) throws Exception {
+
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem deletar disciplinas.");
+        }
 
         buscarPorCodigo(codigo);
         repository.deletar(codigo);

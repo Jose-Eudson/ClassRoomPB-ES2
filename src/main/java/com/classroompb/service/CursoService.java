@@ -3,6 +3,8 @@ package com.classroompb.service;
 import java.util.List;
 
 import com.classroompb.model.Curso;
+import com.classroompb.model.TipoUsuario;
+import com.classroompb.model.Usuario;
 import com.classroompb.repository.CursoRepository;
 
 /**
@@ -15,7 +17,10 @@ public class CursoService {
         this.repository = repository;
     }
 
-    public void cadastrarCurso(String codigo, String nome, int cargaHoraria) throws Exception {
+    public void cadastrarCurso(Usuario administrador, String codigo, String nome, int cargaHoraria) throws Exception {
+        if (administrador == null || administrador.getTipo() != TipoUsuario.ADMINISTRADOR) {
+            throw new Exception("Erro: Apenas administradores podem cadastrar cursos.");
+        }
         validarCamposObrigatorios(codigo, nome);
         if (cargaHoraria <= 0) {
             throw new Exception("Erro: Carga horária deve ser maior que zero.");
@@ -44,7 +49,10 @@ public class CursoService {
         return c;
     }
 
-    public void editarCurso(String codigo, String novoNome, int novaCargaHoraria) throws Exception {
+    public void editarCurso(Usuario administrador, String codigo, String novoNome, int novaCargaHoraria) throws Exception {
+        if (administrador == null || administrador.getTipo() != TipoUsuario.ADMINISTRADOR) {
+            throw new Exception("Erro: Apenas administradores podem editar cursos.");
+        }
         Curso existente = buscarPorCodigo(codigo);
         if (novoNome == null || novoNome.trim().isEmpty()) {
             throw new Exception("Erro: Nome do curso não pode ser vazio.");
@@ -57,7 +65,10 @@ public class CursoService {
         repository.atualizar(existente);
     }
 
-    public void deletarCurso(String codigo) throws Exception {
+    public void deletarCurso(Usuario administrador, String codigo) throws Exception {
+        if (administrador == null || administrador.getTipo() != TipoUsuario.ADMINISTRADOR) {
+            throw new Exception("Erro: Apenas administradores podem deletar cursos.");
+        }
         buscarPorCodigo(codigo);
         repository.deletar(codigo);
     }

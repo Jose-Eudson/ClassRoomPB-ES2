@@ -50,7 +50,7 @@ public class CoordenadorController {
             List<String> opcoes = Arrays.asList(
                 "Gerenciar disciplinas",
                 "Gerenciar período letivo",
-                "Ofertar turmas",
+                "Gerenciar turmas",
                 "Logout"
             );
             int escolha = ConsoleUI.exibirMenuInterativo("MENU COORDENADOR", opcoes);
@@ -58,7 +58,7 @@ public class CoordenadorController {
             if (escolha == -1 || escolha == opcoes.size() - 1) break;
 
             switch (escolha) {
-                case 0: gerenciarDisciplinas(); break;
+                case 0: gerenciarDisciplinas(usuario); break;
                 case 1: gerenciarPeriodoLetivo(usuario); break;
                 case 2: gerenciarTurmas(usuario); break;
                 default:
@@ -265,7 +265,7 @@ public class CoordenadorController {
     // Submenu de disciplinas
     // -------------------------------------------------------------------------
 
-    private void gerenciarDisciplinas() {
+    private void gerenciarDisciplinas(Usuario usuario) {
         while (true) {
             List<String> opcoes = Arrays.asList(
                 "Cadastrar disciplina",
@@ -279,15 +279,15 @@ public class CoordenadorController {
             if (escolha == 4 || escolha == -1) break;
 
             switch (escolha) {
-                case 0: cadastrarDisciplina(); break;
-                case 1: editarDisciplina();    break;
-                case 2: listarDisciplinas();   break;
-                case 3: deletarDisciplina();   break;
+                case 0: cadastrarDisciplina(usuario); break;
+                case 1: editarDisciplina(usuario);    break;
+                case 2: listarDisciplinas();          break;
+                case 3: deletarDisciplina(usuario);   break;
             }
         }
     }
 
-    private void cadastrarDisciplina() {
+    private void cadastrarDisciplina(Usuario usuario) {
         ConsoleUI.limparTela();
         ConsoleUI.exibirCabecalho("CADASTRAR DISCIPLINA");
         try {
@@ -301,7 +301,7 @@ public class CoordenadorController {
                     ? new ArrayList<String>()
                     : new ArrayList<String>(Arrays.asList(preReqTexto.split(",")));
 
-            disciplinaService.cadastrarDisciplina(codigo, nome, cargaHoraria, creditos, preReq);
+            disciplinaService.cadastrarDisciplina(usuario, codigo, nome, cargaHoraria, creditos, preReq);
             ConsoleUI.exibirMensagem("Disciplina cadastrada com sucesso!", false);
         } catch (NumberFormatException e) {
             ConsoleUI.exibirMensagem("Erro: Carga horaria e creditos devem ser numeros inteiros.", true);
@@ -310,7 +310,7 @@ public class CoordenadorController {
         }
     }
 
-    private void editarDisciplina() {
+    private void editarDisciplina(Usuario usuario) {
         ConsoleUI.limparTela();
         ConsoleUI.exibirCabecalho("EDITAR DISCIPLINA");
         try {
@@ -340,7 +340,7 @@ public class CoordenadorController {
                     ? atual.getPreRequisitos()
                     : new ArrayList<String>(Arrays.asList(preReqTexto.split(",")));
 
-            disciplinaService.editarDisciplina(codigo, novoNome, novaCarga, novosCreditos, novosPreReq);
+            disciplinaService.editarDisciplina(usuario, codigo, novoNome, novaCarga, novosCreditos, novosPreReq);
             ConsoleUI.exibirMensagem("Disciplina atualizada com sucesso!", false);
         } catch (NumberFormatException e) {
             ConsoleUI.exibirMensagem("Erro: Valores numericos invalidos.", true);
@@ -376,7 +376,7 @@ public class CoordenadorController {
         ConsoleUI.exibirMensagem("Fim da lista.", false);
     }
 
-    private void deletarDisciplina() {
+    private void deletarDisciplina(Usuario usuario) {
         ConsoleUI.limparTela();
         ConsoleUI.exibirCabecalho("DELETAR DISCIPLINA");
         try {
@@ -388,7 +388,7 @@ public class CoordenadorController {
                     Arrays.asList("Sim, deletar", "Nao, cancelar"));
 
             if (escolha == 0) {
-                disciplinaService.deletarDisciplina(codigo);
+                disciplinaService.deletarDisciplina(usuario, codigo);
                 ConsoleUI.exibirMensagem("Disciplina deletada com sucesso!", false);
             } else {
                 ConsoleUI.exibirMensagem("Operacao cancelada.", false);
