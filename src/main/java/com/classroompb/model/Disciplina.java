@@ -18,8 +18,7 @@ public class Disciplina implements Serializable {
     
     /** Construtor padrao necessario para desserializacao. */
     public Disciplina() {
-    	this.pre_requisitos = new ArrayList<>();
-    	
+        this.pre_requisitos = new ArrayList<>();
     }
 
     /** Construtor completo para criacao de disciplinas. */
@@ -55,7 +54,7 @@ public class Disciplina implements Serializable {
     }
 
     public void setPreRequisitos(List<String> pre_requisitos) {
-    	this.pre_requisitos = pre_requisitos;
+        this.pre_requisitos = pre_requisitos;
     }
     
     @Override

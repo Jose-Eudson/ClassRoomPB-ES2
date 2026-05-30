@@ -71,7 +71,7 @@ public class TurmaRepository {
     public List<Turma> listarPorDisciplinaEPeriodo(String codigoDisciplina, String codigoPeriodo) {
         return turmas.stream()
                 .filter(t -> t.getCodigoDisciplina().equalsIgnoreCase(codigoDisciplina)
-                          && t.getCodigoPeriodo().equalsIgnoreCase(codigoPeriodo))
+                && t.getCodigoPeriodo().equalsIgnoreCase(codigoPeriodo))
                 .collect(Collectors.toList());
     }
 

@@ -275,7 +275,7 @@ public class TurmaService {
         // Localiza a turma — lança exceção se não existir
         Turma turma = buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
 
-        // RF14: Só é possível editar antes do início das aulas
+        //! RF14: Só é possível editar antes do início das aulas
         PeriodoLetivo periodoEditar = periodoRepository.buscarPorCodigo(codigoPeriodo);
         if (periodoEditar != null && periodoEditar.getDataInicio() != null
                 && !LocalDate.now().isBefore(periodoEditar.getDataInicio())) {
