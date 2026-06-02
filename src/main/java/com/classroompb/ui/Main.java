@@ -47,7 +47,7 @@ public class Main {
         periodoLetivoService = new PeriodoLetivoService(periodoLetivoRepository);
         turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoLetivoRepository);
 
-        alunoController       = new AlunoController(service);
+        alunoController       = new AlunoController(service, disciplinaService, periodoLetivoService, turmaService);
         professorController   = new ProfessorController(service);
         coordenadorController = new CoordenadorController(service, disciplinaService, periodoLetivoService, turmaService);
         adminController       = new AdminController(service, cursoService);
