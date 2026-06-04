@@ -11,5 +11,8 @@ public enum StatusMatricula {
     CONFIRMADA,
 
     /** Solicitação cancelada pelo aluno. */
-    CANCELADA
+    CANCELADA,
+
+    /** Solicitação rejeitada pelo coordenador. */
+    REJEITADA
 }

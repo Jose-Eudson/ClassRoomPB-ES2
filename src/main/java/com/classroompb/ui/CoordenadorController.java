@@ -24,17 +24,20 @@ public class CoordenadorController {
     private final DisciplinaService disciplinaService;
     private final PeriodoLetivoService periodoService;
     private final TurmaService turmaService;
+    private final com.classroompb.service.MatriculaTurmaService matriculaService;
 
     public CoordenadorController(
             UsuarioService service,
             DisciplinaService disciplinaService,
             PeriodoLetivoService periodoService,
-            TurmaService turmaService
+            TurmaService turmaService,
+            com.classroompb.service.MatriculaTurmaService matriculaService
     ) {
         this.service = service;
         this.disciplinaService = disciplinaService;
         this.periodoService = periodoService;
         this.turmaService = turmaService;
+        this.matriculaService = matriculaService;
     }
 
     /** Exibe o menu principal do coordenador e permanece em loop até logout. */
@@ -51,6 +54,7 @@ public class CoordenadorController {
                 "Gerenciar disciplinas",
                 "Gerenciar período letivo",
                 "Gerenciar turmas",
+                "Gerenciar solicitações de matrícula",
                 "Logout"
             );
             int escolha = ConsoleUI.exibirMenuInterativo("MENU COORDENADOR", opcoes);
@@ -61,6 +65,7 @@ public class CoordenadorController {
                 case 0: gerenciarDisciplinas(usuario); break;
                 case 1: gerenciarPeriodoLetivo(usuario); break;
                 case 2: gerenciarTurmas(usuario); break;
+                case 3: gerenciarSolicitacoesMatricula(usuario); break;
                 default:
                     ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
                     break;
@@ -587,6 +592,210 @@ public class CoordenadorController {
 
         } catch (Exception e) {
 
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Gestão de Solicitações de Matrícula (RF16)
+    // -------------------------------------------------------------------------
+
+    private void gerenciarSolicitacoesMatricula(Usuario usuario) {
+        while (true) {
+            List<String> opcoes = Arrays.asList(
+                "Listar solicitações pendentes",
+                "Listar todas as solicitações",
+                "Listar solicitações por status",
+                "Listar solicitações de uma turma",
+                "Voltar"
+            );
+            int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR SOLICITAÇÕES DE MATRÍCULA", opcoes);
+
+            if (escolha == 4 || escolha == -1) break;
+
+            switch (escolha) {
+                case 0: listarSolicitacoesPendentes(usuario);  break;
+                case 1: listarTodasSolicitacoes(usuario);      break;
+                case 2: listarSolicitacoesPorStatus(usuario);  break;
+                case 3: listarSolicitacoesPorTurma(usuario);   break;
+            }
+        }
+    }
+
+    private void listarSolicitacoesPendentes(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("SOLICITAÇÕES PENDENTES");
+
+        try {
+            List<com.classroompb.model.MatriculaTurma> pendentes = matriculaService.listarSolicitacoesPendentes(usuario);
+
+            if (pendentes.isEmpty()) {
+                ConsoleUI.exibirMensagem("Não há solicitações pendentes no momento.", false);
+                return;
+            }
+
+            exibirTabelaSolicitacoes(pendentes);
+            processarSolicitacaoPendente(usuario, pendentes);
+
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void listarTodasSolicitacoes(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("TODAS AS SOLICITAÇÕES DE MATRÍCULA");
+
+        try {
+            List<com.classroompb.model.MatriculaTurma> todas = matriculaService.listarTodasSolicitacoes(usuario);
+
+            if (todas.isEmpty()) {
+                ConsoleUI.exibirMensagem("Não há solicitações de matrícula no sistema.", false);
+                return;
+            }
+
+            exibirTabelaSolicitacoesCompleta(todas);
+            System.out.println("\nTotal de solicitações: " + todas.size());
+            ConsoleUI.exibirMensagem("Fim da lista.", false);
+
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void listarSolicitacoesPorStatus(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("SOLICITAÇÕES POR STATUS");
+
+        try {
+            List<String> statusOpcoes = Arrays.asList(
+                "PENDENTE",
+                "CONFIRMADA",
+                "CANCELADA",
+                "REJEITADA"
+            );
+            int escolhaStatus = ConsoleUI.exibirMenuInterativo("Selecione o status", statusOpcoes);
+
+            if (escolhaStatus == -1) return;
+
+            com.classroompb.model.StatusMatricula status = com.classroompb.model.StatusMatricula.values()[escolhaStatus];
+            List<com.classroompb.model.MatriculaTurma> solicitacoes = matriculaService.listarSolicitacoesPorStatus(usuario, status);
+
+            if (solicitacoes.isEmpty()) {
+                ConsoleUI.exibirMensagem("Não há solicitações com o status " + status + ".", false);
+                return;
+            }
+
+            exibirTabelaSolicitacoesCompleta(solicitacoes);
+            System.out.println("\nTotal de solicitações com status " + status + ": " + solicitacoes.size());
+            ConsoleUI.exibirMensagem("Fim da lista.", false);
+
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void listarSolicitacoesPorTurma(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("SOLICITAÇÕES POR TURMA");
+
+        try {
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ");
+            String codigoPeriodo    = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
+            String codigoTurma      = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
+
+            List<com.classroompb.model.MatriculaTurma> solicitacoes = matriculaService.listarSolicitacoesPorTurma(
+                usuario, codigoDisciplina, codigoPeriodo, codigoTurma);
+
+            if (solicitacoes.isEmpty()) {
+                ConsoleUI.exibirMensagem("Não há solicitações para a turma especificada.", false);
+                return;
+            }
+
+            exibirTabelaSolicitacoesCompleta(solicitacoes);
+            System.out.println("\nTotal de solicitações: " + solicitacoes.size());
+            ConsoleUI.exibirMensagem("Fim da lista.", false);
+
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void exibirTabelaSolicitacoes(List<com.classroompb.model.MatriculaTurma> solicitacoes) {
+        String[] colunas = {"#", "Aluno", "Disciplina", "Período", "Turma", "Data"};
+        List<String[]> linhas = new ArrayList<>();
+        for (int i = 0; i < solicitacoes.size(); i++) {
+            com.classroompb.model.MatriculaTurma m = solicitacoes.get(i);
+            linhas.add(new String[]{
+                String.valueOf(i + 1),
+                m.getMatriculaAluno(),
+                m.getCodigoDisciplina(),
+                m.getCodigoPeriodo(),
+                m.getCodigoTurma(),
+                m.getDataSolicitacao().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            });
+        }
+        ConsoleUI.exibirTabela(colunas, linhas);
+    }
+
+    private void exibirTabelaSolicitacoesCompleta(List<com.classroompb.model.MatriculaTurma> solicitacoes) {
+        String[] colunas = {"#", "Aluno", "Disciplina", "Período", "Turma", "Status", "Data"};
+        List<String[]> linhas = new ArrayList<>();
+        for (int i = 0; i < solicitacoes.size(); i++) {
+            com.classroompb.model.MatriculaTurma m = solicitacoes.get(i);
+            linhas.add(new String[]{
+                String.valueOf(i + 1),
+                m.getMatriculaAluno(),
+                m.getCodigoDisciplina(),
+                m.getCodigoPeriodo(),
+                m.getCodigoTurma(),
+                m.getStatus().toString(),
+                m.getDataSolicitacao().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            });
+        }
+        ConsoleUI.exibirTabela(colunas, linhas);
+    }
+
+    private void processarSolicitacaoPendente(Usuario usuario, List<com.classroompb.model.MatriculaTurma> pendentes) {
+        try {
+            List<String> opcoes = Arrays.asList("Aprovar solicitação", "Negar solicitação", "Voltar");
+            int escolha = ConsoleUI.exibirMenuInterativo("AÇÕES", opcoes);
+
+            if (escolha == 2 || escolha == -1) return;
+
+            String indiceStr = ConsoleUI.lerEntrada("Digite o número da solicitação: ");
+            int indice = Integer.parseInt(indiceStr) - 1;
+
+            if (indice < 0 || indice >= pendentes.size()) {
+                ConsoleUI.exibirMensagem("Índice inválido.", true);
+                return;
+            }
+
+            com.classroompb.model.MatriculaTurma selecionada = pendentes.get(indice);
+
+            if (escolha == 0) {
+                matriculaService.aprovarMatricula(
+                    usuario,
+                    selecionada.getMatriculaAluno(),
+                    selecionada.getCodigoDisciplina(),
+                    selecionada.getCodigoPeriodo(),
+                    selecionada.getCodigoTurma()
+                );
+                ConsoleUI.exibirMensagem("Solicitação aprovada com sucesso!", false);
+            } else {
+                matriculaService.negarMatricula(
+                    usuario,
+                    selecionada.getMatriculaAluno(),
+                    selecionada.getCodigoDisciplina(),
+                    selecionada.getCodigoPeriodo(),
+                    selecionada.getCodigoTurma()
+                );
+                ConsoleUI.exibirMensagem("Solicitação negada com sucesso!", false);
+            }
+
+        } catch (NumberFormatException e) {
+            ConsoleUI.exibirMensagem("Erro: Digite um número válido.", true);
+        } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }
     }

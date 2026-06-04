@@ -128,7 +128,7 @@ public class MatriculaTurmaRepository {
      * @param codigoTurma      código da turma
      * @return número de matrículas confirmadas
      */
-    public long contarConfirmadasPorTurma(
+    public long contarOcupadasPorTurma(
             String codigoDisciplina,
             String codigoPeriodo,
             String codigoTurma
@@ -137,7 +137,8 @@ public class MatriculaTurmaRepository {
                 .filter(m -> m.getCodigoDisciplina().equalsIgnoreCase(codigoDisciplina)
                         && m.getCodigoPeriodo().equalsIgnoreCase(codigoPeriodo)
                         && m.getCodigoTurma().equalsIgnoreCase(codigoTurma)
-                        && m.getStatus() == StatusMatricula.CONFIRMADA)
+                        && (m.getStatus() == StatusMatricula.CONFIRMADA
+                            || m.getStatus() == StatusMatricula.PENDENTE))
                 .count();
     }
 

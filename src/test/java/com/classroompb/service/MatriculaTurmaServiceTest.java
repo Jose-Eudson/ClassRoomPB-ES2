@@ -112,7 +112,7 @@ public class MatriculaTurmaServiceTest {
     }
 
     private void mockVagasDisponiveis(long confirmadas) {
-        when(matriculaRepository.contarConfirmadasPorTurma(DISC, PER, TURMA)).thenReturn(confirmadas);
+        when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(confirmadas);
     }
 
     private void mockCenarioSucesso() {
@@ -200,7 +200,7 @@ public class MatriculaTurmaServiceTest {
 
             when(turmaRepository.buscarPorChaveUnica("FIS001", PER, "T01")).thenReturn(turmaFis);
             when(matriculaRepository.existeSolicitacaoAtiva("A0001", "FIS001", PER, "T01")).thenReturn(false);
-            when(matriculaRepository.contarConfirmadasPorTurma("FIS001", PER, "T01")).thenReturn(0L);
+            when(matriculaRepository.contarOcupadasPorTurma("FIS001", PER, "T01")).thenReturn(0L);
 
             assertDoesNotThrow(() -> service.solicitarMatricula(aluno, "FIS001", PER, "T01"));
         }
@@ -712,39 +712,39 @@ public class MatriculaTurmaServiceTest {
     class VagasDisponiveis {
 
         @Test
-        @DisplayName("8.1 Deve retornar total de vagas quando não há confirmadas")
-        void deveRetornarTotalQuandoSemConfirmadas() {
-            when(matriculaRepository.contarConfirmadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
+        @DisplayName("8.1 Deve retornar total de vagas quando não há ocupadas")
+        void deveRetornarTotalQuandoSemOcupadas() {
+            when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
 
             long vagas = service.vagasDisponiveis(turma);
 
-            assertEquals(40L, vagas, "Com 0 confirmadas, todas as 40 vagas estão disponíveis");
+            assertEquals(40L, vagas, "Com 0 ocupadas, todas as 40 vagas estão disponíveis");
         }
 
         @Test
         @DisplayName("8.2 Deve retornar zero quando todas as vagas estão ocupadas")
         void deveRetornarZeroQuandoTurmaCheia() {
-            when(matriculaRepository.contarConfirmadasPorTurma(DISC, PER, TURMA)).thenReturn(40L);
+            when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(40L);
 
             long vagas = service.vagasDisponiveis(turma);
 
-            assertEquals(0L, vagas, "Com 40 confirmadas e 40 vagas, resultado deve ser 0");
+            assertEquals(0L, vagas, "Com 40 ocupadas e 40 vagas, resultado deve ser 0");
         }
 
         @Test
-        @DisplayName("8.3 Deve retornar a diferença correta entre vagas e confirmadas")
+        @DisplayName("8.3 Deve retornar a diferença correta entre vagas e ocupadas")
         void deveRetornarDiferencaCorreta() {
-            when(matriculaRepository.contarConfirmadasPorTurma(DISC, PER, TURMA)).thenReturn(15L);
+            when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(15L);
 
             long vagas = service.vagasDisponiveis(turma);
 
-            assertEquals(25L, vagas, "40 vagas - 15 confirmadas = 25 disponíveis");
+            assertEquals(25L, vagas, "40 vagas - 15 ocupadas = 25 disponíveis");
         }
 
         @Test
-        @DisplayName("8.4 Deve retornar zero (não negativo) quando confirmadas excedem vagas")
+        @DisplayName("8.4 Deve retornar zero (não negativo) quando ocupadas excedem vagas")
         void naoDeveRetornarNegativoEmExcesso() {
-            when(matriculaRepository.contarConfirmadasPorTurma(DISC, PER, TURMA)).thenReturn(50L);
+            when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(50L);
 
             long vagas = service.vagasDisponiveis(turma);
 
@@ -762,11 +762,76 @@ public class MatriculaTurmaServiceTest {
         @Test
         @DisplayName("8.6 Deve consultar repositório com os códigos corretos da turma")
         void deveConsultarRepositorioComChavesDaTurma() {
-            when(matriculaRepository.contarConfirmadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
+            when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
 
             service.vagasDisponiveis(turma);
 
-            verify(matriculaRepository).contarConfirmadasPorTurma(DISC, PER, TURMA);
+            verify(matriculaRepository).contarOcupadasPorTurma(DISC, PER, TURMA);
+        }
+    }
+
+    // =========================================================================
+    // 9. GESTÃO PELO COORDENADOR
+    // =========================================================================
+
+    @Nested
+    @DisplayName("9. Gestão pelo coordenador")
+    class GestaoCoordenador {
+
+        @Test
+        @DisplayName("9.1 Coordenador deve listar solicitações pendentes")
+        void deveListarPendentes() throws Exception {
+            MatriculaTurma m1 = new MatriculaTurma("A01", "D1", "P1", "T1");
+            MatriculaTurma m2 = new MatriculaTurma("A02", "D1", "P1", "T1");
+            m2.setStatus(StatusMatricula.CONFIRMADA);
+            
+            when(matriculaRepository.listarTodas()).thenReturn(Arrays.asList(m1, m2));
+
+            List<MatriculaTurma> pendentes = service.listarSolicitacoesPendentes(coordenador);
+
+            assertEquals(1, pendentes.size());
+            assertEquals("A01", pendentes.get(0).getMatriculaAluno());
+        }
+
+        @Test
+        @DisplayName("9.2 Não-coordenador não pode listar solicitações")
+        void naoCoordenadorNaoPodeListar() {
+            assertThrows(Exception.class, () -> service.listarSolicitacoesPendentes(aluno));
+        }
+
+        @Test
+        @DisplayName("9.3 Coordenador deve aprovar solicitação pendente")
+        void deveAprovarSolicitacao() throws Exception {
+            MatriculaTurma pendente = new MatriculaTurma("A01", "D1", "P1", "T1");
+            when(matriculaRepository.buscarPorChaveUnica("A01", "D1", "P1", "T1")).thenReturn(pendente);
+
+            service.aprovarMatricula(coordenador, "A01", "D1", "P1", "T1");
+
+            assertEquals(StatusMatricula.CONFIRMADA, pendente.getStatus());
+            verify(matriculaRepository).atualizar(pendente);
+        }
+
+        @Test
+        @DisplayName("9.4 Coordenador deve negar solicitação pendente")
+        void deveNegarSolicitacao() throws Exception {
+            MatriculaTurma pendente = new MatriculaTurma("A01", "D1", "P1", "T1");
+            when(matriculaRepository.buscarPorChaveUnica("A01", "D1", "P1", "T1")).thenReturn(pendente);
+
+            service.negarMatricula(coordenador, "A01", "D1", "P1", "T1");
+
+            assertEquals(StatusMatricula.REJEITADA, pendente.getStatus());
+            verify(matriculaRepository).atualizar(pendente);
+        }
+
+        @Test
+        @DisplayName("9.5 Não deve aprovar solicitação que não seja PENDENTE")
+        void naoDeveAprovarNaoPendente() {
+            MatriculaTurma confirmada = new MatriculaTurma("A01", "D1", "P1", "T1");
+            confirmada.setStatus(StatusMatricula.CONFIRMADA);
+            when(matriculaRepository.buscarPorChaveUnica("A01", "D1", "P1", "T1")).thenReturn(confirmada);
+
+            assertThrows(Exception.class, () -> 
+                service.aprovarMatricula(coordenador, "A01", "D1", "P1", "T1"));
         }
     }
 }

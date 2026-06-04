@@ -54,7 +54,7 @@ public class Main {
 
         alunoController       = new AlunoController(service, disciplinaService, periodoLetivoService, turmaService, matriculaService);
         professorController   = new ProfessorController(service);
-        coordenadorController = new CoordenadorController(service, disciplinaService, periodoLetivoService, turmaService);
+        coordenadorController = new CoordenadorController(service, disciplinaService, periodoLetivoService, turmaService, matriculaService);
         adminController       = new AdminController(service, cursoService);
 
         while (true) {

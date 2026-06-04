@@ -346,41 +346,48 @@ public class MatriculaTurmaRepositoryTest {
     // =========================================================================
 
     @Nested
-    @DisplayName("contarConfirmadasPorTurma()")
-    class ContarConfirmadasPorTurma {
+    @DisplayName("contarOcupadasPorTurma()")
+    class ContarOcupadasPorTurma {
 
         @Test
-        @DisplayName("Deve retornar 0 quando não há confirmadas")
-        void deveRetornarZeroQuandoNaoHaConfirmadas() {
+        @DisplayName("Deve contar matrículas PENDENTES como ocupadas")
+        void deveContarPendentes() {
             repository.salvar(matriculaA1_MAT_T01()); // PENDENTE
-            assertEquals(0L, repository.contarConfirmadasPorTurma("MAT001", "2026.1", "T01"));
+            assertEquals(1L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"));
         }
 
         @Test
-        @DisplayName("Deve contar apenas matrículas com status CONFIRMADA")
-        void deveContarApenasConfirmadas() {
+        @DisplayName("Deve contar matrículas CONFIRMADAS como ocupadas")
+        void deveContarConfirmadas() {
+            MatriculaTurma m1 = matriculaA1_MAT_T01();
+            m1.setStatus(StatusMatricula.CONFIRMADA);
+            repository.salvar(m1);
+
+            assertEquals(1L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"));
+        }
+
+        @Test
+        @DisplayName("Deve somar PENDENTES e CONFIRMADAS")
+        void deveSomarPendentesEConfirmadas() {
             MatriculaTurma m1 = matriculaA1_MAT_T01();
             m1.setStatus(StatusMatricula.CONFIRMADA);
             repository.salvar(m1);
             repository.salvar(matriculaA2_MAT_T01()); // PENDENTE
 
-            assertEquals(1L, repository.contarConfirmadasPorTurma("MAT001", "2026.1", "T01"));
+            assertEquals(2L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"));
         }
 
         @Test
-        @DisplayName("Não deve contar confirmadas de outra turma")
+        @DisplayName("Não deve contar ocupadas de outra turma")
         void naoDeveContarOutraTurma() {
-            MatriculaTurma confirmada = matriculaA1_MAT_T01();
-            confirmada.setStatus(StatusMatricula.CONFIRMADA);
-            repository.salvar(confirmada);
-
-            assertEquals(0L, repository.contarConfirmadasPorTurma("MAT001", "2026.1", "T02"));
+            repository.salvar(matriculaA1_MAT_T01());
+            assertEquals(0L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T02"));
         }
 
         @Test
         @DisplayName("Deve retornar 0 quando repositório está vazio")
         void deveRetornarZeroParaRepositorioVazio() {
-            assertEquals(0L, repository.contarConfirmadasPorTurma("MAT001", "2026.1", "T01"));
+            assertEquals(0L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"));
         }
 
         @Test
@@ -390,7 +397,7 @@ public class MatriculaTurmaRepositoryTest {
             cancelada.setStatus(StatusMatricula.CANCELADA);
             repository.salvar(cancelada);
 
-            assertEquals(0L, repository.contarConfirmadasPorTurma("MAT001", "2026.1", "T01"));
+            assertEquals(0L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"));
         }
     }
 
@@ -548,18 +555,18 @@ public class MatriculaTurmaRepositoryTest {
         }
 
         @Test
-        @DisplayName("contarConfirmadasPorTurma deve retornar valor correto após reload")
-        void contarConfirmadasAposReload() {
+        @DisplayName("contarOcupadasPorTurma deve retornar valor correto após reload")
+        void contarOcupadasAposReload() {
             MatriculaTurma m1 = matriculaA1_MAT_T01();
             m1.setStatus(StatusMatricula.CONFIRMADA);
             MatriculaTurma m2 = matriculaA2_MAT_T01();
-            m2.setStatus(StatusMatricula.CONFIRMADA);
+            m2.setStatus(StatusMatricula.PENDENTE);
 
             repository.salvar(m1);
             repository.salvar(m2);
 
             MatriculaTurmaRepository novaInstancia = new MatriculaTurmaRepository(arquivoTemp());
-            assertEquals(2L, novaInstancia.contarConfirmadasPorTurma("MAT001", "2026.1", "T01"));
+            assertEquals(2L, novaInstancia.contarOcupadasPorTurma("MAT001", "2026.1", "T01"));
         }
 
         @Test

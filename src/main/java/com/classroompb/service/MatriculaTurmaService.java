@@ -107,8 +107,8 @@ public class MatriculaTurmaService {
                     + turmaNorm + "' da disciplina '" + discNorm + "'.");
         }
 
-        // Regra: verificar disponibilidade de vagas
-        long vagasOcupadas = matriculaRepository.contarConfirmadasPorTurma(discNorm, periodoNorm, turmaNorm);
+        // Regra: verificar disponibilidade de vagas (RN03)
+        long vagasOcupadas = matriculaRepository.contarOcupadasPorTurma(discNorm, periodoNorm, turmaNorm);
         if (vagasOcupadas >= turma.getVagas()) {
             throw new Exception(
                     "Erro: Não há vagas disponíveis na turma '" + turmaNorm
@@ -200,11 +200,162 @@ public class MatriculaTurmaService {
      */
     public long vagasDisponiveis(Turma turma) {
         if (turma == null) return 0;
-        long ocupadas = matriculaRepository.contarConfirmadasPorTurma(
+        long ocupadas = matriculaRepository.contarOcupadasPorTurma(
                 turma.getCodigoDisciplina(),
                 turma.getCodigoPeriodo(),
                 turma.getCodigo()
         );
         return Math.max(0, turma.getVagas() - ocupadas);
+    }
+
+    // =========================================================================
+    // Gestão pelo Coordenador
+    // =========================================================================
+
+    /**
+     * Lista todas as solicitações pendentes no sistema.
+     *
+     * @param coordenador usuário que está realizando a operação (deve ser COORDENADOR)
+     * @return lista de solicitações pendentes
+     * @throws Exception se o usuário não for coordenador
+     */
+    public List<MatriculaTurma> listarSolicitacoesPendentes(Usuario coordenador) throws Exception {
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem listar solicitações de matrícula.");
+        }
+        return matriculaRepository.listarTodas().stream()
+                .filter(m -> m.getStatus() == StatusMatricula.PENDENTE)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Lista todas as solicitações de matrícula do sistema, independente do status.
+     *
+     * @param coordenador usuário que está realizando a operação (deve ser COORDENADOR)
+     * @return lista de todas as solicitações
+     * @throws Exception se o usuário não for coordenador
+     */
+    public List<MatriculaTurma> listarTodasSolicitacoes(Usuario coordenador) throws Exception {
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem listar solicitações de matrícula.");
+        }
+        return matriculaRepository.listarTodas();
+    }
+
+    /**
+     * Lista todas as solicitações de matrícula de um status específico.
+     *
+     * @param coordenador usuário que está realizando a operação (deve ser COORDENADOR)
+     * @param status o status desejado
+     * @return lista de solicitações com o status especificado
+     * @throws Exception se o usuário não for coordenador
+     */
+    public List<MatriculaTurma> listarSolicitacoesPorStatus(Usuario coordenador, StatusMatricula status) throws Exception {
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem listar solicitações de matrícula.");
+        }
+        return matriculaRepository.listarTodas().stream()
+                .filter(m -> m.getStatus() == status)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Lista todas as solicitações de matrícula de uma turma específica.
+     *
+     * @param coordenador usuário que está realizando a operação (deve ser COORDENADOR)
+     * @param codigoDisciplina código da disciplina
+     * @param codigoPeriodo código do período letivo
+     * @param codigoTurma código da turma
+     * @return lista de solicitações da turma
+     * @throws Exception se o usuário não for coordenador
+     */
+    public List<MatriculaTurma> listarSolicitacoesPorTurma(
+            Usuario coordenador,
+            String codigoDisciplina,
+            String codigoPeriodo,
+            String codigoTurma
+    ) throws Exception {
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem listar solicitações de matrícula.");
+        }
+        return matriculaRepository.listarPorTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+    }
+
+    /**
+     * Aprova uma solicitação de matrícula.
+     *
+     * @param coordenador      usuário coordenador
+     * @param matriculaAluno   matrícula do aluno
+     * @param codigoDisciplina código da disciplina
+     * @param codigoPeriodo    código do período letivo
+     * @param codigoTurma      código da turma
+     * @throws Exception se não for coordenador ou solicitação não encontrada/pendente
+     */
+    public void aprovarMatricula(
+            Usuario coordenador,
+            String matriculaAluno,
+            String codigoDisciplina,
+            String codigoPeriodo,
+            String codigoTurma
+    ) throws Exception {
+        validarCoordenador(coordenador);
+
+        MatriculaTurma solicitacao = buscarSolicitacaoPendete(
+                matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+
+        solicitacao.setStatus(StatusMatricula.CONFIRMADA);
+        matriculaRepository.atualizar(solicitacao);
+    }
+
+    /**
+     * Nega uma solicitação de matrícula.
+     *
+     * @param coordenador      usuário coordenador
+     * @param matriculaAluno   matrícula do aluno
+     * @param codigoDisciplina código da disciplina
+     * @param codigoPeriodo    código do período letivo
+     * @param codigoTurma      código da turma
+     * @throws Exception se não for coordenador ou solicitação não encontrada/pendente
+     */
+    public void negarMatricula(
+            Usuario coordenador,
+            String matriculaAluno,
+            String codigoDisciplina,
+            String codigoPeriodo,
+            String codigoTurma
+    ) throws Exception {
+        validarCoordenador(coordenador);
+
+        MatriculaTurma solicitacao = buscarSolicitacaoPendete(
+                matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+
+        solicitacao.setStatus(StatusMatricula.REJEITADA);
+        matriculaRepository.atualizar(solicitacao);
+    }
+
+    private void validarCoordenador(Usuario coordenador) throws Exception {
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem realizar esta operação.");
+        }
+    }
+
+    private MatriculaTurma buscarSolicitacaoPendete(
+            String matriculaAluno,
+            String codigoDisciplina,
+            String codigoPeriodo,
+            String codigoTurma
+    ) throws Exception {
+        MatriculaTurma solicitacao = matriculaRepository.buscarPorChaveUnica(
+                matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+
+        if (solicitacao == null) {
+            throw new Exception("Erro: Solicitação de matrícula não encontrada.");
+        }
+
+        if (solicitacao.getStatus() != StatusMatricula.PENDENTE) {
+            throw new Exception("Erro: Apenas solicitações PENDENTES podem ser aprovadas ou negadas.");
+        }
+
+        return solicitacao;
     }
 }
