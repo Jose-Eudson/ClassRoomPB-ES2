@@ -5,11 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.classroompb.model.Disciplina;
+import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
 import com.classroompb.service.DisciplinaService;
+import com.classroompb.service.MatriculaTurmaService;
 import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.PeriodoLetivoService;
 import com.classroompb.service.TurmaService;
@@ -26,9 +28,10 @@ public class AlunoController {
     private final DisciplinaService disciplinaService;
     private final PeriodoLetivoService periodoLetivoService;
     private final TurmaService turmaService;
+    private final MatriculaTurmaService matriculaService;
 
     public AlunoController(UsuarioService service) {
-        this(service, null, null, null);
+        this(service, null, null, null, null);
     }
 
     public AlunoController(
@@ -37,10 +40,21 @@ public class AlunoController {
             PeriodoLetivoService periodoLetivoService,
             TurmaService turmaService
     ) {
+        this(service, disciplinaService, periodoLetivoService, turmaService, null);
+    }
+
+    public AlunoController(
+            UsuarioService service,
+            DisciplinaService disciplinaService,
+            PeriodoLetivoService periodoLetivoService,
+            TurmaService turmaService,
+            MatriculaTurmaService matriculaService
+    ) {
         this.service = service;
         this.disciplinaService = disciplinaService;
         this.periodoLetivoService = periodoLetivoService;
         this.turmaService = turmaService;
+        this.matriculaService = matriculaService;
     }
 
     /** Exibe o menu principal do aluno e permanece em loop até logout. */
@@ -55,6 +69,9 @@ public class AlunoController {
         while (true) {
             List<String> opcoes = Arrays.asList(
                 "Consultar disciplinas e turmas",
+                "Solicitar matrícula em turma",
+                "Cancelar solicitação de matrícula",
+                "Minhas solicitações de matrícula",
                 "Logout"
             );
             int escolha = ConsoleUI.exibirMenuInterativo("MENU ALUNO", opcoes);
@@ -62,7 +79,10 @@ public class AlunoController {
             if (escolha == -1 || escolha == opcoes.size() - 1) break;
 
             switch (escolha) {
-                case 0: consultarDisciplinasETurmas(); break;
+                case 0: consultarDisciplinasETurmas();          break;
+                case 1: solicitarMatricula(usuario);            break;
+                case 2: cancelarSolicitacaoMatricula(usuario);  break;
+                case 3: listarMinhasSolicitacoes(usuario);      break;
                 default:
                     ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
                     break;
@@ -226,6 +246,166 @@ public class AlunoController {
     }
 
     // -------------------------------------------------------------------------
+    // RF16: Solicitar matrícula em turma
+    // -------------------------------------------------------------------------
+
+    /**
+     * Fluxo de solicitação de matrícula em turma para o aluno.
+     * Lista as turmas do período ativo e permite ao aluno escolher uma.
+     */
+    private void solicitarMatricula(Usuario aluno) {
+        if (matriculaService == null || turmaService == null || periodoLetivoService == null) {
+            ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
+            return;
+        }
+
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("SOLICITAR MATRÍCULA EM TURMA");
+
+        PeriodoLetivo periodoAtivo = encontrarPeriodoAtivo();
+        if (periodoAtivo == null) {
+            ConsoleUI.exibirMensagem("Nenhum período letivo ativo no momento.", false);
+            return;
+        }
+
+        System.out.println("  Período ativo: " + periodoAtivo.getCodigo()
+                + " | " + periodoAtivo.getDataInicio()
+                + " até " + periodoAtivo.getDataFim() + "\n");
+
+        String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
+        if (codigoDisciplina.isEmpty()) {
+            ConsoleUI.exibirMensagem("Código da disciplina não pode ser vazio.", true);
+            return;
+        }
+
+        List<Turma> turmas = turmaService.listarTurmasPorDisciplinaEPeriodo(
+                codigoDisciplina, periodoAtivo.getCodigo());
+
+        if (turmas.isEmpty()) {
+            ConsoleUI.exibirMensagem(
+                    "Nenhuma turma ofertada para a disciplina '" + codigoDisciplina
+                    + "' no período " + periodoAtivo.getCodigo() + ".", false);
+            return;
+        }
+
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("TURMAS DISPONÍVEIS — " + codigoDisciplina.toUpperCase());
+        exibirTabelaTurmas(turmas);
+        System.out.println();
+
+        String codigoTurma = ConsoleUI.lerEntrada("Código da turma desejada: ").trim();
+        if (codigoTurma.isEmpty()) {
+            ConsoleUI.exibirMensagem("Código da turma não pode ser vazio.", true);
+            return;
+        }
+
+        try {
+            matriculaService.solicitarMatricula(aluno, codigoDisciplina,
+                    periodoAtivo.getCodigo(), codigoTurma);
+            ConsoleUI.exibirMensagem(
+                    "Solicitação de matrícula registrada com sucesso! "
+                    + "Turma: " + codigoTurma + " | Disciplina: " + codigoDisciplina
+                    + " | Período: " + periodoAtivo.getCodigo() + ".", false);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // RF16: Cancelar solicitação de matrícula
+    // -------------------------------------------------------------------------
+
+    /** Fluxo de cancelamento de uma solicitação PENDENTE do aluno. */
+    private void cancelarSolicitacaoMatricula(Usuario aluno) {
+        if (matriculaService == null) {
+            ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
+            return;
+        }
+
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("CANCELAR SOLICITAÇÃO DE MATRÍCULA");
+
+        List<MatriculaTurma> solicitacoes;
+        try {
+            solicitacoes = matriculaService.listarMinhasSolicitacoes(aluno);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+            return;
+        }
+
+        if (solicitacoes.isEmpty()) {
+            ConsoleUI.exibirMensagem("Você não possui solicitações de matrícula.", false);
+            return;
+        }
+
+        exibirTabelaSolicitacoes(solicitacoes);
+        System.out.println();
+
+        String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
+        String codigoTurma      = ConsoleUI.lerEntrada("Código da turma: ").trim();
+
+        if (codigoDisciplina.isEmpty() || codigoTurma.isEmpty()) {
+            ConsoleUI.exibirMensagem("Disciplina e turma são obrigatórios.", true);
+            return;
+        }
+
+        // Determina o período a partir das solicitações existentes do aluno
+        String codigoPeriodo = solicitacoes.stream()
+                .filter(m -> m.getCodigoDisciplina().equalsIgnoreCase(codigoDisciplina)
+                        && m.getCodigoTurma().equalsIgnoreCase(codigoTurma))
+                .map(MatriculaTurma::getCodigoPeriodo)
+                .findFirst()
+                .orElse(null);
+
+        if (codigoPeriodo == null) {
+            ConsoleUI.exibirMensagem(
+                    "Nenhuma solicitação encontrada para a turma '" + codigoTurma
+                    + "' da disciplina '" + codigoDisciplina + "'.", true);
+            return;
+        }
+
+        try {
+            matriculaService.cancelarSolicitacao(aluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+            ConsoleUI.exibirMensagem("Solicitação de matrícula cancelada com sucesso.", false);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // RF16: Listar minhas solicitações
+    // -------------------------------------------------------------------------
+
+    /** Exibe todas as solicitações de matrícula do aluno logado. */
+    private void listarMinhasSolicitacoes(Usuario aluno) {
+        if (matriculaService == null) {
+            ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
+            return;
+        }
+
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("MINHAS SOLICITAÇÕES DE MATRÍCULA");
+
+        List<MatriculaTurma> solicitacoes;
+        try {
+            solicitacoes = matriculaService.listarMinhasSolicitacoes(aluno);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+            return;
+        }
+
+        if (solicitacoes.isEmpty()) {
+            ConsoleUI.exibirMensagem("Você não possui solicitações de matrícula.", false);
+            return;
+        }
+
+        exibirTabelaSolicitacoes(solicitacoes);
+        System.out.println("Total: " + solicitacoes.size() + " solicitação(ões).");
+        System.out.println("\nPressione ENTER para continuar...");
+        lerEntradaSilenciosa();
+    }
+
+    // -------------------------------------------------------------------------
     // Métodos auxiliares
     // -------------------------------------------------------------------------
 
@@ -253,6 +433,25 @@ public class AlunoController {
                 t.getSala(),
                 String.valueOf(t.getVagas()),
                 prof
+            });
+        }
+        ConsoleUI.exibirTabela(colunas, linhas);
+    }
+
+    /** Exibe uma tabela formatada com as solicitações de matrícula. */
+    private void exibirTabelaSolicitacoes(List<MatriculaTurma> solicitacoes) {
+        String[] colunas = { "Disciplina", "Turma", "Período", "Status", "Data Solicitação" };
+        List<String[]> linhas = new ArrayList<>();
+        for (MatriculaTurma m : solicitacoes) {
+            String data = m.getDataSolicitacao() != null
+                    ? m.getDataSolicitacao().toString().replace("T", " ").substring(0, 16)
+                    : "-";
+            linhas.add(new String[]{
+                m.getCodigoDisciplina(),
+                m.getCodigoTurma(),
+                m.getCodigoPeriodo(),
+                m.getStatus().toString(),
+                data
             });
         }
         ConsoleUI.exibirTabela(colunas, linhas);
