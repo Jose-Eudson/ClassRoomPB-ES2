@@ -2,15 +2,21 @@ package com.classroompb.service;
 
 import java.util.List;
 
+import com.classroompb.model.Aluno;
+import com.classroompb.model.Disciplina;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.StatusMatricula;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
+import com.classroompb.repository.DisciplinaRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
+
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
+
+import com.classroompb.service.HistoricoService;
 
 /**
  * RF16: Serviço responsável pela solicitação e gestão de matrículas de alunos
@@ -32,15 +38,23 @@ public class MatriculaTurmaService {
     private final MatriculaTurmaRepository matriculaRepository;
     private final TurmaRepository turmaRepository;
     private final PeriodoLetivoRepository periodoRepository;
+    
+    private final DisciplinaRepository disciplinaRepository;
+    private final HistoricoService historicoService;
+
 
     public MatriculaTurmaService(
             MatriculaTurmaRepository matriculaRepository,
             TurmaRepository turmaRepository,
-            PeriodoLetivoRepository periodoRepository
+            PeriodoLetivoRepository periodoRepository,
+            DisciplinaRepository disciplinaRepository,
+            HistoricoService historicoService
     ) {
         this.matriculaRepository = matriculaRepository;
-        this.turmaRepository     = turmaRepository;
-        this.periodoRepository   = periodoRepository;
+        this.turmaRepository = turmaRepository;
+        this.periodoRepository = periodoRepository;
+        this.disciplinaRepository = disciplinaRepository;
+        this.historicoService = historicoService;
     }
 
     // =========================================================================
@@ -122,6 +136,18 @@ public class MatriculaTurmaService {
                 periodoNorm,
                 turmaNorm
         );
+
+        // RF19 - verificar pré-requisitos
+
+        Disciplina disciplina = disciplinaRepository.buscarPorCodigo(discNorm);
+
+        if (disciplina == null) {
+            throw new Exception(
+                    "Erro: Disciplina '" + discNorm + "' não encontrada."
+            );
+        }
+
+        validarPreRequisitos((Aluno) aluno, disciplina);
 
         matriculaRepository.salvar(solicitacao);
     }
@@ -357,5 +383,22 @@ public class MatriculaTurmaService {
         }
 
         return solicitacao;
+    }
+
+    public void validarPreRequisitos(Aluno aluno, Disciplina disciplina) throws Exception {
+
+        List<String> preRequisitos = disciplina.getPreRequisitos();
+
+        if (preRequisitos == null || preRequisitos.isEmpty()) return;
+
+        for (String codigoPreReq : preRequisitos) {
+
+            boolean aprovado = historicoService.alunoFoiAprovado(aluno.getMatricula(), codigoPreReq);
+
+            if (!aprovado) {
+
+                throw new Exception("Erro: O aluno nao foi aprovado no pre-requisito " + codigoPreReq);
+            }
+        }
     }
 }

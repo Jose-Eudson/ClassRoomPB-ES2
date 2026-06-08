@@ -28,11 +28,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.classroompb.model.Administrador;
 import com.classroompb.model.Aluno;
 import com.classroompb.model.Coordenador;
+import com.classroompb.model.Disciplina;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.Professor;
 import com.classroompb.model.StatusMatricula;
 import com.classroompb.model.Turma;
+import com.classroompb.repository.DisciplinaRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
@@ -51,6 +53,7 @@ import com.classroompb.repository.TurmaRepository;
  *   7. Cancelar solicitação — casos de sucesso e falhas
  *   8. Listar solicitações do aluno
  *   9. Consultar vagas disponíveis
+ *   10. 
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RF16 - Aluno solicita matrícula em turma")
@@ -59,6 +62,8 @@ public class MatriculaTurmaServiceTest {
     @Mock private MatriculaTurmaRepository matriculaRepository;
     @Mock private TurmaRepository turmaRepository;
     @Mock private PeriodoLetivoRepository periodoRepository;
+    @Mock private DisciplinaRepository disciplinaRepository;
+    @Mock private HistoricoService historicoService;
 
     private MatriculaTurmaService service;
 
@@ -80,9 +85,10 @@ public class MatriculaTurmaServiceTest {
     private static final String PER   = "2026.1";
     private static final String TURMA = "T01";
 
+
     @BeforeEach
     void setUp() {
-        service = new MatriculaTurmaService(matriculaRepository, turmaRepository, periodoRepository);
+        service = new MatriculaTurmaService(matriculaRepository, turmaRepository, periodoRepository, disciplinaRepository, historicoService);
 
         aluno         = new Aluno("A0001", "João Silva",  "joao@test.com",  "senha123");
         outroAluno    = new Aluno("A0002", "Maria Souza", "maria@test.com", "senha456");
@@ -832,6 +838,117 @@ public class MatriculaTurmaServiceTest {
 
             assertThrows(Exception.class, () -> 
                 service.aprovarMatricula(coordenador, "A01", "D1", "P1", "T1"));
+        }
+    }
+
+    class PreRequisitos {
+        @Test
+        @DisplayName("Deve permitir matricula quando disciplina nao possui pre-requisitos")
+        void devePermitirMatriculaSemPreRequisitos() throws Exception {
+
+            Disciplina disciplina = new Disciplina(
+                    "ES2",
+                    "Engenharia de Software 2",
+                    60,
+                    4,
+                    List.of()
+            );
+
+            when(disciplinaRepository.buscarPorCodigo("ES2"))
+                    .thenReturn(disciplina);
+
+            assertDoesNotThrow(() ->
+                    service.validarPreRequisitos(aluno, disciplina)
+            );
+        }
+
+
+        @Test
+        @DisplayName("Deve permitir matricula quando todos os pre-requisitos foram cumpridos")
+        void devePermitirQuandoTodosPreRequisitosForamCumpridos() throws Exception {
+
+            Disciplina disciplina = new Disciplina(
+                    "ES2",
+                    "Engenharia de Software 2",
+                    60,
+                    4,
+                    List.of("ES1", "POO")
+            );
+
+            when(historicoService.alunoFoiAprovado(
+                    aluno.getMatricula(),
+                    "ES1"))
+                    .thenReturn(true);
+
+            when(historicoService.alunoFoiAprovado(
+                    aluno.getMatricula(),
+                    "POO"))
+                    .thenReturn(true);
+
+            assertDoesNotThrow(() ->
+                    service.validarPreRequisitos(aluno, disciplina)
+            );
+        }
+
+        @Test
+        @DisplayName("Nao deve permitir matricula quando faltar um pre-requisito")
+        void naoDevePermitirQuandoFaltarUmPreRequisito() {
+
+            Disciplina disciplina = new Disciplina(
+                    "ES2",
+                    "Engenharia de Software 2",
+                    60,
+                    4,
+                    List.of("ES1", "POO")
+            );
+
+            when(historicoService.alunoFoiAprovado(
+                    aluno.getMatricula(),
+                    "ES1"))
+                    .thenReturn(true);
+
+            when(historicoService.alunoFoiAprovado(
+                    aluno.getMatricula(),
+                    "POO"))
+                    .thenReturn(false);
+
+            Exception ex = assertThrows(
+                    Exception.class,
+                    () -> service.validarPreRequisitos(aluno, disciplina)
+            );
+
+            assertEquals(
+                    "Erro: O aluno nao foi aprovado no pre-requisito POO.",
+                    ex.getMessage()
+            );
+        }
+
+        @Test
+        @DisplayName("Nao deve permitir matricula quando nenhum pre-requisito foi cumprido")
+        void naoDevePermitirQuandoNenhumPreRequisitoFoiCumprido() {
+
+            Disciplina disciplina = new Disciplina(
+                    "ES2",
+                    "Engenharia de Software 2",
+                    60,
+                    4,
+                    List.of("ES1")
+            );
+
+            when(historicoService.alunoFoiAprovado(
+                    aluno.getMatricula(),
+                    "ES1"))
+                    .thenReturn(false);
+
+            Exception ex = assertThrows(
+                    Exception.class,
+                    () -> service.validarPreRequisitos(aluno, disciplina)
+            );
+
+            assertEquals(
+                    "Erro: O aluno nao foi aprovado no pre-requisito ES1.",
+                    ex.getMessage()
+            );
         }
     }
 }
