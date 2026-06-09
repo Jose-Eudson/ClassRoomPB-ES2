@@ -9,19 +9,14 @@ public class HistoricoService {
 
     private final HistoricoRepository repository;
 
-    public HistoricoService(
-            HistoricoRepository repository) {
+    public HistoricoService(HistoricoRepository repository) {
 
         this.repository = repository;
     }
 
-    public boolean alunoFoiAprovado(
-            String matriculaAluno,
-            String codigoDisciplina) {
+    public boolean alunoFoiAprovado(String matriculaAluno, String codigoDisciplina) {
 
-        List<Historico> historicos =
-                repository.buscarPorAluno(
-                        matriculaAluno);
+        List<Historico> historicos = repository.buscarPorAluno(matriculaAluno);
 
         return historicos.stream()
                 .anyMatch(h ->

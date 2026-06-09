@@ -35,6 +35,7 @@ import com.classroompb.model.Professor;
 import com.classroompb.model.StatusMatricula;
 import com.classroompb.model.Turma;
 import com.classroompb.repository.DisciplinaRepository;
+import com.classroompb.repository.HistoricoRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
@@ -64,7 +65,8 @@ public class MatriculaTurmaServiceTest {
     @Mock private PeriodoLetivoRepository periodoRepository;
     @Mock private DisciplinaRepository disciplinaRepository;
     @Mock private HistoricoService historicoService;
-
+    @Mock private HistoricoRepository historicoRepository;
+    
     private MatriculaTurmaService service;
 
     // -------------------------------------------------------------------------
@@ -88,7 +90,7 @@ public class MatriculaTurmaServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new MatriculaTurmaService(matriculaRepository, turmaRepository, periodoRepository, disciplinaRepository, historicoService);
+        service = new MatriculaTurmaService(matriculaRepository, turmaRepository, periodoRepository, disciplinaRepository, historicoRepository);
 
         aluno         = new Aluno("A0001", "João Silva",  "joao@test.com",  "senha123");
         outroAluno    = new Aluno("A0002", "Maria Souza", "maria@test.com", "senha456");
@@ -841,7 +843,10 @@ public class MatriculaTurmaServiceTest {
         }
     }
 
+    @Nested
     class PreRequisitos {
+
+
         @Test
         @DisplayName("Deve permitir matricula quando disciplina nao possui pre-requisitos")
         void devePermitirMatriculaSemPreRequisitos() throws Exception {
@@ -948,6 +953,140 @@ public class MatriculaTurmaServiceTest {
             assertEquals(
                     "Erro: O aluno nao foi aprovado no pre-requisito ES1.",
                     ex.getMessage()
+            );
+        }
+    }
+
+    @Nested
+    class ChoqueHorario{
+        @Test
+        @DisplayName("Deve impedir matrícula com choque de horário")
+        void deveImpedirChoqueHorario() throws Exception {
+            aluno = new Aluno(
+                    "A0001",
+                    "Carlos",
+                    "carlos@email.com",
+                    "123"
+            );
+
+            turmaRepository.salvar(
+                    new Turma(
+                            "T01",
+                            "ES2",
+                            "2026.1",
+                            20,
+                            "Seg/Qua 10h-12h",
+                            "A101",
+                            "P0001"
+                    )
+            );
+
+            turmaRepository.salvar(
+                    new Turma(
+                            "T02",
+                            "RDSC",
+                            "2026.1",
+                            20,
+                            "Seg/Sex 10h-12h",
+                            "A102",
+                            "P0001"
+                    )
+            );
+
+            service.solicitarMatricula(
+                    aluno,
+                    "ES2",
+                    "2026.1",
+                    "T01"
+            );
+
+            Exception ex = assertThrows(
+                    Exception.class,
+                    () -> service.solicitarMatricula(
+                            aluno,
+                            "RDSC",
+                            "2026.1",
+                            "T02"
+                    )
+            );
+
+            assertTrue(ex.getMessage().contains("choque de horário"));
+        }
+
+        @Test
+        @DisplayName("Deve permitir horários diferentes")
+        void devePermitirHorariosDiferentes() {
+
+            assertDoesNotThrow(() -> {
+
+                service.solicitarMatricula(
+                        aluno,
+                        "ES2",
+                        "2026.1",
+                        "T01"
+                );
+
+                service.solicitarMatricula(
+                        aluno,
+                        "SO",
+                        "2026.1",
+                        "T03"
+                );
+
+            });
+        }
+
+        @Test
+        @DisplayName("Deve permitir após cancelamento")
+        void devePermitirNovaSolicitacaoAposCancelamento() throws Exception {
+
+            service.solicitarMatricula(
+                    aluno,
+                    "ES2",
+                    "2026.1",
+                    "T01"
+            );
+
+            service.cancelarSolicitacao(
+                    aluno,
+                    "ES2",
+                    "2026.1",
+                    "T01"
+            );
+
+            assertDoesNotThrow(() ->
+                    service.solicitarMatricula(
+                            aluno,
+                            "RDSC",
+                            "2026.1",
+                            "T02"
+                    )
+            );
+        }
+
+        @Test
+        @DisplayName("Deve detectar choque por apenas um dia em comum")
+        void deveDetectarChoqueMesmoComApenasUmDiaEmComum() throws Exception {
+
+            service.solicitarMatricula(
+                    aluno,
+                    "ES2",
+                    "2026.1",
+                    "T01"
+            );
+
+            Exception ex = assertThrows(
+                    Exception.class,
+                    () -> service.solicitarMatricula(
+                            aluno,
+                            "RDSC",
+                            "2026.1",
+                            "T02"
+                    )
+            );
+
+            assertTrue(
+                    ex.getMessage().contains("choque de horário")
             );
         }
     }

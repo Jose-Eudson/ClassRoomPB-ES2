@@ -14,6 +14,7 @@ import com.classroompb.repository.TurmaRepository;
 import com.classroompb.repository.UsuarioRepository;
 import com.classroompb.service.CursoService;
 import com.classroompb.service.DisciplinaService;
+import com.classroompb.service.HistoricoService;
 import com.classroompb.service.MatriculaTurmaService;
 import com.classroompb.service.PeriodoLetivoService;
 import com.classroompb.service.TurmaService;
@@ -32,7 +33,7 @@ public class Main {
     private static DisciplinaService disciplinaService;
     private static PeriodoLetivoService periodoLetivoService;
     private static TurmaService turmaService;
-    private static MatriculaTurmaService matriculaService;
+
 
     private static AlunoController       alunoController;
     private static ProfessorController   professorController;
@@ -52,7 +53,8 @@ public class Main {
         disciplinaService = new DisciplinaService(disciplinaRepository);
         periodoLetivoService = new PeriodoLetivoService(periodoLetivoRepository);
         turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoLetivoRepository);
-        matriculaService = new MatriculaTurmaService(matriculaRepository, turmaRepository, periodoLetivoRepository, disciplinaRepository, historicoRepository);
+        MatriculaTurmaService matriculaService = new MatriculaTurmaService(matriculaRepository, turmaRepository, 
+            periodoLetivoRepository, disciplinaRepository, historicoRepository);
 
         alunoController       = new AlunoController(service, disciplinaService, periodoLetivoService, turmaService, matriculaService);
         professorController   = new ProfessorController(service);

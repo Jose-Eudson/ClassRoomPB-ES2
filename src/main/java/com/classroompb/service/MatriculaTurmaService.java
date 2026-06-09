@@ -11,6 +11,7 @@ import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.DisciplinaRepository;
+import com.classroompb.repository.HistoricoRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
 
 import com.classroompb.repository.PeriodoLetivoRepository;
@@ -36,23 +37,25 @@ public class MatriculaTurmaService {
     private final MatriculaTurmaRepository matriculaRepository;
     private final TurmaRepository turmaRepository;
     private final PeriodoLetivoRepository periodoRepository;
-    
     private final DisciplinaRepository disciplinaRepository;
-    private final HistoricoService historicoService;
+    private final HistoricoRepository historicoRepository;
 
+    private HistoricoService historicoService;
 
     public MatriculaTurmaService(
             MatriculaTurmaRepository matriculaRepository,
             TurmaRepository turmaRepository,
             PeriodoLetivoRepository periodoRepository,
             DisciplinaRepository disciplinaRepository,
-            HistoricoService historicoService
+            HistoricoRepository historicoRepository
     ) {
         this.matriculaRepository = matriculaRepository;
         this.turmaRepository = turmaRepository;
         this.periodoRepository = periodoRepository;
         this.disciplinaRepository = disciplinaRepository;
-        this.historicoService = historicoService;
+        this.historicoRepository = historicoRepository;
+
+        this.historicoService = new HistoricoService(historicoRepository);
     }
 
     // =========================================================================
@@ -146,6 +149,10 @@ public class MatriculaTurmaService {
         }
 
         validarPreRequisitos((Aluno) aluno, disciplina);
+
+        //RF19 - impedir choque de horário entre turmas do mesmo aluno
+        validarChoqueHorario((Aluno) aluno, turma);
+
 
         matriculaRepository.salvar(solicitacao);
     }
@@ -392,11 +399,69 @@ public class MatriculaTurmaService {
         for (String codigoPreReq : preRequisitos) {
 
             boolean aprovado = historicoService.alunoFoiAprovado(aluno.getMatricula(), codigoPreReq);
-
             if (!aprovado) {
 
                 throw new Exception("Erro: O aluno nao foi aprovado no pre-requisito " + codigoPreReq);
             }
         }
     }
+
+    private void validarChoqueHorario(Aluno aluno, Turma novaTurma) throws Exception {
+
+        List<MatriculaTurma> matriculas = matriculaRepository.listarPorAluno(aluno.getMatricula());
+
+        for (MatriculaTurma matricula : matriculas) {
+
+            if (matricula.getStatus() == StatusMatricula.CANCELADA || matricula.getStatus() == StatusMatricula.REJEITADA) {
+                continue;
+            }
+
+            Turma turmaExistente =
+                    turmaRepository.buscarPorChaveUnica(
+                            matricula.getCodigoDisciplina(),
+                            matricula.getCodigoPeriodo(),
+                            matricula.getCodigoTurma()
+                    );
+
+            if (turmaExistente == null) {
+                continue;
+            }
+
+            if (existeChoqueHorario(turmaExistente.getHorario(), novaTurma.getHorario())) {
+
+                throw new Exception("Erro: Existe choque de horário com a turma " + turmaExistente.getCodigo());
+            }
+        }
+    }
+
+    private boolean existeChoqueHorario(String horario1, String horario2) {
+            if (horario1 == null || horario2 == null) return false;
+
+            String[] partes1 = horario1.split(" ");
+            String[] partes2 = horario2.split(" ");
+
+            String dias1 = partes1[0];
+            String dias2 = partes2[0];
+
+            String hora1 = partes1[1];
+            String hora2 = partes2[1];
+
+            // verifica se existe algum dia em comum
+            String[] listaDias1 = dias1.split("/");
+            String[] listaDias2 = dias2.split("/");
+
+            boolean mesmoDia = false;
+
+            for (String d1 : listaDias1) {
+                for (String d2 : listaDias2) {
+                    if (d1.equalsIgnoreCase(d2)) mesmoDia = true;
+                }
+            }
+
+            if (!mesmoDia) return false;
+            
+
+            return hora1.equalsIgnoreCase(hora2);
+    }
 }
+

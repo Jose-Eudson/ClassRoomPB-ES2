@@ -11,9 +11,7 @@ public class DisciplinaService {
 
     private final DisciplinaRepository repository;
 
-    public DisciplinaService(
-            DisciplinaRepository repository
-    ) {
+    public DisciplinaService(DisciplinaRepository repository) {
         this.repository = repository;
     }
 
