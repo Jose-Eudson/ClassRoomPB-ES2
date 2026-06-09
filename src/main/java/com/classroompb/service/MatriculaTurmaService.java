@@ -16,8 +16,6 @@ import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
 
-import com.classroompb.service.HistoricoService;
-
 /**
  * RF16: Serviço responsável pela solicitação e gestão de matrículas de alunos
  * em turmas.
@@ -137,7 +135,7 @@ public class MatriculaTurmaService {
                 turmaNorm
         );
 
-        // RF19 - verificar pré-requisitos
+        // RF18 - verificar pré-requisitos
 
         Disciplina disciplina = disciplinaRepository.buscarPorCodigo(discNorm);
 

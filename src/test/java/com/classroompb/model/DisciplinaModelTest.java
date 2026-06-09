@@ -24,29 +24,14 @@ public class DisciplinaModelTest {
                         )
                 );
 
-                assertEquals(
-                        "ES2",
-                        disciplina.getCodigo()
-                );
+                assertEquals("ES2", disciplina.getCodigo());
 
-                assertEquals(
-                        "Engenharia de Software 2",
-                        disciplina.getNome()
-                );
+                assertEquals("Engenharia de Software 2", disciplina.getNome());
 
-                assertEquals(
-                        60,
-                        disciplina.getCargaHoraria()
-                );
+                assertEquals(60, disciplina.getCargaHoraria());
 
-                assertEquals(
-                        4,
-                        disciplina.getCreditos()
-                );
+                assertEquals(4, disciplina.getCreditos());
 
-                assertEquals(
-                        2,
-                        disciplina.getPreRequisitos().size()
-                );
+                assertEquals(2, disciplina.getPreRequisitos().size());
         }
 }
