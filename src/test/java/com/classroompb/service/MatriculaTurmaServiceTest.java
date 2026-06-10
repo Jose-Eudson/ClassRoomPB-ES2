@@ -1090,4 +1090,94 @@ public class MatriculaTurmaServiceTest {
             );
         }
     }
+
+    @Nested
+    class MatriculaAutomatica {
+
+        @Test
+        @DisplayName("Matrícula confirmada automaticamente")
+        void deveConfirmarMatriculaAutomaticamenteQuandoTodosOsCriteriosForemAtendidos() throws Exception {
+
+            service.solicitarMatricula(
+                    aluno,
+                    "ES2",
+                    "2026.1",
+                    "T01"
+            );
+
+            MatriculaTurma matricula =
+                    matriculaRepository.buscarPorChaveUnica(
+                            aluno.getMatricula(),
+                            "ES2",
+                            "2026.1",
+                            "T01"
+                    );
+
+            assertNotNull(matricula);
+            assertEquals(StatusMatricula.CONFIRMADA, matricula.getStatus());
+        }
+
+        @Test
+        @DisplayName("Se não houver vaga na turma, não confirmar matrícula, mesmo com os critérios atendidos")
+        void naoDeveConfirmarMatriculaQuandoNaoHaVagas() {
+            Exception ex = assertThrows(
+                Exception.class,
+                    () -> service.solicitarMatricula(
+                            aluno,
+                            "ES2",
+                            "2026.1",
+                            "T01"
+                    )
+            );
+
+            assertTrue(ex.getMessage().contains("Não há vagas"));
+        }
+
+        @Test
+        @DisplayName("Se existir choque de horário, não confirmar matrícula, mesmo com os requisitos atendidos")
+        void naoDeveConfirmarMatriculaQuandoExisteChoqueHorario() throws Exception {
+
+            service.solicitarMatricula(
+                    aluno,
+                    "ES2",
+                    "2026.1",
+                    "T01"
+            );
+
+            Exception ex = assertThrows(
+                    Exception.class,
+                    () -> service.solicitarMatricula(
+                            aluno,
+                            "RDSC",
+                            "2026.1",
+                            "T02"
+                    )
+            );
+
+            assertTrue(ex.getMessage().contains("choque"));
+        }
+
+        @Test
+        @DisplayName("Verifica se a persistência foi alterada corretamente")
+        void matriculaSalvaDeveConterStatusConfirmado() throws Exception {
+
+            service.solicitarMatricula(
+                    aluno,
+                    "ES2",
+                    "2026.1",
+                    "T01"
+            );
+
+            List<MatriculaTurma> matriculas =
+                    matriculaRepository.listarPorAluno(
+                            aluno.getMatricula()
+                    );
+
+            assertEquals(1, matriculas.size());
+            assertEquals(
+                    StatusMatricula.CONFIRMADA,
+                    matriculas.get(0).getStatus()
+            );
+        }
+    }
 }

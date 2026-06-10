@@ -147,11 +147,14 @@ public class MatriculaTurmaService {
                     "Erro: Disciplina '" + discNorm + "' não encontrada."
             );
         }
-
+        //RF18 - verificar se os pré-requisitos para cursar tal disciplina foram cumpridos pelo aluno
         validarPreRequisitos((Aluno) aluno, disciplina);
 
         //RF19 - impedir choque de horário entre turmas do mesmo aluno
         validarChoqueHorario((Aluno) aluno, turma);
+
+        //RF20 - confirmação automática de matrícula, se os critérios foram atendidos, sem necessidade de aprovação do coordenador
+        solicitacao.setStatus(StatusMatricula.CONFIRMADA);
 
 
         matriculaRepository.salvar(solicitacao);
