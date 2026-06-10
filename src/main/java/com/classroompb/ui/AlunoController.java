@@ -69,7 +69,7 @@ public class AlunoController {
             List<String> opcoes = Arrays.asList(
                     "Consultar disciplinas e turmas",
                     "Solicitar matrícula em turma",
-                    "Cancelar solicitação de matrícula",
+                    "Cancelar matrícula",
                     "Minhas solicitações de matrícula",
                     "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU ALUNO", opcoes);
@@ -400,8 +400,8 @@ public class AlunoController {
         }
 
         try {
-            matriculaService.cancelarSolicitacao(aluno, codigoDisciplina, codigoPeriodo, codigoTurma);
-            ConsoleUI.exibirMensagem("Solicitação de matrícula cancelada com sucesso.", false);
+            matriculaService.cancelarMatricula(aluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+            ConsoleUI.exibirMensagem("Matrícula cancelada com sucesso.", false);
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }

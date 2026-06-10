@@ -16,6 +16,7 @@ import com.classroompb.repository.MatriculaTurmaRepository;
 
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
+import java.time.LocalDate;
 
 /**
  * RF16: Serviço responsável pela solicitação e gestão de matrículas de alunos
@@ -202,6 +203,90 @@ public class MatriculaTurmaService {
 
         solicitacao.setStatus(StatusMatricula.CANCELADA);
         matriculaRepository.atualizar(solicitacao);
+    }
+
+    // =========================================================================
+    // RF22 — Cancelar matrícula dentro do período permitido
+    // =========================================================================
+
+    /**
+     * RF22: Permite que o aluno cancele uma matrícula dentro do período permitido.
+     *
+     * Regra adotada:
+     * - Apenas alunos podem cancelar matrícula.
+     * - A matrícula precisa existir.
+     * - Status permitidos para cancelamento: CONFIRMADA, LISTA_ESPERA ou PENDENTE.
+     * - O período letivo precisa estar ativo.
+     * - A data atual precisa estar entre dataInicio e dataFim do período.
+     */
+    public void cancelarMatricula(
+            Usuario aluno,
+            String codigoDisciplina,
+            String codigoPeriodo,
+            String codigoTurma) throws Exception {
+
+        if (aluno == null || aluno.getTipo() != TipoUsuario.ALUNO) {
+            throw new Exception("Erro: Apenas alunos podem cancelar matrícula.");
+        }
+
+        if (codigoDisciplina == null || codigoDisciplina.trim().isEmpty()) {
+            throw new Exception("Erro: Código da disciplina não pode ser vazio.");
+        }
+
+        if (codigoPeriodo == null || codigoPeriodo.trim().isEmpty()) {
+            throw new Exception("Erro: Código do período letivo não pode ser vazio.");
+        }
+
+        if (codigoTurma == null || codigoTurma.trim().isEmpty()) {
+            throw new Exception("Erro: Código da turma não pode ser vazio.");
+        }
+
+        String discNorm = codigoDisciplina.trim();
+        String periodoNorm = codigoPeriodo.trim();
+        String turmaNorm = codigoTurma.trim();
+
+        MatriculaTurma matricula = matriculaRepository.buscarPorChaveUnica(
+                aluno.getMatricula(),
+                discNorm,
+                periodoNorm,
+                turmaNorm);
+
+        if (matricula == null) {
+            throw new Exception(
+                    "Erro: Nenhuma matrícula encontrada para a turma '"
+                            + turmaNorm + "' da disciplina '" + discNorm + "'.");
+        }
+
+        if (matricula.getStatus() == StatusMatricula.CANCELADA) {
+            throw new Exception("Erro: Esta matrícula já está cancelada.");
+        }
+
+        if (matricula.getStatus() == StatusMatricula.REJEITADA) {
+            throw new Exception("Erro: Matrículas rejeitadas não podem ser canceladas.");
+        }
+
+        PeriodoLetivo periodo = periodoRepository.buscarPorCodigo(periodoNorm);
+
+        if (periodo == null) {
+            throw new Exception("Erro: Período letivo '" + periodoNorm + "' não encontrado.");
+        }
+
+        if (!periodo.isAtivo()) {
+            throw new Exception("Erro: Não é possível cancelar matrícula em período letivo inativo.");
+        }
+
+        LocalDate hoje = LocalDate.now();
+
+        if (periodo.getDataInicio() != null && hoje.isBefore(periodo.getDataInicio())) {
+            throw new Exception("Erro: Cancelamento de matrícula fora do período permitido.");
+        }
+
+        if (periodo.getDataFim() != null && hoje.isAfter(periodo.getDataFim())) {
+            throw new Exception("Erro: Cancelamento de matrícula fora do período permitido.");
+        }
+
+        matricula.setStatus(StatusMatricula.CANCELADA);
+        matriculaRepository.atualizar(matricula);
     }
 
     // =========================================================================
