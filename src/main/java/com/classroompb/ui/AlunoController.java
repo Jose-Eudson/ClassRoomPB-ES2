@@ -16,6 +16,7 @@ import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.PeriodoLetivoService;
 import com.classroompb.service.TurmaService;
 import com.classroompb.service.UsuarioService;
+import com.classroompb.model.StatusMatricula;
 
 /**
  * Controlador da interface do Aluno.
@@ -38,8 +39,7 @@ public class AlunoController {
             UsuarioService service,
             DisciplinaService disciplinaService,
             PeriodoLetivoService periodoLetivoService,
-            TurmaService turmaService
-    ) {
+            TurmaService turmaService) {
         this(service, disciplinaService, periodoLetivoService, turmaService, null);
     }
 
@@ -48,8 +48,7 @@ public class AlunoController {
             DisciplinaService disciplinaService,
             PeriodoLetivoService periodoLetivoService,
             TurmaService turmaService,
-            MatriculaTurmaService matriculaService
-    ) {
+            MatriculaTurmaService matriculaService) {
         this.service = service;
         this.disciplinaService = disciplinaService;
         this.periodoLetivoService = periodoLetivoService;
@@ -68,21 +67,29 @@ public class AlunoController {
 
         while (true) {
             List<String> opcoes = Arrays.asList(
-                "Consultar disciplinas e turmas",
-                "Solicitar matrícula em turma",
-                "Cancelar solicitação de matrícula",
-                "Minhas solicitações de matrícula",
-                "Logout"
-            );
+                    "Consultar disciplinas e turmas",
+                    "Solicitar matrícula em turma",
+                    "Cancelar solicitação de matrícula",
+                    "Minhas solicitações de matrícula",
+                    "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU ALUNO", opcoes);
 
-            if (escolha == -1 || escolha == opcoes.size() - 1) break;
+            if (escolha == -1 || escolha == opcoes.size() - 1)
+                break;
 
             switch (escolha) {
-                case 0: consultarDisciplinasETurmas();          break;
-                case 1: solicitarMatricula(usuario);            break;
-                case 2: cancelarSolicitacaoMatricula(usuario);  break;
-                case 3: listarMinhasSolicitacoes(usuario);      break;
+                case 0:
+                    consultarDisciplinasETurmas();
+                    break;
+                case 1:
+                    solicitarMatricula(usuario);
+                    break;
+                case 2:
+                    cancelarSolicitacaoMatricula(usuario);
+                    break;
+                case 3:
+                    listarMinhasSolicitacoes(usuario);
+                    break;
                 default:
                     ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
                     break;
@@ -107,19 +114,25 @@ public class AlunoController {
 
         while (true) {
             List<String> opcoes = Arrays.asList(
-                "Listar todas as disciplinas",
-                "Listar turmas do período ativo",
-                "Buscar turmas por disciplina",
-                "Voltar"
-            );
+                    "Listar todas as disciplinas",
+                    "Listar turmas do período ativo",
+                    "Buscar turmas por disciplina",
+                    "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("CONSULTAR DISCIPLINAS E TURMAS", opcoes);
 
-            if (escolha == -1 || escolha == opcoes.size() - 1) return;
+            if (escolha == -1 || escolha == opcoes.size() - 1)
+                return;
 
             switch (escolha) {
-                case 0: listarTodasDisciplinas();          break;
-                case 1: listarTurmasDoPeriodoAtivo();      break;
-                case 2: buscarTurmasPorDisciplina();       break;
+                case 0:
+                    listarTodasDisciplinas();
+                    break;
+                case 1:
+                    listarTurmasDoPeriodoAtivo();
+                    break;
+                case 2:
+                    buscarTurmasPorDisciplina();
+                    break;
             }
         }
     }
@@ -142,12 +155,12 @@ public class AlunoController {
             String preReqs = (d.getPreRequisitos() == null || d.getPreRequisitos().isEmpty())
                     ? "Nenhum"
                     : String.join(", ", d.getPreRequisitos());
-            linhas.add(new String[]{
-                d.getCodigo(),
-                d.getNome(),
-                String.valueOf(d.getCargaHoraria()),
-                String.valueOf(d.getCreditos()),
-                preReqs
+            linhas.add(new String[] {
+                    d.getCodigo(),
+                    d.getNome(),
+                    String.valueOf(d.getCargaHoraria()),
+                    String.valueOf(d.getCreditos()),
+                    preReqs
             });
         }
 
@@ -284,7 +297,8 @@ public class AlunoController {
         if (turmas.isEmpty()) {
             ConsoleUI.exibirMensagem(
                     "Nenhuma turma ofertada para a disciplina '" + codigoDisciplina
-                    + "' no período " + periodoAtivo.getCodigo() + ".", false);
+                            + "' no período " + periodoAtivo.getCodigo() + ".",
+                    false);
             return;
         }
 
@@ -300,12 +314,32 @@ public class AlunoController {
         }
 
         try {
-            matriculaService.solicitarMatricula(aluno, codigoDisciplina,
-                    periodoAtivo.getCodigo(), codigoTurma);
-            ConsoleUI.exibirMensagem(
-                    "Solicitação de matrícula registrada com sucesso! "
-                    + "Turma: " + codigoTurma + " | Disciplina: " + codigoDisciplina
-                    + " | Período: " + periodoAtivo.getCodigo() + ".", false);
+            StatusMatricula status = matriculaService.solicitarMatricula(
+                    aluno,
+                    codigoDisciplina,
+                    periodoAtivo.getCodigo(),
+                    codigoTurma);
+
+            if (status == StatusMatricula.LISTA_ESPERA) {
+                ConsoleUI.exibirMensagem(
+                        "Turma cheia. Você foi adicionado à lista de espera. "
+                                + "Turma: " + codigoTurma
+                                + " | Disciplina: " + codigoDisciplina
+                                + " | Período: " + periodoAtivo.getCodigo() + ".",
+                        false);
+            } else if (status == StatusMatricula.CONFIRMADA) {
+                ConsoleUI.exibirMensagem(
+                        "Matrícula confirmada com sucesso! "
+                                + "Turma: " + codigoTurma
+                                + " | Disciplina: " + codigoDisciplina
+                                + " | Período: " + periodoAtivo.getCodigo() + ".",
+                        false);
+            } else {
+                ConsoleUI.exibirMensagem(
+                        "Solicitação de matrícula registrada com status: " + status + ".",
+                        false);
+            }
+
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }
@@ -342,7 +376,7 @@ public class AlunoController {
         System.out.println();
 
         String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
-        String codigoTurma      = ConsoleUI.lerEntrada("Código da turma: ").trim();
+        String codigoTurma = ConsoleUI.lerEntrada("Código da turma: ").trim();
 
         if (codigoDisciplina.isEmpty() || codigoTurma.isEmpty()) {
             ConsoleUI.exibirMensagem("Disciplina e turma são obrigatórios.", true);
@@ -360,7 +394,8 @@ public class AlunoController {
         if (codigoPeriodo == null) {
             ConsoleUI.exibirMensagem(
                     "Nenhuma solicitação encontrada para a turma '" + codigoTurma
-                    + "' da disciplina '" + codigoDisciplina + "'.", true);
+                            + "' da disciplina '" + codigoDisciplina + "'.",
+                    true);
             return;
         }
 
@@ -413,7 +448,8 @@ public class AlunoController {
     private PeriodoLetivo encontrarPeriodoAtivo() {
         List<PeriodoLetivo> periodos = periodoLetivoService.listarPeriodos();
         for (PeriodoLetivo p : periodos) {
-            if (p.isAtivo()) return p;
+            if (p.isAtivo())
+                return p;
         }
         return null;
     }
@@ -426,13 +462,13 @@ public class AlunoController {
             String prof = (t.getMatriculaProfessor() == null || t.getMatriculaProfessor().trim().isEmpty())
                     ? "A definir"
                     : t.getMatriculaProfessor();
-            linhas.add(new String[]{
-                t.getCodigo(),
-                t.getCodigoDisciplina(),
-                t.getHorario(),
-                t.getSala(),
-                String.valueOf(t.getVagas()),
-                prof
+            linhas.add(new String[] {
+                    t.getCodigo(),
+                    t.getCodigoDisciplina(),
+                    t.getHorario(),
+                    t.getSala(),
+                    String.valueOf(t.getVagas()),
+                    prof
             });
         }
         ConsoleUI.exibirTabela(colunas, linhas);
@@ -446,24 +482,21 @@ public class AlunoController {
             String data = m.getDataSolicitacao() != null
                     ? m.getDataSolicitacao().toString().replace("T", " ").substring(0, 16)
                     : "-";
-            linhas.add(new String[]{
-                m.getCodigoDisciplina(),
-                m.getCodigoTurma(),
-                m.getCodigoPeriodo(),
-                m.getStatus().toString(),
-                data
+            linhas.add(new String[] {
+                    m.getCodigoDisciplina(),
+                    m.getCodigoTurma(),
+                    m.getCodigoPeriodo(),
+                    m.getStatus().toString(),
+                    data
             });
         }
         ConsoleUI.exibirTabela(colunas, linhas);
     }
 
-    /** Lê uma linha da entrada sem exibir prompt, usado apenas para pausar a tela. */
+    /**
+     * Lê uma linha da entrada sem exibir prompt, usado apenas para pausar a tela.
+     */
     private void lerEntradaSilenciosa() {
-        try {
-            //noinspection ResultOfMethodCallIgnored
-            System.in.read();
-            // Descarta restante do buffer
-            while (System.in.available() > 0) System.in.read();
-        } catch (java.io.IOException ignored) {}
+        ConsoleUI.aguardarEnter();
     }
 }

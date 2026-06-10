@@ -22,15 +22,15 @@ import com.classroompb.repository.TurmaRepository;
  * em turmas.
  *
  * Regras de negócio aplicadas:
- *   - Apenas alunos podem solicitar matrícula.
- *   - A turma informada deve existir.
- *   - O período letivo da turma deve estar ativo.
- *   - Não é permitido ao aluno solicitar matrícula na mesma turma mais de uma vez
- *     (solicitações PENDENTE ou CONFIRMADA bloqueiam nova solicitação).
- *   - Não é possível solicitar matrícula se não houver vagas disponíveis
- *     (vagas - confirmadas <= 0).
- *   - O aluno só pode cancelar suas próprias solicitações.
- *   - Apenas solicitações com status PENDENTE podem ser canceladas pelo aluno.
+ * - Apenas alunos podem solicitar matrícula.
+ * - A turma informada deve existir.
+ * - O período letivo da turma deve estar ativo.
+ * - Não é permitido ao aluno solicitar matrícula na mesma turma mais de uma vez
+ * (solicitações PENDENTE ou CONFIRMADA bloqueiam nova solicitação).
+ * - Não é possível solicitar matrícula se não houver vagas disponíveis
+ * (vagas - confirmadas <= 0).
+ * - O aluno só pode cancelar suas próprias solicitações.
+ * - Apenas solicitações com status PENDENTE podem ser canceladas pelo aluno.
  */
 public class MatriculaTurmaService {
 
@@ -47,8 +47,7 @@ public class MatriculaTurmaService {
             TurmaRepository turmaRepository,
             PeriodoLetivoRepository periodoRepository,
             DisciplinaRepository disciplinaRepository,
-            HistoricoRepository historicoRepository
-    ) {
+            HistoricoRepository historicoRepository) {
         this.matriculaRepository = matriculaRepository;
         this.turmaRepository = turmaRepository;
         this.periodoRepository = periodoRepository;
@@ -65,18 +64,18 @@ public class MatriculaTurmaService {
     /**
      * Registra uma solicitação de matrícula de um aluno em uma turma.
      *
-     * @param aluno            usuário que está realizando a operação (deve ser ALUNO)
+     * @param aluno            usuário que está realizando a operação (deve ser
+     *                         ALUNO)
      * @param codigoDisciplina código da disciplina da turma
      * @param codigoPeriodo    código do período letivo
      * @param codigoTurma      código da turma
      * @throws Exception se qualquer regra de negócio for violada
      */
-    public void solicitarMatricula(
+    public StatusMatricula solicitarMatricula(
             Usuario aluno,
             String codigoDisciplina,
             String codigoPeriodo,
-            String codigoTurma
-    ) throws Exception {
+            String codigoTurma) throws Exception {
 
         // Permissão: apenas alunos
         if (aluno == null || aluno.getTipo() != TipoUsuario.ALUNO) {
@@ -94,17 +93,17 @@ public class MatriculaTurmaService {
             throw new Exception("Erro: Código da turma não pode ser vazio.");
         }
 
-        String discNorm   = codigoDisciplina.trim();
+        String discNorm = codigoDisciplina.trim();
         String periodoNorm = codigoPeriodo.trim();
-        String turmaNorm  = codigoTurma.trim();
+        String turmaNorm = codigoTurma.trim();
 
         // Regra: turma deve existir
         Turma turma = turmaRepository.buscarPorChaveUnica(discNorm, periodoNorm, turmaNorm);
         if (turma == null) {
             throw new Exception(
                     "Erro: Turma '" + turmaNorm
-                    + "' da disciplina '" + discNorm
-                    + "' no período '" + periodoNorm + "' não encontrada.");
+                            + "' da disciplina '" + discNorm
+                            + "' no período '" + periodoNorm + "' não encontrada.");
         }
 
         // Regra: período letivo deve estar ativo
@@ -114,50 +113,47 @@ public class MatriculaTurmaService {
                     "Erro: Não é possível solicitar matrícula em turmas de um período letivo inativo.");
         }
 
-        // Regra: aluno não pode se matricular na mesma turma duas vezes
+        // Regra: aluno não pode solicitar a mesma turma mais de uma vez
         if (matriculaRepository.existeSolicitacaoAtiva(
                 aluno.getMatricula(), discNorm, periodoNorm, turmaNorm)) {
             throw new Exception(
                     "Erro: Você já possui uma solicitação ativa para a turma '"
-                    + turmaNorm + "' da disciplina '" + discNorm + "'.");
+                            + turmaNorm + "' da disciplina '" + discNorm + "'.");
         }
 
-        // Regra: verificar disponibilidade de vagas (RN03)
-        long vagasOcupadas = matriculaRepository.contarOcupadasPorTurma(discNorm, periodoNorm, turmaNorm);
-        if (vagasOcupadas >= turma.getVagas()) {
+        // RF18 - verificar disciplina e pré-requisitos
+        Disciplina disciplina = disciplinaRepository.buscarPorCodigo(discNorm);
+
+        if (disciplina == null) {
             throw new Exception(
-                    "Erro: Não há vagas disponíveis na turma '" + turmaNorm
-                    + "' da disciplina '" + discNorm + "'. Vagas esgotadas ("
-                    + turma.getVagas() + "/" + turma.getVagas() + ").");
+                    "Erro: Disciplina '" + discNorm + "' não encontrada.");
         }
+
+        validarPreRequisitos((Aluno) aluno, disciplina);
+
+        // RF19 - impedir choque de horário
+        validarChoqueHorario((Aluno) aluno, turma);
+
+        // RF21 - caso não haja vaga, aluno entra em lista de espera
+        long vagasOcupadas = matriculaRepository.contarOcupadasPorTurma(
+                discNorm,
+                periodoNorm,
+                turmaNorm);
 
         MatriculaTurma solicitacao = new MatriculaTurma(
                 aluno.getMatricula(),
                 discNorm,
                 periodoNorm,
-                turmaNorm
-        );
+                turmaNorm);
 
-        // RF18 - verificar pré-requisitos
-
-        Disciplina disciplina = disciplinaRepository.buscarPorCodigo(discNorm);
-
-        if (disciplina == null) {
-            throw new Exception(
-                    "Erro: Disciplina '" + discNorm + "' não encontrada."
-            );
+        if (vagasOcupadas >= turma.getVagas()) {
+            solicitacao.setStatus(StatusMatricula.LISTA_ESPERA);
+        } else {
+            solicitacao.setStatus(StatusMatricula.CONFIRMADA);
         }
-        //RF18 - verificar se os pré-requisitos para cursar tal disciplina foram cumpridos pelo aluno
-        validarPreRequisitos((Aluno) aluno, disciplina);
-
-        //RF19 - impedir choque de horário entre turmas do mesmo aluno
-        validarChoqueHorario((Aluno) aluno, turma);
-
-        //RF20 - confirmação automática de matrícula, se os critérios foram atendidos, sem necessidade de aprovação do coordenador
-        solicitacao.setStatus(StatusMatricula.CONFIRMADA);
-
 
         matriculaRepository.salvar(solicitacao);
+        return solicitacao.getStatus();
     }
 
     // =========================================================================
@@ -167,7 +163,8 @@ public class MatriculaTurmaService {
     /**
      * Cancela uma solicitação de matrícula PENDENTE do aluno.
      *
-     * @param aluno            usuário que está realizando a operação (deve ser ALUNO)
+     * @param aluno            usuário que está realizando a operação (deve ser
+     *                         ALUNO)
      * @param codigoDisciplina código da disciplina da turma
      * @param codigoPeriodo    código do período letivo
      * @param codigoTurma      código da turma
@@ -178,16 +175,15 @@ public class MatriculaTurmaService {
             Usuario aluno,
             String codigoDisciplina,
             String codigoPeriodo,
-            String codigoTurma
-    ) throws Exception {
+            String codigoTurma) throws Exception {
 
         if (aluno == null || aluno.getTipo() != TipoUsuario.ALUNO) {
             throw new Exception("Erro: Apenas alunos podem cancelar suas solicitações de matrícula.");
         }
 
-        String discNorm    = codigoDisciplina  != null ? codigoDisciplina.trim()  : "";
-        String periodoNorm = codigoPeriodo     != null ? codigoPeriodo.trim()     : "";
-        String turmaNorm   = codigoTurma       != null ? codigoTurma.trim()       : "";
+        String discNorm = codigoDisciplina != null ? codigoDisciplina.trim() : "";
+        String periodoNorm = codigoPeriodo != null ? codigoPeriodo.trim() : "";
+        String turmaNorm = codigoTurma != null ? codigoTurma.trim() : "";
 
         MatriculaTurma solicitacao = matriculaRepository.buscarPorChaveUnica(
                 aluno.getMatricula(), discNorm, periodoNorm, turmaNorm);
@@ -195,13 +191,13 @@ public class MatriculaTurmaService {
         if (solicitacao == null) {
             throw new Exception(
                     "Erro: Nenhuma solicitação encontrada para a turma '" + turmaNorm
-                    + "' da disciplina '" + discNorm + "'.");
+                            + "' da disciplina '" + discNorm + "'.");
         }
 
         if (solicitacao.getStatus() != StatusMatricula.PENDENTE) {
             throw new Exception(
                     "Erro: Apenas solicitações com status PENDENTE podem ser canceladas. "
-                    + "Status atual: " + solicitacao.getStatus() + ".");
+                            + "Status atual: " + solicitacao.getStatus() + ".");
         }
 
         solicitacao.setStatus(StatusMatricula.CANCELADA);
@@ -233,12 +229,12 @@ public class MatriculaTurmaService {
      * @return vagas disponíveis (>= 0)
      */
     public long vagasDisponiveis(Turma turma) {
-        if (turma == null) return 0;
+        if (turma == null)
+            return 0;
         long ocupadas = matriculaRepository.contarOcupadasPorTurma(
                 turma.getCodigoDisciplina(),
                 turma.getCodigoPeriodo(),
-                turma.getCodigo()
-        );
+                turma.getCodigo());
         return Math.max(0, turma.getVagas() - ocupadas);
     }
 
@@ -249,7 +245,8 @@ public class MatriculaTurmaService {
     /**
      * Lista todas as solicitações pendentes no sistema.
      *
-     * @param coordenador usuário que está realizando a operação (deve ser COORDENADOR)
+     * @param coordenador usuário que está realizando a operação (deve ser
+     *                    COORDENADOR)
      * @return lista de solicitações pendentes
      * @throws Exception se o usuário não for coordenador
      */
@@ -265,7 +262,8 @@ public class MatriculaTurmaService {
     /**
      * Lista todas as solicitações de matrícula do sistema, independente do status.
      *
-     * @param coordenador usuário que está realizando a operação (deve ser COORDENADOR)
+     * @param coordenador usuário que está realizando a operação (deve ser
+     *                    COORDENADOR)
      * @return lista de todas as solicitações
      * @throws Exception se o usuário não for coordenador
      */
@@ -279,12 +277,14 @@ public class MatriculaTurmaService {
     /**
      * Lista todas as solicitações de matrícula de um status específico.
      *
-     * @param coordenador usuário que está realizando a operação (deve ser COORDENADOR)
-     * @param status o status desejado
+     * @param coordenador usuário que está realizando a operação (deve ser
+     *                    COORDENADOR)
+     * @param status      o status desejado
      * @return lista de solicitações com o status especificado
      * @throws Exception se o usuário não for coordenador
      */
-    public List<MatriculaTurma> listarSolicitacoesPorStatus(Usuario coordenador, StatusMatricula status) throws Exception {
+    public List<MatriculaTurma> listarSolicitacoesPorStatus(Usuario coordenador, StatusMatricula status)
+            throws Exception {
         if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
             throw new Exception("Erro: Apenas coordenadores podem listar solicitações de matrícula.");
         }
@@ -296,10 +296,11 @@ public class MatriculaTurmaService {
     /**
      * Lista todas as solicitações de matrícula de uma turma específica.
      *
-     * @param coordenador usuário que está realizando a operação (deve ser COORDENADOR)
+     * @param coordenador      usuário que está realizando a operação (deve ser
+     *                         COORDENADOR)
      * @param codigoDisciplina código da disciplina
-     * @param codigoPeriodo código do período letivo
-     * @param codigoTurma código da turma
+     * @param codigoPeriodo    código do período letivo
+     * @param codigoTurma      código da turma
      * @return lista de solicitações da turma
      * @throws Exception se o usuário não for coordenador
      */
@@ -307,8 +308,7 @@ public class MatriculaTurmaService {
             Usuario coordenador,
             String codigoDisciplina,
             String codigoPeriodo,
-            String codigoTurma
-    ) throws Exception {
+            String codigoTurma) throws Exception {
         if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
             throw new Exception("Erro: Apenas coordenadores podem listar solicitações de matrícula.");
         }
@@ -323,15 +323,15 @@ public class MatriculaTurmaService {
      * @param codigoDisciplina código da disciplina
      * @param codigoPeriodo    código do período letivo
      * @param codigoTurma      código da turma
-     * @throws Exception se não for coordenador ou solicitação não encontrada/pendente
+     * @throws Exception se não for coordenador ou solicitação não
+     *                   encontrada/pendente
      */
     public void aprovarMatricula(
             Usuario coordenador,
             String matriculaAluno,
             String codigoDisciplina,
             String codigoPeriodo,
-            String codigoTurma
-    ) throws Exception {
+            String codigoTurma) throws Exception {
         validarCoordenador(coordenador);
 
         MatriculaTurma solicitacao = buscarSolicitacaoPendete(
@@ -349,15 +349,15 @@ public class MatriculaTurmaService {
      * @param codigoDisciplina código da disciplina
      * @param codigoPeriodo    código do período letivo
      * @param codigoTurma      código da turma
-     * @throws Exception se não for coordenador ou solicitação não encontrada/pendente
+     * @throws Exception se não for coordenador ou solicitação não
+     *                   encontrada/pendente
      */
     public void negarMatricula(
             Usuario coordenador,
             String matriculaAluno,
             String codigoDisciplina,
             String codigoPeriodo,
-            String codigoTurma
-    ) throws Exception {
+            String codigoTurma) throws Exception {
         validarCoordenador(coordenador);
 
         MatriculaTurma solicitacao = buscarSolicitacaoPendete(
@@ -377,8 +377,7 @@ public class MatriculaTurmaService {
             String matriculaAluno,
             String codigoDisciplina,
             String codigoPeriodo,
-            String codigoTurma
-    ) throws Exception {
+            String codigoTurma) throws Exception {
         MatriculaTurma solicitacao = matriculaRepository.buscarPorChaveUnica(
                 matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
 
@@ -397,7 +396,8 @@ public class MatriculaTurmaService {
 
         List<String> preRequisitos = disciplina.getPreRequisitos();
 
-        if (preRequisitos == null || preRequisitos.isEmpty()) return;
+        if (preRequisitos == null || preRequisitos.isEmpty())
+            return;
 
         for (String codigoPreReq : preRequisitos) {
 
@@ -415,16 +415,15 @@ public class MatriculaTurmaService {
 
         for (MatriculaTurma matricula : matriculas) {
 
-            if (matricula.getStatus() == StatusMatricula.CANCELADA || matricula.getStatus() == StatusMatricula.REJEITADA) {
+            if (matricula.getStatus() == StatusMatricula.CANCELADA
+                    || matricula.getStatus() == StatusMatricula.REJEITADA) {
                 continue;
             }
 
-            Turma turmaExistente =
-                    turmaRepository.buscarPorChaveUnica(
-                            matricula.getCodigoDisciplina(),
-                            matricula.getCodigoPeriodo(),
-                            matricula.getCodigoTurma()
-                    );
+            Turma turmaExistente = turmaRepository.buscarPorChaveUnica(
+                    matricula.getCodigoDisciplina(),
+                    matricula.getCodigoPeriodo(),
+                    matricula.getCodigoTurma());
 
             if (turmaExistente == null) {
                 continue;
@@ -438,33 +437,34 @@ public class MatriculaTurmaService {
     }
 
     private boolean existeChoqueHorario(String horario1, String horario2) {
-            if (horario1 == null || horario2 == null) return false;
+        if (horario1 == null || horario2 == null)
+            return false;
 
-            String[] partes1 = horario1.split(" ");
-            String[] partes2 = horario2.split(" ");
+        String[] partes1 = horario1.split(" ");
+        String[] partes2 = horario2.split(" ");
 
-            String dias1 = partes1[0];
-            String dias2 = partes2[0];
+        String dias1 = partes1[0];
+        String dias2 = partes2[0];
 
-            String hora1 = partes1[1];
-            String hora2 = partes2[1];
+        String hora1 = partes1[1];
+        String hora2 = partes2[1];
 
-            // verifica se existe algum dia em comum
-            String[] listaDias1 = dias1.split("/");
-            String[] listaDias2 = dias2.split("/");
+        // verifica se existe algum dia em comum
+        String[] listaDias1 = dias1.split("/");
+        String[] listaDias2 = dias2.split("/");
 
-            boolean mesmoDia = false;
+        boolean mesmoDia = false;
 
-            for (String d1 : listaDias1) {
-                for (String d2 : listaDias2) {
-                    if (d1.equalsIgnoreCase(d2)) mesmoDia = true;
-                }
+        for (String d1 : listaDias1) {
+            for (String d2 : listaDias2) {
+                if (d1.equalsIgnoreCase(d2))
+                    mesmoDia = true;
             }
+        }
 
-            if (!mesmoDia) return false;
-            
+        if (!mesmoDia)
+            return false;
 
-            return hora1.equalsIgnoreCase(hora2);
+        return hora1.equalsIgnoreCase(hora2);
     }
 }
-

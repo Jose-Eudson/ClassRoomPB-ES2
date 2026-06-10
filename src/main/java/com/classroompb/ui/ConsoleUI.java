@@ -11,19 +11,22 @@ import java.util.Scanner;
 
 public class ConsoleUI {
     private static final String CLEAR_SCREEN = "\033[H\033[2J";
-    private static final String RESET  = "\u001B[0m";
-    private static final String BOLD   = "\u001B[1m";
-    private static final String CYAN   = "\u001B[36m";
+    private static final String RESET = "\u001B[0m";
+    private static final String BOLD = "\u001B[1m";
+    private static final String CYAN = "\u001B[36m";
     private static final String YELLOW = "\u001B[33m";
-    private static final String GREEN  = "\u001B[32m";
-    private static final String RED    = "\u001B[31m";
+    private static final String GREEN = "\u001B[32m";
+    private static final String RED = "\u001B[31m";
 
     private static final Scanner scanner = new Scanner(System.in);
     private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
 
-    /** Repete uma string N vezes — substitui String.repeat() ausente em Java 8/10. */
+    /**
+     * Repete uma string N vezes — substitui String.repeat() ausente em Java 8/10.
+     */
     private static String repeat(String str, int count) {
-        if (count <= 0) return "";
+        if (count <= 0)
+            return "";
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < count; i++) {
             sb.append(str);
@@ -31,7 +34,10 @@ public class ConsoleUI {
         return sb.toString();
     }
 
-    /** Limpa a tela do terminal. No Windows usa 'cls'; nos demais, usa sequência ANSI. */
+    /**
+     * Limpa a tela do terminal. No Windows usa 'cls'; nos demais, usa sequência
+     * ANSI.
+     */
     public static void limparTela() {
         if (IS_WINDOWS) {
             try {
@@ -45,14 +51,19 @@ public class ConsoleUI {
         System.out.flush();
     }
 
-    /** Exibe um cabeçalho formatado com o título centralizado entre linhas de '='. */
+    /**
+     * Exibe um cabeçalho formatado com o título centralizado entre linhas de '='.
+     */
     public static void exibirCabecalho(String titulo) {
         System.out.println(CYAN + BOLD + repeat("=", 50));
         System.out.println(centralizarTexto(titulo, 50));
         System.out.println(repeat("=", 50) + RESET);
     }
 
-    /** Centraliza um texto dentro de uma largura fixa preenchendo com espaços à esquerda. */
+    /**
+     * Centraliza um texto dentro de uma largura fixa preenchendo com espaços à
+     * esquerda.
+     */
     private static String centralizarTexto(String texto, int largura) {
         int espacos = (largura - texto.length()) / 2;
         return repeat(" ", Math.max(0, espacos)) + texto;
@@ -83,15 +94,25 @@ public class ConsoleUI {
 
             System.out.print("\n" + BOLD + "Escolha: " + RESET);
             String entrada = scanner.nextLine();
+
+            if (entrada == null || entrada.trim().isEmpty()) {
+                continue;
+            }
+
             try {
-                int escolha = Integer.parseInt(entrada) - 1;
+                int escolha = Integer.parseInt(entrada.trim()) - 1;
+
                 if (escolha >= 0 && escolha < opcoes.size()) {
                     return escolha;
                 }
-            } catch (NumberFormatException ignored) {}
-            
+            } catch (NumberFormatException ignored) {
+            }
+
             System.out.println(RED + "Opção inválida!" + RESET);
-            try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ignored) {
+            }
         }
     }
 
@@ -113,8 +134,13 @@ public class ConsoleUI {
         return lerEntrada(prompt);
     }
 
+    public static void aguardarEnter() {
+        scanner.nextLine();
+    }
+
     /**
-     * Exibe uma mensagem de sucesso (verde) ou erro (vermelho) e aguarda ENTER para continuar.
+     * Exibe uma mensagem de sucesso (verde) ou erro (vermelho) e aguarda ENTER para
+     * continuar.
      *
      * @param erro true para mensagem de erro, false para mensagem de sucesso
      */
@@ -122,7 +148,7 @@ public class ConsoleUI {
         String cor = erro ? RED : GREEN;
         System.out.println("\n" + cor + BOLD + (erro ? " [!] " : " [✓] ") + mensagem + RESET);
         System.out.println("Pressione ENTER para continuar...");
-        scanner.nextLine();
+        aguardarEnter();
     }
 
     /**
@@ -130,12 +156,13 @@ public class ConsoleUI {
      * Calcula automaticamente a largura de cada coluna com base no conteúdo.
      *
      * @param colunas Nomes das colunas (cabeçalho)
-     * @param linhas  Dados de cada linha, onde cada String[] representa uma linha da tabela
+     * @param linhas  Dados de cada linha, onde cada String[] representa uma linha
+     *                da tabela
      */
     public static void exibirTabela(String[] colunas, List<String[]> linhas) {
         StringBuilder sb = new StringBuilder();
         int[] larguras = new int[colunas.length];
-        
+
         // Calcula a largura máxima necessária para cada coluna
         for (int i = 0; i < colunas.length; i++) {
             larguras[i] = colunas[i].length();
@@ -148,7 +175,8 @@ public class ConsoleUI {
 
         // Linha separadora superior
         sb.append(CYAN);
-        for (int w : larguras) sb.append("+").append(repeat("-", w + 2));
+        for (int w : larguras)
+            sb.append("+").append(repeat("-", w + 2));
         sb.append("+\n");
 
         // Linha de cabeçalho
@@ -158,20 +186,23 @@ public class ConsoleUI {
         sb.append("|\n");
 
         // Linha separadora após cabeçalho
-        for (int w : larguras) sb.append("+").append(repeat("-", w + 2));
+        for (int w : larguras)
+            sb.append("+").append(repeat("-", w + 2));
         sb.append("+\n").append(RESET);
 
         // Linhas de dados
         for (String[] linha : linhas) {
             for (int i = 0; i < colunas.length; i++) {
-                sb.append("| ").append(String.format("%-" + larguras[i] + "s", linha[i] != null ? linha[i] : "")).append(" ");
+                sb.append("| ").append(String.format("%-" + larguras[i] + "s", linha[i] != null ? linha[i] : ""))
+                        .append(" ");
             }
             sb.append("|\n");
         }
 
         // Linha separadora inferior
         sb.append(CYAN);
-        for (int w : larguras) sb.append("+").append(repeat("-", w + 2));
+        for (int w : larguras)
+            sb.append("+").append(repeat("-", w + 2));
         sb.append("+\n").append(RESET);
 
         System.out.print(sb.toString());
