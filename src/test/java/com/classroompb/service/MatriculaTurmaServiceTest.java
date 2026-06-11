@@ -26,6 +26,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.times;
 
 import com.classroompb.model.Administrador;
 import com.classroompb.model.Aluno;
@@ -1138,6 +1139,240 @@ public class MatriculaTurmaServiceTest {
                         assertTrue(ex.getMessage().contains("Apenas alunos"));
                         verify(matriculaRepository, never()).buscarPorChaveUnica(any(), any(), any(), any());
                         verify(matriculaRepository, never()).atualizar(any());
+                }
+        }
+        // =========================================================================
+        // 11. RF23 — MANUTENÇÃO DA LISTA DE ESPERA POR TURMA
+        // =========================================================================
+
+        @Nested
+        @DisplayName("11. RF23 - Manutenção da lista de espera por turma")
+        class ManutencaoListaEsperaRF23 {
+
+                private PeriodoLetivo periodoPermitido() {
+                        return new PeriodoLetivo(
+                                        PER,
+                                        2026,
+                                        1,
+                                        LocalDate.now().minusDays(5),
+                                        LocalDate.now().plusDays(5),
+                                        true);
+                }
+
+                private MatriculaTurma matriculaComStatus(
+                                String matriculaAluno,
+                                StatusMatricula status,
+                                LocalDateTime dataSolicitacao) {
+                        MatriculaTurma matricula = new MatriculaTurma(
+                                        matriculaAluno,
+                                        DISC,
+                                        PER,
+                                        TURMA);
+
+                        matricula.setStatus(status);
+                        matricula.setDataSolicitacao(dataSolicitacao);
+
+                        return matricula;
+                }
+
+                @Test
+                @DisplayName("11.1 Deve listar apenas alunos em LISTA_ESPERA de uma turma")
+                void deveListarApenasAlunosEmListaEsperaDaTurma() throws Exception {
+                        MatriculaTurma confirmado = matriculaComStatus(
+                                        "A0001",
+                                        StatusMatricula.CONFIRMADA,
+                                        LocalDateTime.now().minusMinutes(30));
+
+                        MatriculaTurma espera1 = matriculaComStatus(
+                                        "A0002",
+                                        StatusMatricula.LISTA_ESPERA,
+                                        LocalDateTime.now().minusMinutes(20));
+
+                        MatriculaTurma espera2 = matriculaComStatus(
+                                        "A0003",
+                                        StatusMatricula.LISTA_ESPERA,
+                                        LocalDateTime.now().minusMinutes(10));
+
+                        MatriculaTurma cancelado = matriculaComStatus(
+                                        "A0004",
+                                        StatusMatricula.CANCELADA,
+                                        LocalDateTime.now().minusMinutes(5));
+
+                        when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+                                        .thenReturn(Arrays.asList(confirmado, espera1, espera2, cancelado));
+
+                        mockTurmaExiste();        
+
+                        List<MatriculaTurma> resultado = service.listarListaEsperaPorTurma(coordenador, DISC, PER,
+                                        TURMA);
+
+                        assertEquals(2, resultado.size());
+                        assertEquals("A0002", resultado.get(0).getMatriculaAluno());
+                        assertEquals("A0003", resultado.get(1).getMatriculaAluno());
+                        assertTrue(resultado.stream()
+                                        .allMatch(m -> m.getStatus() == StatusMatricula.LISTA_ESPERA));
+                }
+
+                @Test
+                @DisplayName("11.2 Lista de espera deve ser ordenada pela data de solicitação")
+                void listaEsperaDeveSerOrdenadaPelaDataSolicitacao() throws Exception {
+                        MatriculaTurma esperaMaisNova = matriculaComStatus(
+                                        "A0003",
+                                        StatusMatricula.LISTA_ESPERA,
+                                        LocalDateTime.now().minusMinutes(5));
+
+                        MatriculaTurma esperaMaisAntiga = matriculaComStatus(
+                                        "A0002",
+                                        StatusMatricula.LISTA_ESPERA,
+                                        LocalDateTime.now().minusMinutes(30));
+
+                        when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+                                        .thenReturn(Arrays.asList(esperaMaisNova, esperaMaisAntiga));
+                        
+                        mockTurmaExiste();                
+
+                        List<MatriculaTurma> resultado = service.listarListaEsperaPorTurma(coordenador, DISC, PER,
+                                        TURMA);
+
+                        assertEquals(2, resultado.size());
+                        assertEquals("A0002", resultado.get(0).getMatriculaAluno());
+                        assertEquals("A0003", resultado.get(1).getMatriculaAluno());
+                }
+
+                @Test
+                @DisplayName("11.3 Não-coordenador não pode listar lista de espera da turma")
+                void naoCoordenadorNaoPodeListarListaEspera() {
+                        Exception ex = assertThrows(Exception.class,
+                                        () -> service.listarListaEsperaPorTurma(aluno, DISC, PER, TURMA));
+
+                        assertTrue(ex.getMessage().contains("Apenas coordenadores"));
+                        verify(matriculaRepository, never()).listarPorTurma(any(), any(), any());
+                }
+
+                @Test
+                @DisplayName("11.4 Ao cancelar matrícula CONFIRMADA, deve promover primeiro da lista de espera")
+                void aoCancelarConfirmadaDevePromoverPrimeiroDaListaEspera() {
+                        MatriculaTurma confirmada = matriculaComStatus(
+                                        "A0001",
+                                        StatusMatricula.CONFIRMADA,
+                                        LocalDateTime.now().minusHours(1));
+
+                        MatriculaTurma espera = matriculaComStatus(
+                                        "A0002",
+                                        StatusMatricula.LISTA_ESPERA,
+                                        LocalDateTime.now().minusMinutes(30));
+
+                        when(matriculaRepository.buscarPorChaveUnica("A0001", DISC, PER, TURMA))
+                                        .thenReturn(confirmada);
+
+                        when(periodoRepository.buscarPorCodigo(PER))
+                                        .thenReturn(periodoPermitido());
+
+                        when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA))
+                                        .thenReturn(turma);
+
+                        when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA))
+                                        .thenReturn(0L);
+
+                        when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+                                        .thenReturn(Collections.singletonList(espera));
+
+                        assertDoesNotThrow(() -> service.cancelarMatricula(aluno, DISC, PER, TURMA));
+
+                        ArgumentCaptor<MatriculaTurma> captor = ArgumentCaptor.forClass(MatriculaTurma.class);
+
+                        verify(matriculaRepository, times(2)).atualizar(captor.capture());
+
+                        List<MatriculaTurma> atualizadas = captor.getAllValues();
+
+                        assertEquals(StatusMatricula.CANCELADA, atualizadas.get(0).getStatus());
+                        assertEquals("A0001", atualizadas.get(0).getMatriculaAluno());
+
+                        assertEquals(StatusMatricula.CONFIRMADA, atualizadas.get(1).getStatus());
+                        assertEquals("A0002", atualizadas.get(1).getMatriculaAluno());
+                }
+
+                @Test
+                @DisplayName("11.5 Se não houver aluno na lista de espera, deve apenas cancelar")
+                void seNaoHouverListaEsperaDeveApenasCancelar() {
+                        MatriculaTurma confirmada = matriculaComStatus(
+                                        "A0001",
+                                        StatusMatricula.CONFIRMADA,
+                                        LocalDateTime.now().minusHours(1));
+
+                        when(matriculaRepository.buscarPorChaveUnica("A0001", DISC, PER, TURMA))
+                                        .thenReturn(confirmada);
+
+                        when(periodoRepository.buscarPorCodigo(PER))
+                                        .thenReturn(periodoPermitido());
+
+                        when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA))
+                                        .thenReturn(turma);
+
+                        when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA))
+                                        .thenReturn(0L);
+
+                        when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+                                        .thenReturn(Collections.emptyList());
+
+                        assertDoesNotThrow(() -> service.cancelarMatricula(aluno, DISC, PER, TURMA));
+
+                        verify(matriculaRepository, times(1)).atualizar(any(MatriculaTurma.class));
+                }
+
+                @Test
+                @DisplayName("11.6 Cancelar aluno da LISTA_ESPERA não deve promover outro aluno")
+                void cancelarAlunoDaListaEsperaNaoDevePromoverOutroAluno() {
+                        MatriculaTurma espera = matriculaComStatus(
+                                        "A0001",
+                                        StatusMatricula.LISTA_ESPERA,
+                                        LocalDateTime.now().minusMinutes(30));
+
+                        when(matriculaRepository.buscarPorChaveUnica("A0001", DISC, PER, TURMA))
+                                        .thenReturn(espera);
+
+                        when(periodoRepository.buscarPorCodigo(PER))
+                                        .thenReturn(periodoPermitido());
+
+                        assertDoesNotThrow(() -> service.cancelarMatricula(aluno, DISC, PER, TURMA));
+
+                        verify(matriculaRepository, times(1)).atualizar(any(MatriculaTurma.class));
+                        verify(turmaRepository, never()).buscarPorChaveUnica(any(), any(), any());
+                }
+
+                @Test
+                @DisplayName("11.7 Se a turma ainda estiver cheia, não deve promover aluno da lista de espera")
+                void seTurmaAindaEstiverCheiaNaoDevePromoverListaEspera() {
+                        MatriculaTurma confirmada = matriculaComStatus(
+                                        "A0001",
+                                        StatusMatricula.CONFIRMADA,
+                                        LocalDateTime.now().minusHours(1));
+
+                        Turma turmaComUmaVaga = new Turma(
+                                        TURMA,
+                                        DISC,
+                                        PER,
+                                        1,
+                                        "Seg/Qua 10h-12h",
+                                        "Bloco A-101",
+                                        "P0001");
+
+                        when(matriculaRepository.buscarPorChaveUnica("A0001", DISC, PER, TURMA))
+                                        .thenReturn(confirmada);
+
+                        when(periodoRepository.buscarPorCodigo(PER))
+                                        .thenReturn(periodoPermitido());
+
+                        when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA))
+                                        .thenReturn(turmaComUmaVaga);
+
+                        when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA))
+                                        .thenReturn(1L);
+
+                        assertDoesNotThrow(() -> service.cancelarMatricula(aluno, DISC, PER, TURMA));
+
+                        verify(matriculaRepository, times(1)).atualizar(any(MatriculaTurma.class));
+                        verify(matriculaRepository, never()).listarPorTurma(any(), any(), any());
                 }
         }
 }

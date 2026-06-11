@@ -285,8 +285,16 @@ public class MatriculaTurmaService {
             throw new Exception("Erro: Cancelamento de matrícula fora do período permitido.");
         }
 
+        StatusMatricula statusAnterior = matricula.getStatus();
+
         matricula.setStatus(StatusMatricula.CANCELADA);
         matriculaRepository.atualizar(matricula);
+
+        // RF23: se uma vaga foi liberada, promove o primeiro aluno da lista de espera
+        if (statusAnterior == StatusMatricula.CONFIRMADA
+                || statusAnterior == StatusMatricula.PENDENTE) {
+            promoverPrimeiroDaListaEsperaSeHouverVaga(discNorm, periodoNorm, turmaNorm);
+        }
     }
 
     // =========================================================================
@@ -323,6 +331,108 @@ public class MatriculaTurmaService {
         return Math.max(0, turma.getVagas() - ocupadas);
     }
 
+    // =========================================================================
+    // RF23 — Manutenção da lista de espera por turma
+    // =========================================================================
+
+    /**
+     * RF23: Lista os alunos em lista de espera de uma turma específica.
+     *
+     * A lista é ordenada pela data de solicitação, mantendo a ordem de chegada.
+     */
+    public List<MatriculaTurma> listarListaEsperaPorTurma(
+            Usuario coordenador,
+            String codigoDisciplina,
+            String codigoPeriodo,
+            String codigoTurma) throws Exception {
+
+        validarCoordenador(coordenador);
+
+        if (codigoDisciplina == null || codigoDisciplina.trim().isEmpty()) {
+            throw new Exception("Erro: Código da disciplina não pode ser vazio.");
+        }
+
+        if (codigoPeriodo == null || codigoPeriodo.trim().isEmpty()) {
+            throw new Exception("Erro: Código do período letivo não pode ser vazio.");
+        }
+
+        if (codigoTurma == null || codigoTurma.trim().isEmpty()) {
+            throw new Exception("Erro: Código da turma não pode ser vazio.");
+        }
+
+        String discNorm = codigoDisciplina.trim();
+        String periodoNorm = codigoPeriodo.trim();
+        String turmaNorm = codigoTurma.trim();
+
+        Turma turma = turmaRepository.buscarPorChaveUnica(discNorm, periodoNorm, turmaNorm);
+
+        if (turma == null) {
+            throw new Exception(
+                    "Erro: Turma '" + turmaNorm
+                            + "' da disciplina '" + discNorm
+                            + "' no período '" + periodoNorm + "' não encontrada.");
+        }
+
+        return obterListaEsperaOrdenada(discNorm, periodoNorm, turmaNorm);
+    }
+
+    /**
+     * RF23: Promove automaticamente o primeiro aluno da lista de espera
+     * quando surgir vaga em uma turma.
+     */
+    private void promoverPrimeiroDaListaEsperaSeHouverVaga(
+            String codigoDisciplina,
+            String codigoPeriodo,
+            String codigoTurma) {
+        Turma turma = turmaRepository.buscarPorChaveUnica(
+                codigoDisciplina,
+                codigoPeriodo,
+                codigoTurma);
+
+        if (turma == null) {
+            return;
+        }
+
+        long ocupadas = matriculaRepository.contarOcupadasPorTurma(
+                codigoDisciplina,
+                codigoPeriodo,
+                codigoTurma);
+
+        if (ocupadas >= turma.getVagas()) {
+            return;
+        }
+
+        List<MatriculaTurma> listaEspera = obterListaEsperaOrdenada(
+                codigoDisciplina,
+                codigoPeriodo,
+                codigoTurma);
+
+        if (listaEspera.isEmpty()) {
+            return;
+        }
+
+        MatriculaTurma proximo = listaEspera.get(0);
+        proximo.setStatus(StatusMatricula.CONFIRMADA);
+        matriculaRepository.atualizar(proximo);
+    }
+
+    /**
+     * Retorna apenas matrículas com status LISTA_ESPERA de uma turma,
+     * ordenadas pela data da solicitação.
+     */
+    private List<MatriculaTurma> obterListaEsperaOrdenada(
+            String codigoDisciplina,
+            String codigoPeriodo,
+            String codigoTurma) {
+        return matriculaRepository
+                .listarPorTurma(codigoDisciplina, codigoPeriodo, codigoTurma)
+                .stream()
+                .filter(m -> m.getStatus() == StatusMatricula.LISTA_ESPERA)
+                .sorted(java.util.Comparator.comparing(
+                        MatriculaTurma::getDataSolicitacao,
+                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
+                .collect(java.util.stream.Collectors.toList());
+    }
     // =========================================================================
     // Gestão pelo Coordenador
     // =========================================================================

@@ -31,8 +31,7 @@ public class CoordenadorController {
             DisciplinaService disciplinaService,
             PeriodoLetivoService periodoService,
             TurmaService turmaService,
-            com.classroompb.service.MatriculaTurmaService matriculaService
-    ) {
+            com.classroompb.service.MatriculaTurmaService matriculaService) {
         this.service = service;
         this.disciplinaService = disciplinaService;
         this.periodoService = periodoService;
@@ -51,21 +50,29 @@ public class CoordenadorController {
 
         while (true) {
             List<String> opcoes = Arrays.asList(
-                "Gerenciar disciplinas",
-                "Gerenciar período letivo",
-                "Gerenciar turmas",
-                "Gerenciar solicitações de matrícula",
-                "Logout"
-            );
+                    "Gerenciar disciplinas",
+                    "Gerenciar período letivo",
+                    "Gerenciar turmas",
+                    "Gerenciar solicitações de matrícula",
+                    "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU COORDENADOR", opcoes);
 
-            if (escolha == -1 || escolha == opcoes.size() - 1) break;
+            if (escolha == -1 || escolha == opcoes.size() - 1)
+                break;
 
             switch (escolha) {
-                case 0: gerenciarDisciplinas(usuario); break;
-                case 1: gerenciarPeriodoLetivo(usuario); break;
-                case 2: gerenciarTurmas(usuario); break;
-                case 3: gerenciarSolicitacoesMatricula(usuario); break;
+                case 0:
+                    gerenciarDisciplinas(usuario);
+                    break;
+                case 1:
+                    gerenciarPeriodoLetivo(usuario);
+                    break;
+                case 2:
+                    gerenciarTurmas(usuario);
+                    break;
+                case 3:
+                    gerenciarSolicitacoesMatricula(usuario);
+                    break;
                 default:
                     ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
                     break;
@@ -80,23 +87,33 @@ public class CoordenadorController {
     private void gerenciarTurmas(Usuario usuario) {
         while (true) {
             List<String> opcoes = Arrays.asList(
-                "Ofertar turma",
-                "Editar turma",
-                "Excluir turma",
-                "Listar turmas por período",
-                "Listar turmas por disciplina e período",
-                "Voltar"
-            );
+                    "Ofertar turma",
+                    "Editar turma",
+                    "Excluir turma",
+                    "Listar turmas por período",
+                    "Listar turmas por disciplina e período",
+                    "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR TURMAS", opcoes);
 
-            if (escolha == 5 || escolha == -1) break;
+            if (escolha == 5 || escolha == -1)
+                break;
 
             switch (escolha) {
-                case 0: ofertarTurma(usuario);                    break;
-                case 1: editarTurma(usuario);                     break;
-                case 2: excluirTurma(usuario);                    break;
-                case 3: listarTurmasPorPeriodo();                 break;
-                case 4: listarTurmasPorDisciplinaEPeriodo();      break;
+                case 0:
+                    ofertarTurma(usuario);
+                    break;
+                case 1:
+                    editarTurma(usuario);
+                    break;
+                case 2:
+                    excluirTurma(usuario);
+                    break;
+                case 3:
+                    listarTurmasPorPeriodo();
+                    break;
+                case 4:
+                    listarTurmasPorDisciplinaEPeriodo();
+                    break;
             }
         }
     }
@@ -106,12 +123,12 @@ public class CoordenadorController {
         ConsoleUI.exibirCabecalho("OFERTAR TURMA");
         try {
             String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ");
-            String codigoPeriodo    = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
-            String codigoTurma      = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
-            int vagas               = Integer.parseInt(ConsoleUI.lerEntrada("Número de vagas: "));
-            String horario          = ConsoleUI.lerEntrada("Horário (ex: Seg/Qua 10h-12h): ");
-            String sala             = ConsoleUI.lerEntrada("Sala (ex: Bloco A - 101): ");
-            String professor        = ConsoleUI.lerEntrada("Matrícula do professor responsável: ");
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
+            String codigoTurma = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
+            int vagas = Integer.parseInt(ConsoleUI.lerEntrada("Número de vagas: "));
+            String horario = ConsoleUI.lerEntrada("Horário (ex: Seg/Qua 10h-12h): ");
+            String sala = ConsoleUI.lerEntrada("Sala (ex: Bloco A - 101): ");
+            String professor = ConsoleUI.lerEntrada("Matrícula do professor responsável: ");
 
             turmaService.ofertarTurma(
                     usuario,
@@ -121,8 +138,7 @@ public class CoordenadorController {
                     vagas,
                     horario,
                     sala,
-                    professor
-            );
+                    professor);
 
             ConsoleUI.exibirMensagem("Turma ofertada com sucesso!", false);
         } catch (NumberFormatException e) {
@@ -137,8 +153,8 @@ public class CoordenadorController {
         ConsoleUI.exibirCabecalho("EDITAR TURMA");
         try {
             String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ");
-            String codigoPeriodo    = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
-            String codigoTurma      = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
+            String codigoTurma = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
 
             Turma atual = turmaService.buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
 
@@ -147,14 +163,15 @@ public class CoordenadorController {
             System.out.println("  Horário: " + atual.getHorario());
             System.out.println("  Sala   : " + atual.getSala());
             System.out.println("  Prof   : " + (atual.getMatriculaProfessor() == null
-                    ? "sem professor" : atual.getMatriculaProfessor()));
+                    ? "sem professor"
+                    : atual.getMatriculaProfessor()));
 
             String vagasTexto = ConsoleUI.lerEntrada("\nNovas vagas (vazio para manter): ");
             int novasVagas = vagasTexto.trim().isEmpty() ? 0 : Integer.parseInt(vagasTexto);
 
             String novoHorario = ConsoleUI.lerEntrada("Novo horário (vazio para manter): ");
-            String novaSala    = ConsoleUI.lerEntrada("Nova sala (vazio para manter): ");
-            String novoProf    = ConsoleUI.lerEntrada(
+            String novaSala = ConsoleUI.lerEntrada("Nova sala (vazio para manter): ");
+            String novoProf = ConsoleUI.lerEntrada(
                     "Nova matrícula do professor (vazio para manter): ");
 
             // Vazio (ou só espaços) = manter o professor atual
@@ -168,8 +185,7 @@ public class CoordenadorController {
                     novasVagas,
                     novoHorario,
                     novaSala,
-                    matriculaProf
-            );
+                    matriculaProf);
 
             ConsoleUI.exibirMensagem("Turma atualizada com sucesso!", false);
         } catch (NumberFormatException e) {
@@ -184,16 +200,15 @@ public class CoordenadorController {
         ConsoleUI.exibirCabecalho("EXCLUIR TURMA");
         try {
             String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ");
-            String codigoPeriodo    = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
-            String codigoTurma      = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
+            String codigoTurma = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
 
             Turma turma = turmaService.buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
 
             System.out.println("\n" + turma);
             int escolha = ConsoleUI.exibirMenuInterativo(
                     "Tem certeza que deseja excluir esta turma?",
-                    Arrays.asList("Sim, excluir", "Não, cancelar")
-            );
+                    Arrays.asList("Sim, excluir", "Não, cancelar"));
 
             if (escolha == 0) {
                 turmaService.excluirTurma(usuario, codigoDisciplina, codigoPeriodo, codigoTurma);
@@ -231,7 +246,7 @@ public class CoordenadorController {
         ConsoleUI.exibirCabecalho("TURMAS POR DISCIPLINA E PERÍODO");
         try {
             String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ");
-            String codigoPeriodo    = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
             List<Turma> turmas = turmaService.listarTurmasPorDisciplinaEPeriodo(codigoDisciplina, codigoPeriodo);
 
             if (turmas.isEmpty()) {
@@ -248,19 +263,19 @@ public class CoordenadorController {
     }
 
     private void exibirTabelaTurmas(List<Turma> turmas) {
-        String[] colunas = {"Código", "Disciplina", "Período", "Vagas", "Horário", "Sala", "Professor"};
+        String[] colunas = { "Código", "Disciplina", "Período", "Vagas", "Horário", "Sala", "Professor" };
         List<String[]> linhas = new ArrayList<String[]>();
         for (Turma t : turmas) {
-            linhas.add(new String[]{
-                t.getCodigo(),
-                t.getCodigoDisciplina(),
-                t.getCodigoPeriodo(),
-                String.valueOf(t.getVagas()),
-                t.getHorario(),
-                (t.getSala() == null || t.getSala().isEmpty()) ? "-" : t.getSala(),
-                (t.getMatriculaProfessor() == null || t.getMatriculaProfessor().isEmpty())
-                        ? "-"
-                        : t.getMatriculaProfessor()
+            linhas.add(new String[] {
+                    t.getCodigo(),
+                    t.getCodigoDisciplina(),
+                    t.getCodigoPeriodo(),
+                    String.valueOf(t.getVagas()),
+                    t.getHorario(),
+                    (t.getSala() == null || t.getSala().isEmpty()) ? "-" : t.getSala(),
+                    (t.getMatriculaProfessor() == null || t.getMatriculaProfessor().isEmpty())
+                            ? "-"
+                            : t.getMatriculaProfessor()
             });
         }
         ConsoleUI.exibirTabela(colunas, linhas);
@@ -273,21 +288,29 @@ public class CoordenadorController {
     private void gerenciarDisciplinas(Usuario usuario) {
         while (true) {
             List<String> opcoes = Arrays.asList(
-                "Cadastrar disciplina",
-                "Editar disciplina",
-                "Listar disciplinas",
-                "Deletar disciplina",
-                "Voltar"
-            );
+                    "Cadastrar disciplina",
+                    "Editar disciplina",
+                    "Listar disciplinas",
+                    "Deletar disciplina",
+                    "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR DISCIPLINAS", opcoes);
 
-            if (escolha == 4 || escolha == -1) break;
+            if (escolha == 4 || escolha == -1)
+                break;
 
             switch (escolha) {
-                case 0: cadastrarDisciplina(usuario); break;
-                case 1: editarDisciplina(usuario);    break;
-                case 2: listarDisciplinas();          break;
-                case 3: deletarDisciplina(usuario);   break;
+                case 0:
+                    cadastrarDisciplina(usuario);
+                    break;
+                case 1:
+                    editarDisciplina(usuario);
+                    break;
+                case 2:
+                    listarDisciplinas();
+                    break;
+                case 3:
+                    deletarDisciplina(usuario);
+                    break;
             }
         }
     }
@@ -297,9 +320,9 @@ public class CoordenadorController {
         ConsoleUI.exibirCabecalho("CADASTRAR DISCIPLINA");
         try {
             String codigo = ConsoleUI.lerEntrada("Codigo da disciplina: ");
-            String nome   = ConsoleUI.lerEntrada("Nome da disciplina: ");
+            String nome = ConsoleUI.lerEntrada("Nome da disciplina: ");
             int cargaHoraria = Integer.parseInt(ConsoleUI.lerEntrada("Carga horaria (horas): "));
-            int creditos     = Integer.parseInt(ConsoleUI.lerEntrada("Creditos: "));
+            int creditos = Integer.parseInt(ConsoleUI.lerEntrada("Creditos: "));
             String preReqTexto = ConsoleUI.lerEntrada("Pre-requisitos (separados por virgula, ou vazio): ");
 
             List<String> preReq = preReqTexto.trim().isEmpty()
@@ -328,7 +351,8 @@ public class CoordenadorController {
                     + " | Pre-req: " + atual.getPreRequisitos());
 
             String novoNome = ConsoleUI.lerEntrada("Novo nome (vazio para manter): ");
-            if (novoNome.trim().isEmpty()) novoNome = atual.getNome();
+            if (novoNome.trim().isEmpty())
+                novoNome = atual.getNome();
 
             String cargaTexto = ConsoleUI.lerEntrada("Nova carga horaria (vazio para manter): ");
             int novaCarga = cargaTexto.trim().isEmpty()
@@ -364,15 +388,15 @@ public class CoordenadorController {
             return;
         }
 
-        String[] colunas = {"Codigo", "Nome", "Carga Horaria", "Creditos", "Pre-requisitos"};
+        String[] colunas = { "Codigo", "Nome", "Carga Horaria", "Creditos", "Pre-requisitos" };
         List<String[]> linhas = new ArrayList<String[]>();
         for (Disciplina d : disciplinas) {
-            linhas.add(new String[]{
-                d.getCodigo(),
-                d.getNome(),
-                d.getCargaHoraria() + "h",
-                String.valueOf(d.getCreditos()),
-                d.getPreRequisitos().isEmpty() ? "-" : d.getPreRequisitos().toString()
+            linhas.add(new String[] {
+                    d.getCodigo(),
+                    d.getNome(),
+                    d.getCargaHoraria() + "h",
+                    String.valueOf(d.getCreditos()),
+                    d.getPreRequisitos().isEmpty() ? "-" : d.getPreRequisitos().toString()
             });
         }
 
@@ -410,23 +434,33 @@ public class CoordenadorController {
     private void gerenciarPeriodoLetivo(Usuario usuario) {
         while (true) {
             List<String> opcoes = Arrays.asList(
-                "Cadastrar período letivo",
-                "Listar períodos letivos",
-                "Editar período letivo",
-                "Ativar período",
-                "Encerrar período",
-                "Voltar"
-            );
+                    "Cadastrar período letivo",
+                    "Listar períodos letivos",
+                    "Editar período letivo",
+                    "Ativar período",
+                    "Encerrar período",
+                    "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR PERÍODO LETIVO", opcoes);
 
-            if (escolha == 5 || escolha == -1) break;
+            if (escolha == 5 || escolha == -1)
+                break;
 
             switch (escolha) {
-                case 0: cadastrarPeriodoLetivo(usuario); break;
-                case 1: listarPeriodos();                break;
-                case 2: editarPeriodoLetivo(usuario);    break;
-                case 3: ativarPeriodo(usuario);          break;
-                case 4: encerrarPeriodo(usuario);        break;
+                case 0:
+                    cadastrarPeriodoLetivo(usuario);
+                    break;
+                case 1:
+                    listarPeriodos();
+                    break;
+                case 2:
+                    editarPeriodoLetivo(usuario);
+                    break;
+                case 3:
+                    ativarPeriodo(usuario);
+                    break;
+                case 4:
+                    encerrarPeriodo(usuario);
+                    break;
             }
         }
     }
@@ -441,17 +475,17 @@ public class CoordenadorController {
             return;
         }
 
-        String[] colunas = {"Código", "Ano", "Semestre", "Início", "Fim", "Ativo"};
+        String[] colunas = { "Código", "Ano", "Semestre", "Início", "Fim", "Ativo" };
         List<String[]> linhas = new ArrayList<String[]>();
         java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
         for (com.classroompb.model.PeriodoLetivo p : periodos) {
-            linhas.add(new String[]{
-                p.getCodigo(),
-                String.valueOf(p.getAno()),
-                String.valueOf(p.getSemestre()),
-                p.getDataInicio().format(fmt),
-                p.getDataFim().format(fmt),
-                p.isAtivo() ? "Sim" : "Não"
+            linhas.add(new String[] {
+                    p.getCodigo(),
+                    String.valueOf(p.getAno()),
+                    String.valueOf(p.getSemestre()),
+                    p.getDataInicio().format(fmt),
+                    p.getDataFim().format(fmt),
+                    p.isAtivo() ? "Sim" : "Não"
             });
         }
 
@@ -494,50 +528,34 @@ public class CoordenadorController {
         ConsoleUI.limparTela();
 
         ConsoleUI.exibirCabecalho(
-                "CADASTRAR PERIODO LETIVO"
-        );
+                "CADASTRAR PERIODO LETIVO");
 
         try {
 
-            int ano =
-                    Integer.parseInt(
-                            ConsoleUI.lerEntrada(
-                                    "Ano: "
-                            )
-                    );
+            int ano = Integer.parseInt(
+                    ConsoleUI.lerEntrada(
+                            "Ano: "));
 
-            int semestre =
-                    Integer.parseInt(
-                            ConsoleUI.lerEntrada(
-                                    "Semestre (1 ou 2): "
-                            )
-                    );
+            int semestre = Integer.parseInt(
+                    ConsoleUI.lerEntrada(
+                            "Semestre (1 ou 2): "));
 
             String codigo = ano + "." + semestre;
 
-            java.time.format.DateTimeFormatter fmt =
-                    java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-            java.time.LocalDate dataInicio =
-                    java.time.LocalDate.parse(
-                            ConsoleUI.lerEntrada(
-                                    "Data inicio (dd/mm/aaaa): "
-                            ),
-                            fmt
-                    );
-
-            java.time.LocalDate dataFim =
-                    java.time.LocalDate.parse(
-                            ConsoleUI.lerEntrada(
-                                    "Data fim (dd/mm/aaaa): "
-                            ),
-                            fmt
-                    );
-
-            String respostaAtivo =
+            java.time.LocalDate dataInicio = java.time.LocalDate.parse(
                     ConsoleUI.lerEntrada(
-                            "Periodo ativo? (S/N): "
-                    ).trim().toUpperCase();
+                            "Data inicio (dd/mm/aaaa): "),
+                    fmt);
+
+            java.time.LocalDate dataFim = java.time.LocalDate.parse(
+                    ConsoleUI.lerEntrada(
+                            "Data fim (dd/mm/aaaa): "),
+                    fmt);
+
+            String respostaAtivo = ConsoleUI.lerEntrada(
+                    "Periodo ativo? (S/N): ").trim().toUpperCase();
 
             boolean ativo = respostaAtivo.equals("S");
 
@@ -547,20 +565,17 @@ public class CoordenadorController {
                     semestre,
                     dataInicio,
                     dataFim,
-                    ativo
-            );
+                    ativo);
 
             ConsoleUI.exibirMensagem(
                     "Periodo cadastrado com sucesso! Codigo: " + codigo,
-                    false
-            );
+                    false);
 
         } catch (Exception e) {
 
             ConsoleUI.exibirMensagem(
                     e.getMessage(),
-                    true
-            );
+                    true);
         }
     }
 
@@ -603,21 +618,35 @@ public class CoordenadorController {
     private void gerenciarSolicitacoesMatricula(Usuario usuario) {
         while (true) {
             List<String> opcoes = Arrays.asList(
-                "Listar solicitações pendentes",
-                "Listar todas as solicitações",
-                "Listar solicitações por status",
-                "Listar solicitações de uma turma",
-                "Voltar"
-            );
+                    "Listar solicitações pendentes",
+                    "Listar todas as solicitações",
+                    "Listar solicitações por status",
+                    "Listar solicitações de uma turma",
+                    "Listar lista de espera de uma turma",
+                    "Voltar");
+
             int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR SOLICITAÇÕES DE MATRÍCULA", opcoes);
 
-            if (escolha == 4 || escolha == -1) break;
+            if (escolha == 5 || escolha == -1) {
+                break;
+            }
 
             switch (escolha) {
-                case 0: listarSolicitacoesPendentes(usuario);  break;
-                case 1: listarTodasSolicitacoes(usuario);      break;
-                case 2: listarSolicitacoesPorStatus(usuario);  break;
-                case 3: listarSolicitacoesPorTurma(usuario);   break;
+                case 0:
+                    listarSolicitacoesPendentes(usuario);
+                    break;
+                case 1:
+                    listarTodasSolicitacoes(usuario);
+                    break;
+                case 2:
+                    listarSolicitacoesPorStatus(usuario);
+                    break;
+                case 3:
+                    listarSolicitacoesPorTurma(usuario);
+                    break;
+                case 4:
+                    listarListaEsperaPorTurma(usuario);
+                    break;
             }
         }
     }
@@ -627,7 +656,8 @@ public class CoordenadorController {
         ConsoleUI.exibirCabecalho("SOLICITAÇÕES PENDENTES");
 
         try {
-            List<com.classroompb.model.MatriculaTurma> pendentes = matriculaService.listarSolicitacoesPendentes(usuario);
+            List<com.classroompb.model.MatriculaTurma> pendentes = matriculaService
+                    .listarSolicitacoesPendentes(usuario);
 
             if (pendentes.isEmpty()) {
                 ConsoleUI.exibirMensagem("Não há solicitações pendentes no momento.", false);
@@ -668,18 +698,30 @@ public class CoordenadorController {
         ConsoleUI.exibirCabecalho("SOLICITAÇÕES POR STATUS");
 
         try {
+            List<com.classroompb.model.StatusMatricula> statusDisponiveis = Arrays.asList(
+                    com.classroompb.model.StatusMatricula.PENDENTE,
+                    com.classroompb.model.StatusMatricula.CONFIRMADA,
+                    com.classroompb.model.StatusMatricula.LISTA_ESPERA,
+                    com.classroompb.model.StatusMatricula.CANCELADA,
+                    com.classroompb.model.StatusMatricula.REJEITADA);
+
             List<String> statusOpcoes = Arrays.asList(
-                "PENDENTE",
-                "CONFIRMADA",
-                "CANCELADA",
-                "REJEITADA"
-            );
+                    "PENDENTE",
+                    "CONFIRMADA",
+                    "LISTA_ESPERA",
+                    "CANCELADA",
+                    "REJEITADA");
+
             int escolhaStatus = ConsoleUI.exibirMenuInterativo("Selecione o status", statusOpcoes);
 
-            if (escolhaStatus == -1) return;
+            if (escolhaStatus == -1) {
+                return;
+            }
 
-            com.classroompb.model.StatusMatricula status = com.classroompb.model.StatusMatricula.values()[escolhaStatus];
-            List<com.classroompb.model.MatriculaTurma> solicitacoes = matriculaService.listarSolicitacoesPorStatus(usuario, status);
+            com.classroompb.model.StatusMatricula status = statusDisponiveis.get(escolhaStatus);
+
+            List<com.classroompb.model.MatriculaTurma> solicitacoes = matriculaService
+                    .listarSolicitacoesPorStatus(usuario, status);
 
             if (solicitacoes.isEmpty()) {
                 ConsoleUI.exibirMensagem("Não há solicitações com o status " + status + ".", false);
@@ -700,15 +742,21 @@ public class CoordenadorController {
         ConsoleUI.exibirCabecalho("SOLICITAÇÕES POR TURMA");
 
         try {
-            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ");
-            String codigoPeriodo    = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
-            String codigoTurma      = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ").trim();
+            String codigoTurma = ConsoleUI.lerEntrada("Código da turma (ex: T01): ").trim();
+
+            // Valida se a turma realmente existe
+            turmaService.buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
 
             List<com.classroompb.model.MatriculaTurma> solicitacoes = matriculaService.listarSolicitacoesPorTurma(
-                usuario, codigoDisciplina, codigoPeriodo, codigoTurma);
+                    usuario,
+                    codigoDisciplina,
+                    codigoPeriodo,
+                    codigoTurma);
 
             if (solicitacoes.isEmpty()) {
-                ConsoleUI.exibirMensagem("Não há solicitações para a turma especificada.", false);
+                ConsoleUI.exibirMensagem("A turma existe, mas ainda não possui solicitações.", false);
                 return;
             }
 
@@ -721,36 +769,68 @@ public class CoordenadorController {
         }
     }
 
+    private void listarListaEsperaPorTurma(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("LISTA DE ESPERA POR TURMA");
+
+        try {
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ").trim();
+            String codigoTurma = ConsoleUI.lerEntrada("Código da turma (ex: T01): ").trim();
+
+            // Valida se a turma realmente existe
+            turmaService.buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+
+            List<com.classroompb.model.MatriculaTurma> listaEspera = matriculaService.listarListaEsperaPorTurma(
+                    usuario,
+                    codigoDisciplina,
+                    codigoPeriodo,
+                    codigoTurma);
+
+            if (listaEspera.isEmpty()) {
+                ConsoleUI.exibirMensagem("A turma existe, mas não possui alunos em lista de espera.", false);
+                return;
+            }
+
+            exibirTabelaSolicitacoesCompleta(listaEspera);
+            System.out.println("\nTotal de alunos em lista de espera: " + listaEspera.size());
+            ConsoleUI.exibirMensagem("Fim da lista.", false);
+
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
     private void exibirTabelaSolicitacoes(List<com.classroompb.model.MatriculaTurma> solicitacoes) {
-        String[] colunas = {"#", "Aluno", "Disciplina", "Período", "Turma", "Data"};
+        String[] colunas = { "#", "Aluno", "Disciplina", "Período", "Turma", "Data" };
         List<String[]> linhas = new ArrayList<>();
         for (int i = 0; i < solicitacoes.size(); i++) {
             com.classroompb.model.MatriculaTurma m = solicitacoes.get(i);
-            linhas.add(new String[]{
-                String.valueOf(i + 1),
-                m.getMatriculaAluno(),
-                m.getCodigoDisciplina(),
-                m.getCodigoPeriodo(),
-                m.getCodigoTurma(),
-                m.getDataSolicitacao().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            linhas.add(new String[] {
+                    String.valueOf(i + 1),
+                    m.getMatriculaAluno(),
+                    m.getCodigoDisciplina(),
+                    m.getCodigoPeriodo(),
+                    m.getCodigoTurma(),
+                    m.getDataSolicitacao().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
             });
         }
         ConsoleUI.exibirTabela(colunas, linhas);
     }
 
     private void exibirTabelaSolicitacoesCompleta(List<com.classroompb.model.MatriculaTurma> solicitacoes) {
-        String[] colunas = {"#", "Aluno", "Disciplina", "Período", "Turma", "Status", "Data"};
+        String[] colunas = { "#", "Aluno", "Disciplina", "Período", "Turma", "Status", "Data" };
         List<String[]> linhas = new ArrayList<>();
         for (int i = 0; i < solicitacoes.size(); i++) {
             com.classroompb.model.MatriculaTurma m = solicitacoes.get(i);
-            linhas.add(new String[]{
-                String.valueOf(i + 1),
-                m.getMatriculaAluno(),
-                m.getCodigoDisciplina(),
-                m.getCodigoPeriodo(),
-                m.getCodigoTurma(),
-                m.getStatus().toString(),
-                m.getDataSolicitacao().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            linhas.add(new String[] {
+                    String.valueOf(i + 1),
+                    m.getMatriculaAluno(),
+                    m.getCodigoDisciplina(),
+                    m.getCodigoPeriodo(),
+                    m.getCodigoTurma(),
+                    m.getStatus().toString(),
+                    m.getDataSolicitacao().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
             });
         }
         ConsoleUI.exibirTabela(colunas, linhas);
@@ -761,7 +841,8 @@ public class CoordenadorController {
             List<String> opcoes = Arrays.asList("Aprovar solicitação", "Negar solicitação", "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("AÇÕES", opcoes);
 
-            if (escolha == 2 || escolha == -1) return;
+            if (escolha == 2 || escolha == -1)
+                return;
 
             String indiceStr = ConsoleUI.lerEntrada("Digite o número da solicitação: ");
             int indice = Integer.parseInt(indiceStr) - 1;
@@ -775,21 +856,19 @@ public class CoordenadorController {
 
             if (escolha == 0) {
                 matriculaService.aprovarMatricula(
-                    usuario,
-                    selecionada.getMatriculaAluno(),
-                    selecionada.getCodigoDisciplina(),
-                    selecionada.getCodigoPeriodo(),
-                    selecionada.getCodigoTurma()
-                );
+                        usuario,
+                        selecionada.getMatriculaAluno(),
+                        selecionada.getCodigoDisciplina(),
+                        selecionada.getCodigoPeriodo(),
+                        selecionada.getCodigoTurma());
                 ConsoleUI.exibirMensagem("Solicitação aprovada com sucesso!", false);
             } else {
                 matriculaService.negarMatricula(
-                    usuario,
-                    selecionada.getMatriculaAluno(),
-                    selecionada.getCodigoDisciplina(),
-                    selecionada.getCodigoPeriodo(),
-                    selecionada.getCodigoTurma()
-                );
+                        usuario,
+                        selecionada.getMatriculaAluno(),
+                        selecionada.getCodigoDisciplina(),
+                        selecionada.getCodigoPeriodo(),
+                        selecionada.getCodigoTurma());
                 ConsoleUI.exibirMensagem("Solicitação negada com sucesso!", false);
             }
 
