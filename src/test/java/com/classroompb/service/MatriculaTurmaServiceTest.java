@@ -1201,7 +1201,7 @@ public class MatriculaTurmaServiceTest {
                         when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
                                         .thenReturn(Arrays.asList(confirmado, espera1, espera2, cancelado));
 
-                        mockTurmaExiste();        
+                        mockTurmaExiste();
 
                         List<MatriculaTurma> resultado = service.listarListaEsperaPorTurma(coordenador, DISC, PER,
                                         TURMA);
@@ -1228,8 +1228,8 @@ public class MatriculaTurmaServiceTest {
 
                         when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
                                         .thenReturn(Arrays.asList(esperaMaisNova, esperaMaisAntiga));
-                        
-                        mockTurmaExiste();                
+
+                        mockTurmaExiste();
 
                         List<MatriculaTurma> resultado = service.listarListaEsperaPorTurma(coordenador, DISC, PER,
                                         TURMA);
