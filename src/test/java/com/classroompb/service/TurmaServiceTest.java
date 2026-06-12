@@ -782,6 +782,80 @@ public class TurmaServiceTest {
             assertTrue(ex.getMessage().contains("RF12"));
             verify(turmaRepository, never()).atualizar(any());
         }
+
+        @Test
+        @DisplayName("Deve permitir oferta quando turmas existentes pertencem a outro professor")
+        void devePermitirOfertaQuandoProfessorDiferente() {
+            when(disciplinaRepository.buscarPorCodigo("MAT001")).thenReturn(disciplinaExistente);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
+            when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T02")).thenReturn(false);
+            when(turmaRepository.listarPorPeriodo("2026.1")).thenReturn(Arrays.asList(
+                    new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h-12h", "A-101", "P9999")
+            ));
+            when(usuarioRepository.buscarPorMatricula("P0001")).thenReturn(Optional.of(professor));
+
+            assertDoesNotThrow(() ->
+                    serviceComUsuario.ofertarTurma(coordenador, "MAT001", "2026.1", "T02", 30, "Seg 10h-12h", "B-201",
+                            "P0001")
+            );
+
+            verify(turmaRepository).salvar(any(Turma.class));
+        }
+
+        @Test
+        @DisplayName("Nao deve considerar choque quando turmas tem dias diferentes")
+        void naoDeveConsiderarChoqueComDiasDiferentes() {
+            when(disciplinaRepository.buscarPorCodigo("MAT001")).thenReturn(disciplinaExistente);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
+            when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T07")).thenReturn(false);
+            when(turmaRepository.listarPorPeriodo("2026.1")).thenReturn(Arrays.asList(
+                    new Turma("T01", "MAT001", "2026.1", 40, "Seg 10h-12h", "A-101", "P0001")
+            ));
+            when(usuarioRepository.buscarPorMatricula("P0001")).thenReturn(Optional.of(professor));
+
+            assertDoesNotThrow(() ->
+                    serviceComUsuario.ofertarTurma(coordenador, "MAT001", "2026.1", "T07", 30, "Ter 10h-12h", "B-201",
+                            "P0001")
+            );
+
+            verify(turmaRepository).salvar(any(Turma.class));
+        }
+
+        @Test
+        @DisplayName("Nao deve considerar choque quando horarios sao adjacentes (sem sobreposicao)")
+        void naoDeveConsiderarChoqueComHorariosAdjacentes() {
+            when(disciplinaRepository.buscarPorCodigo("MAT001")).thenReturn(disciplinaExistente);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
+            when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T08")).thenReturn(false);
+            when(turmaRepository.listarPorPeriodo("2026.1")).thenReturn(Arrays.asList(
+                    new Turma("T01", "MAT001", "2026.1", 40, "Seg 08h-10h", "A-101", "P0001")
+            ));
+            when(usuarioRepository.buscarPorMatricula("P0001")).thenReturn(Optional.of(professor));
+
+            assertDoesNotThrow(() ->
+                    serviceComUsuario.ofertarTurma(coordenador, "MAT001", "2026.1", "T08", 30, "Seg 10h-12h", "B-201",
+                            "P0001")
+            );
+
+            verify(turmaRepository).salvar(any(Turma.class));
+        }
+
+        @Test
+        @DisplayName("Deve permitir oferta quando lista de turmas do periodo esta vazia")
+        void devePermitirOfertaComListaPeriodoVazia() {
+            when(disciplinaRepository.buscarPorCodigo("MAT001")).thenReturn(disciplinaExistente);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodoAtivo);
+            when(turmaRepository.existePorChaveUnica("MAT001", "2026.1", "T09")).thenReturn(false);
+            when(turmaRepository.listarPorPeriodo("2026.1")).thenReturn(Collections.emptyList());
+            when(usuarioRepository.buscarPorMatricula("P0001")).thenReturn(Optional.of(professor));
+
+            assertDoesNotThrow(() ->
+                    serviceComUsuario.ofertarTurma(coordenador, "MAT001", "2026.1", "T09", 30, "Seg 10h-12h", "B-201",
+                            "P0001")
+            );
+
+            verify(turmaRepository).salvar(any(Turma.class));
+        }
     }
 
     // =========================================================================

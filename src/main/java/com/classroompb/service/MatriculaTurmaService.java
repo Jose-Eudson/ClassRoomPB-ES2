@@ -166,6 +166,9 @@ public class MatriculaTurmaService {
 
         solicitacao.setStatus(StatusMatricula.CANCELADA);
         matriculaRepository.atualizar(solicitacao);
+
+        // RF23: solicitação PENDENTE ocupava uma vaga — promove próximo da lista de espera
+        promoverPrimeiroDaListaEsperaSeHouverVaga(discNorm, periodoNorm, turmaNorm);
     }
 
     // =========================================================================
@@ -459,6 +462,10 @@ public class MatriculaTurmaService {
     /**
      * Nega uma solicitação de matrícula.
      *
+     * <p>
+     * RF23: Como a solicitação negada era PENDENTE e ocupava uma vaga, a vaga é liberada e o sistema promove
+     * automaticamente o primeiro aluno da lista de espera, se houver.
+     *
      * @param coordenador
      *            usuário coordenador
      * @param matriculaAluno
@@ -480,8 +487,15 @@ public class MatriculaTurmaService {
         MatriculaTurma solicitacao = buscarSolicitacaoPendete(matriculaAluno, codigoDisciplina, codigoPeriodo,
                 codigoTurma);
 
+        String discNorm = codigoDisciplina.trim();
+        String periodoNorm = codigoPeriodo.trim();
+        String turmaNorm = codigoTurma.trim();
+
         solicitacao.setStatus(StatusMatricula.REJEITADA);
         matriculaRepository.atualizar(solicitacao);
+
+        // RF23: solicitação PENDENTE ocupava uma vaga — promove próximo da lista de espera
+        promoverPrimeiroDaListaEsperaSeHouverVaga(discNorm, periodoNorm, turmaNorm);
     }
 
     /**
