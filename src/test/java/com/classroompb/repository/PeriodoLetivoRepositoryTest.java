@@ -46,10 +46,10 @@ public class PeriodoLetivoRepositoryTest {
         @Test
         @DisplayName("Deve salvar periodo letivo e persistir no arquivo")
         void deveSalvarPeriodoLetivo() {
-            PeriodoLetivo periodo = new PeriodoLetivo("2026.2", 2026, 2,
-                    LocalDate.of(2026, 8, 10), LocalDate.of(2026, 12, 20), true);
+            PeriodoLetivo periodo = new PeriodoLetivo("2026.2", 2026, 2, LocalDate.of(2026, 8, 10),
+                    LocalDate.of(2026, 12, 20), true);
             repository.salvar(periodo);
-            
+
             assertEquals(1, repository.listarTodos().size());
             assertEquals("2026.2", repository.listarTodos().get(0).getCodigo());
         }
@@ -57,9 +57,11 @@ public class PeriodoLetivoRepositoryTest {
         @Test
         @DisplayName("Deve persistir múltiplos períodos e manter a ordem")
         void devePersistirMultiplosPeriodos() {
-            repository.salvar(new PeriodoLetivo("2026.1", 2026, 1, LocalDate.now(), LocalDate.now().plusMonths(4), false));
-            repository.salvar(new PeriodoLetivo("2026.2", 2026, 2, LocalDate.now(), LocalDate.now().plusMonths(4), true));
-            
+            repository.salvar(
+                    new PeriodoLetivo("2026.1", 2026, 1, LocalDate.now(), LocalDate.now().plusMonths(4), false));
+            repository
+                    .salvar(new PeriodoLetivo("2026.2", 2026, 2, LocalDate.now(), LocalDate.now().plusMonths(4), true));
+
             List<PeriodoLetivo> todos = repository.listarTodos();
             assertEquals(2, todos.size());
             assertEquals("2026.1", todos.get(0).getCodigo());
@@ -69,9 +71,9 @@ public class PeriodoLetivoRepositoryTest {
         @Test
         @DisplayName("Deve persistir entre instancias diferentes apontando para o mesmo arquivo")
         void devePersistirEntreInstancias() {
-            repository.salvar(new PeriodoLetivo("2026.1", 2026, 1,
-                    LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), false));
-            
+            repository.salvar(
+                    new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), false));
+
             PeriodoLetivoRepository novoRepo = new PeriodoLetivoRepository(arquivoTemp());
             assertEquals(1, novoRepo.listarTodos().size());
             assertEquals("2026.1", novoRepo.listarTodos().get(0).getCodigo());
@@ -80,8 +82,8 @@ public class PeriodoLetivoRepositoryTest {
         @Test
         @DisplayName("listarTodos deve retornar copia defensiva (modificar a lista retornada não afeta o repo)")
         void listarTodosRetornaCopiaDefensiva() {
-            repository.salvar(new PeriodoLetivo("2026.2", 2026, 2,
-                    LocalDate.of(2026, 8, 10), LocalDate.of(2026, 12, 20), true));
+            repository.salvar(
+                    new PeriodoLetivo("2026.2", 2026, 2, LocalDate.of(2026, 8, 10), LocalDate.of(2026, 12, 20), true));
             List<PeriodoLetivo> lista = repository.listarTodos();
             lista.clear();
             assertEquals(1, repository.listarTodos().size(), "A lista interna do repositório não deve ser afetada");
@@ -95,8 +97,8 @@ public class PeriodoLetivoRepositoryTest {
         @Test
         @DisplayName("Deve verificar existencia por codigo de forma exata")
         void deveVerificarExistenciaPorCodigo() {
-            repository.salvar(new PeriodoLetivo("2026.2", 2026, 2,
-                    LocalDate.of(2026, 8, 10), LocalDate.of(2026, 12, 20), true));
+            repository.salvar(
+                    new PeriodoLetivo("2026.2", 2026, 2, LocalDate.of(2026, 8, 10), LocalDate.of(2026, 12, 20), true));
             assertTrue(repository.existePorCodigo("2026.2"));
         }
 
@@ -120,8 +122,8 @@ public class PeriodoLetivoRepositoryTest {
         @Test
         @DisplayName("buscarPorCodigo deve retornar periodo existente")
         void buscarPorCodigoRetornaExistente() {
-            repository.salvar(new PeriodoLetivo("2026.2", 2026, 2,
-                    LocalDate.of(2026, 8, 10), LocalDate.of(2026, 12, 20), true));
+            repository.salvar(
+                    new PeriodoLetivo("2026.2", 2026, 2, LocalDate.of(2026, 8, 10), LocalDate.of(2026, 12, 20), true));
             PeriodoLetivo p = repository.buscarPorCodigo("2026.2");
             assertNotNull(p);
             assertEquals(2026, p.getAno());
@@ -131,8 +133,8 @@ public class PeriodoLetivoRepositoryTest {
         @Test
         @DisplayName("buscarPorCodigo deve ser case-insensitive")
         void buscarPorCodigoCaseInsensitive() {
-            repository.salvar(new PeriodoLetivo("ABC.1", 2026, 1,
-                    LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true));
+            repository.salvar(
+                    new PeriodoLetivo("ABC.1", 2026, 1, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true));
             assertNotNull(repository.buscarPorCodigo("abc.1"));
             assertNotNull(repository.buscarPorCodigo("ABC.1"));
             assertEquals("ABC.1", repository.buscarPorCodigo("abc.1").getCodigo());
@@ -153,13 +155,13 @@ public class PeriodoLetivoRepositoryTest {
         @Test
         @DisplayName("Deve persistir mudanças feitas nos objetos da lista através de atualizarDados()")
         void deveAtualizarDados() {
-            repository.salvar(new PeriodoLetivo("2026.2", 2026, 2,
-                    LocalDate.of(2026, 8, 10), LocalDate.of(2026, 12, 20), false));
-            
+            repository.salvar(
+                    new PeriodoLetivo("2026.2", 2026, 2, LocalDate.of(2026, 8, 10), LocalDate.of(2026, 12, 20), false));
+
             PeriodoLetivo p = repository.buscarPorCodigo("2026.2");
             p.setAtivo(true);
             p.setAno(2027);
-            
+
             repository.atualizarDados(); // Sincroniza a lista em memória com o arquivo
 
             PeriodoLetivoRepository novoRepo = new PeriodoLetivoRepository(arquivoTemp());
@@ -182,7 +184,8 @@ public class PeriodoLetivoRepositoryTest {
         @Test
         @DisplayName("Deve lidar com arquivo corrompido ou inválido iniciando lista vazia")
         void deveLidarComArquivoInvalido() throws Exception {
-            java.nio.file.Files.write(tempDir.resolve("corrompido.json"), "texto invalido que nao e json".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            java.nio.file.Files.write(tempDir.resolve("corrompido.json"),
+                    "texto invalido que nao e json".getBytes(java.nio.charset.StandardCharsets.UTF_8));
             PeriodoLetivoRepository repo = new PeriodoLetivoRepository(tempDir.resolve("corrompido.json").toString());
             assertTrue(repo.listarTodos().isEmpty());
         }
@@ -208,9 +211,9 @@ public class PeriodoLetivoRepositoryTest {
             PeriodoLetivoRepository repo = new PeriodoLetivoRepository(caminhoArquivo);
 
             // Não deve lançar exceção mesmo se não conseguir salvar no disco
-            assertDoesNotThrow(() -> repo.salvar(new PeriodoLetivo("2026.1", 2026, 1,
-                    LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true)));
-            
+            assertDoesNotThrow(() -> repo.salvar(
+                    new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true)));
+
             dirReadOnly.setWritable(true);
         }
     }

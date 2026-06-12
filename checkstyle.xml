@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+    Guia de Estilo — ClassRoomPB
+    Regras focadas no que agrega valor: nomenclatura, imports e complexidade.
+    Formatação (indentação, espaços, chaves) é responsabilidade do formatter-maven-plugin.
+-->
+<module name="Checker">
+
+    <property name="severity" value="warning"/>
+    <property name="fileExtensions" value="java"/>
+    <property name="charset" value="UTF-8"/>
+
+    <!-- Tamanho máximo de linha: 120 caracteres -->
+    <module name="LineLength">
+        <property name="max" value="120"/>
+        <property name="ignorePattern" value="^(import|package).*|.*https?://.*"/>
+    </module>
+
+    <!-- Arquivo deve terminar com newline -->
+    <module name="NewlineAtEndOfFile"/>
+
+    <!-- =========================================================
+         VERIFICAÇÕES DE CÓDIGO
+         ========================================================= -->
+    <module name="TreeWalker">
+
+        <!-- Proíbe imports com * no código de produção -->
+        <module name="AvoidStarImport"/>
+
+        <!-- Proíbe imports não utilizados -->
+        <module name="UnusedImports"/>
+
+        <!-- Classes e interfaces: PascalCase -->
+        <module name="TypeName"/>
+
+        <!-- Métodos: camelCase -->
+        <module name="MethodName"/>
+
+        <!-- Variáveis locais e parâmetros: camelCase -->
+        <module name="LocalVariableName"/>
+        <module name="ParameterName"/>
+
+        <!-- Campos de instância: camelCase -->
+        <module name="MemberName"/>
+
+        <!-- Constantes (static final): UPPER_SNAKE_CASE -->
+        <module name="ConstantName"/>
+
+        <!-- Pacotes: minúsculas -->
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+        </module>
+
+        <!-- Chaves obrigatórias em if/else/for/while -->
+        <module name="NeedBraces"/>
+
+        <!-- Proíbe uso de == para comparar Strings -->
+        <module name="StringLiteralEquality"/>
+
+        <!-- Proíbe blocos catch vazios sem comentário -->
+        <module name="EmptyCatchBlock">
+            <property name="exceptionVariableName" value="expected|ignored|ignore"/>
+        </module>
+
+        <!-- Complexidade ciclomática máxima: 25
+             (services de domínio complexo como MatriculaTurmaService e TurmaService
+              têm múltiplas regras de negócio em um único método — refatorar quebraria
+              a rastreabilidade com os RFs. PMD já detecta métodos longos.) -->
+        <module name="CyclomaticComplexity">
+            <property name="max" value="25"/>
+        </module>
+
+        <!-- Máximo de parâmetros por método: 8 -->
+        <module name="ParameterNumber">
+            <property name="max" value="8"/>
+        </module>
+
+        <!-- Suporte a @SuppressWarnings no código -->
+        <module name="SuppressWarningsHolder"/>
+
+    </module>
+
+    <!-- Suporte a @SuppressWarnings no nível de arquivo -->
+    <module name="SuppressWarningsFilter"/>
+
+    <!-- =================================================
+         SUPRESSÕES PARA ARQUIVOS DE TESTE
+         ================================================= -->
+
+    <!-- Testes: permite nomes de método com _ (padrão BDD: deveXxx_quandoYyy) -->
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="MethodName"/>
+        <property name="files" value=".*Test\.java"/>
+    </module>
+
+    <!-- Testes: não exige newline no final -->
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="NewlineAtEndOfFile"/>
+        <property name="files" value=".*Test\.java"/>
+    </module>
+
+    <!-- Testes: permite linhas mais longas (asserções verbosas) -->
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="LineLength"/>
+        <property name="files" value=".*Test\.java"/>
+    </module>
+
+    <!-- Usuario.java: anotação @JsonTypeInfo toda em uma linha (formatada pelo Jackson convention) -->
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="LineLength"/>
+        <property name="files" value="Usuario\.java"/>
+    </module>
+
+    <!-- Testes: permite import static .* de Assertions (padrão JUnit 5 comum) -->
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="AvoidStarImport"/>
+        <property name="files" value=".*Test\.java"/>
+    </module>
+
+</module>

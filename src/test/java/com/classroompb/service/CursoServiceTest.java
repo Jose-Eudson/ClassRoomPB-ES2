@@ -2,14 +2,9 @@ package com.classroompb.service;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +29,7 @@ public class CursoServiceTest {
 
     private CursoService service;
     private Usuario admin;
- 
+
     @BeforeEach
     void setUp() {
         service = new CursoService(repository);
@@ -57,8 +52,7 @@ public class CursoServiceTest {
         @DisplayName("Nao deve cadastrar com usuario nao administrador")
         void naoDeveCadastrarComUsuarioNaoAdmin() {
             Usuario aluno = new Aluno("A0001", "Aluno", "aluno@teste.com", "123");
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso(aluno, "ADS", "Curso", 1800));
+            Exception ex = assertThrows(Exception.class, () -> service.cadastrarCurso(aluno, "ADS", "Curso", 1800));
             assertEquals("Erro: Apenas administradores podem cadastrar cursos.", ex.getMessage());
             verify(repository, never()).salvar(any());
         }
@@ -76,48 +70,42 @@ public class CursoServiceTest {
         @Test
         @DisplayName("Nao deve cadastrar com codigo nulo")
         void naoDeveCadastrarComCodigoNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso(admin, null, "Curso", 1800));
+            Exception ex = assertThrows(Exception.class, () -> service.cadastrarCurso(admin, null, "Curso", 1800));
             assertEquals("Erro: Código do curso não pode ser vazio.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com codigo vazio")
         void naoDeveCadastrarComCodigoVazio() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso(admin, "   ", "Curso", 1800));
+            Exception ex = assertThrows(Exception.class, () -> service.cadastrarCurso(admin, "   ", "Curso", 1800));
             assertEquals("Erro: Código do curso não pode ser vazio.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com nome nulo")
         void naoDeveCadastrarComNomeNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso(admin, "ADS", null, 1800));
+            Exception ex = assertThrows(Exception.class, () -> service.cadastrarCurso(admin, "ADS", null, 1800));
             assertEquals("Erro: Nome do curso não pode ser vazio.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com nome vazio")
         void naoDeveCadastrarComNomeVazio() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso(admin, "ADS", "", 1800));
+            Exception ex = assertThrows(Exception.class, () -> service.cadastrarCurso(admin, "ADS", "", 1800));
             assertEquals("Erro: Nome do curso não pode ser vazio.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com carga horaria zero")
         void naoDeveCadastrarComCargaHorariaZero() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso(admin, "ADS", "Curso", 0));
+            Exception ex = assertThrows(Exception.class, () -> service.cadastrarCurso(admin, "ADS", "Curso", 0));
             assertEquals("Erro: Carga horária deve ser maior que zero.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com carga horaria negativa")
         void naoDeveCadastrarComCargaHorariaNegativa() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarCurso(admin, "ADS", "Curso", -10));
+            Exception ex = assertThrows(Exception.class, () -> service.cadastrarCurso(admin, "ADS", "Curso", -10));
             assertEquals("Erro: Carga horária deve ser maior que zero.", ex.getMessage());
         }
     }
@@ -192,8 +180,7 @@ public class CursoServiceTest {
         void editarCursoLancaExcecaoParaNomeVazio() {
             Curso curso = new Curso("ADS", "Antigo", 3200);
             when(repository.buscarPorCodigo("ADS")).thenReturn(curso);
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.editarCurso(admin, "ADS", "", 4000));
+            Exception ex = assertThrows(Exception.class, () -> service.editarCurso(admin, "ADS", "", 4000));
             assertEquals("Erro: Nome do curso não pode ser vazio.", ex.getMessage());
         }
 
@@ -202,8 +189,7 @@ public class CursoServiceTest {
         void editarCursoLancaExcecaoParaNomeNulo() {
             Curso curso = new Curso("ADS", "Antigo", 3200);
             when(repository.buscarPorCodigo("ADS")).thenReturn(curso);
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.editarCurso(admin, "ADS", null, 4000));
+            Exception ex = assertThrows(Exception.class, () -> service.editarCurso(admin, "ADS", null, 4000));
             assertEquals("Erro: Nome do curso não pode ser vazio.", ex.getMessage());
         }
 
@@ -212,8 +198,7 @@ public class CursoServiceTest {
         void editarCursoLancaExcecaoParaCargaHorariaInvalida() {
             Curso curso = new Curso("ADS", "Antigo", 3200);
             when(repository.buscarPorCodigo("ADS")).thenReturn(curso);
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.editarCurso(admin, "ADS", "Novo", 0));
+            Exception ex = assertThrows(Exception.class, () -> service.editarCurso(admin, "ADS", "Novo", 0));
             assertEquals("Erro: Carga horária deve ser maior que zero.", ex.getMessage());
         }
 

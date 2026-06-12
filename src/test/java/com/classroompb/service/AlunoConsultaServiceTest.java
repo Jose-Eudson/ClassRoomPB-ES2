@@ -5,10 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -29,13 +26,9 @@ import com.classroompb.repository.UsuarioRepository;
 /**
  * RF15 — Testes unitários: Aluno consulta turmas e disciplinas.
  *
- * Cobertura:
- *   - Listar todas as disciplinas cadastradas
- *   - Buscar disciplina por código (sucesso e erro)
- *   - Listar turmas do período ativo
- *   - Listar turmas por disciplina e período
- *   - Cenários de lista vazia
- *   - Cenários de parâmetros inválidos
+ * Cobertura: - Listar todas as disciplinas cadastradas - Buscar disciplina por código (sucesso e erro) - Listar turmas
+ * do período ativo - Listar turmas por disciplina e período - Cenários de lista vazia - Cenários de parâmetros
+ * inválidos
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RF15 - Aluno: consulta de disciplinas e turmas")
@@ -45,10 +38,14 @@ public class AlunoConsultaServiceTest {
     // Mocks e serviços
     // -------------------------------------------------------------------------
 
-    @Mock private DisciplinaRepository disciplinaRepository;
-    @Mock private TurmaRepository turmaRepository;
-    @Mock private PeriodoLetivoRepository periodoRepository;
-    @Mock private UsuarioRepository usuarioRepository;
+    @Mock
+    private DisciplinaRepository disciplinaRepository;
+    @Mock
+    private TurmaRepository turmaRepository;
+    @Mock
+    private PeriodoLetivoRepository periodoRepository;
+    @Mock
+    private UsuarioRepository usuarioRepository;
 
     private DisciplinaService disciplinaService;
     private TurmaService turmaService;
@@ -71,22 +68,21 @@ public class AlunoConsultaServiceTest {
 
     @BeforeEach
     void setUp() {
-        disciplinaService    = new DisciplinaService(disciplinaRepository);
-        turmaService         = new TurmaService(turmaRepository, disciplinaRepository, periodoRepository, usuarioRepository);
+        disciplinaService = new DisciplinaService(disciplinaRepository);
+        turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoRepository, usuarioRepository);
         periodoLetivoService = new PeriodoLetivoService(periodoRepository);
 
-        disciplinaCalculo = new Disciplina("MAT001", "Cálculo I",       60, 4, Collections.emptyList());
-        disciplinaAlgebra = new Disciplina("MAT002", "Álgebra Linear",  60, 4, Collections.singletonList("MAT001"));
-        disciplinaFisica  = new Disciplina("FIS001", "Física I",        60, 4, Collections.emptyList());
+        disciplinaCalculo = new Disciplina("MAT001", "Cálculo I", 60, 4, Collections.emptyList());
+        disciplinaAlgebra = new Disciplina("MAT002", "Álgebra Linear", 60, 4, Collections.singletonList("MAT001"));
+        disciplinaFisica = new Disciplina("FIS001", "Física I", 60, 4, Collections.emptyList());
 
-        periodoAtivo   = new PeriodoLetivo("2026.1", 2026, 1,
-                LocalDate.of(2026, 2, 1),  LocalDate.of(2026, 6, 30), true);
-        periodoInativo = new PeriodoLetivo("2025.2", 2025, 2,
-                LocalDate.of(2025, 8, 1),  LocalDate.of(2025, 12, 20), false);
+        periodoAtivo = new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true);
+        periodoInativo = new PeriodoLetivo("2025.2", 2025, 2, LocalDate.of(2025, 8, 1), LocalDate.of(2025, 12, 20),
+                false);
 
-        turmaT01               = new Turma("T01", "MAT001", "2026.1", 40, "Seg/Qua 10h-12h", "Bloco A-101",  "P0001");
-        turmaT02               = new Turma("T02", "MAT001", "2026.1", 35, "Ter/Qui 14h-16h", "Bloco B-202",  "P0002");
-        turmaDisciplinaDiferente = new Turma("T01", "FIS001", "2026.1", 30, "Sex 08h-10h",   "Lab Física",   "P0003");
+        turmaT01 = new Turma("T01", "MAT001", "2026.1", 40, "Seg/Qua 10h-12h", "Bloco A-101", "P0001");
+        turmaT02 = new Turma("T02", "MAT001", "2026.1", 35, "Ter/Qui 14h-16h", "Bloco B-202", "P0002");
+        turmaDisciplinaDiferente = new Turma("T01", "FIS001", "2026.1", 30, "Sex 08h-10h", "Lab Física", "P0003");
     }
 
     // =========================================================================
@@ -198,8 +194,7 @@ public class AlunoConsultaServiceTest {
         @Test
         @DisplayName("Lança exceção quando o código é nulo")
         void lancaExcecaoQuandoCodigoNulo() {
-            Exception ex = assertThrows(Exception.class,
-                    () -> disciplinaService.buscarPorCodigo(null));
+            Exception ex = assertThrows(Exception.class, () -> disciplinaService.buscarPorCodigo(null));
 
             assertNotNull(ex.getMessage());
         }
@@ -207,8 +202,7 @@ public class AlunoConsultaServiceTest {
         @Test
         @DisplayName("Lança exceção quando o código é uma string vazia")
         void lancaExcecaoQuandoCodigoVazio() {
-            Exception ex = assertThrows(Exception.class,
-                    () -> disciplinaService.buscarPorCodigo("   "));
+            Exception ex = assertThrows(Exception.class, () -> disciplinaService.buscarPorCodigo("   "));
 
             assertNotNull(ex.getMessage());
         }
@@ -415,8 +409,7 @@ public class AlunoConsultaServiceTest {
         @Test
         @DisplayName("Lança exceção quando o código da disciplina é vazio")
         void lancaExcecaoQuandoCodigoDisciplinaVazio() {
-            Exception ex = assertThrows(Exception.class,
-                    () -> turmaService.buscarTurma("", "2026.1", "T01"));
+            Exception ex = assertThrows(Exception.class, () -> turmaService.buscarTurma("", "2026.1", "T01"));
 
             assertNotNull(ex.getMessage());
         }
@@ -424,8 +417,7 @@ public class AlunoConsultaServiceTest {
         @Test
         @DisplayName("Lança exceção quando o código do período é nulo")
         void lancaExcecaoQuandoCodigoPeriodoNulo() {
-            Exception ex = assertThrows(Exception.class,
-                    () -> turmaService.buscarTurma("MAT001", null, "T01"));
+            Exception ex = assertThrows(Exception.class, () -> turmaService.buscarTurma("MAT001", null, "T01"));
 
             assertNotNull(ex.getMessage());
         }
@@ -433,8 +425,7 @@ public class AlunoConsultaServiceTest {
         @Test
         @DisplayName("Lança exceção quando o código da turma é vazio")
         void lancaExcecaoQuandoCodigoTurmaVazio() {
-            Exception ex = assertThrows(Exception.class,
-                    () -> turmaService.buscarTurma("MAT001", "2026.1", "  "));
+            Exception ex = assertThrows(Exception.class, () -> turmaService.buscarTurma("MAT001", "2026.1", "  "));
 
             assertNotNull(ex.getMessage());
         }

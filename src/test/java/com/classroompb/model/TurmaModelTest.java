@@ -12,15 +12,11 @@ import org.junit.jupiter.api.Test;
 /**
  * Testes unitários para a entidade Turma (RF10 / RF11 - Task 1.2.4).
  *
- * Cobre todos os métodos com 0% de cobertura identificados no relatório JaCoCo:
- *   - Construtor padrão Turma()
- *   - Construtor completo Turma(String, String, String, int, String, String, String)
- *   - getChaveUnica()
- *   - toString() — ramo com professor, sem professor, com sala e sem sala
- *   - Todos os setters (setCodigo, setCodigoDisciplina, setCodigoPeriodo,
- *                       setVagas, setHorario, setSala, setMatriculaProfessor)
- *   - Todos os getters (getCodigo, getCodigoDisciplina, getCodigoPeriodo,
- *                       getVagas, getHorario, getSala, getMatriculaProfessor)
+ * Cobre todos os métodos com 0% de cobertura identificados no relatório JaCoCo: - Construtor padrão Turma() -
+ * Construtor completo Turma(String, String, String, int, String, String, String) - getChaveUnica() - toString() — ramo
+ * com professor, sem professor, com sala e sem sala - Todos os setters (setCodigo, setCodigoDisciplina,
+ * setCodigoPeriodo, setVagas, setHorario, setSala, setMatriculaProfessor) - Todos os getters (getCodigo,
+ * getCodigoDisciplina, getCodigoPeriodo, getVagas, getHorario, getSala, getMatriculaProfessor)
  */
 @DisplayName("Testes do modelo Turma")
 public class TurmaModelTest {
@@ -58,13 +54,13 @@ public class TurmaModelTest {
         void construtorCompletoDeveAtribuirTodosOsCampos() {
             Turma turma = new Turma("T01", "MAT001", "2026.1", 40, "Seg/Qua 10h-12h", "Bloco A - 101", "P0001");
 
-            assertEquals("T01",              turma.getCodigo());
-            assertEquals("MAT001",           turma.getCodigoDisciplina());
-            assertEquals("2026.1",           turma.getCodigoPeriodo());
-            assertEquals(40,                 turma.getVagas());
+            assertEquals("T01", turma.getCodigo());
+            assertEquals("MAT001", turma.getCodigoDisciplina());
+            assertEquals("2026.1", turma.getCodigoPeriodo());
+            assertEquals(40, turma.getVagas());
             assertEquals("Seg/Qua 10h-12h", turma.getHorario());
-            assertEquals("Bloco A - 101",   turma.getSala());
-            assertEquals("P0001",            turma.getMatriculaProfessor());
+            assertEquals("Bloco A - 101", turma.getSala());
+            assertEquals("P0001", turma.getMatriculaProfessor());
         }
 
         @Test
@@ -180,7 +176,7 @@ public class TurmaModelTest {
             assertEquals(3, partes.length);
             assertEquals("FIS001", partes[0]);
             assertEquals("2025.2", partes[1]);
-            assertEquals("T02",    partes[2]);
+            assertEquals("T02", partes[2]);
         }
 
         @Test
@@ -222,13 +218,13 @@ public class TurmaModelTest {
             Turma turma = new Turma("T01", "MAT001", "2026.1", 40, "Seg/Qua 10h-12h", "Bloco A - 101", "P0001");
             String str = turma.toString();
 
-            assertTrue(str.contains("T01"),              "deve conter código");
-            assertTrue(str.contains("MAT001"),           "deve conter código da disciplina");
-            assertTrue(str.contains("2026.1"),           "deve conter código do período");
-            assertTrue(str.contains("40"),               "deve conter número de vagas");
+            assertTrue(str.contains("T01"), "deve conter código");
+            assertTrue(str.contains("MAT001"), "deve conter código da disciplina");
+            assertTrue(str.contains("2026.1"), "deve conter código do período");
+            assertTrue(str.contains("40"), "deve conter número de vagas");
             assertTrue(str.contains("Seg/Qua 10h-12h"), "deve conter horário");
-            assertTrue(str.contains("Bloco A - 101"),   "deve conter sala");
-            assertTrue(str.contains("P0001"),            "deve conter matrícula do professor");
+            assertTrue(str.contains("Bloco A - 101"), "deve conter sala");
+            assertTrue(str.contains("P0001"), "deve conter matrícula do professor");
         }
 
         @Test

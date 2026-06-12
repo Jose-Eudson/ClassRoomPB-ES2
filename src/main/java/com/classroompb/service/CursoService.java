@@ -49,7 +49,8 @@ public class CursoService {
         return c;
     }
 
-    public void editarCurso(Usuario administrador, String codigo, String novoNome, int novaCargaHoraria) throws Exception {
+    public void editarCurso(Usuario administrador, String codigo, String novoNome, int novaCargaHoraria)
+            throws Exception {
         if (administrador == null || administrador.getTipo() != TipoUsuario.ADMINISTRADOR) {
             throw new Exception("Erro: Apenas administradores podem editar cursos.");
         }

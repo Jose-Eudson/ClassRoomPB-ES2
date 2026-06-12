@@ -15,15 +15,8 @@ public class PeriodoLetivoModelTest {
     @DisplayName("Deve criar periodo letivo corretamente")
     void deveCriarPeriodoLetivoCorretamente() {
 
-        PeriodoLetivo periodo =
-            new PeriodoLetivo(
-                        "2026.2",
-                        2026,
-                        2,
-                        LocalDate.of(2026, 8, 10),
-                        LocalDate.of(2026, 12, 20),
-                        true
-                );
+        PeriodoLetivo periodo = new PeriodoLetivo("2026.2", 2026, 2, LocalDate.of(2026, 8, 10),
+                LocalDate.of(2026, 12, 20), true);
 
         assertEquals("2026.2", periodo.getCodigo());
         assertEquals(2026, periodo.getAno());
@@ -58,16 +51,11 @@ public class PeriodoLetivoModelTest {
     @DisplayName("Deve retornar toString correto para periodo ativo")
     void deveRetornarToStringParaPeriodoAtivo() {
 
-        PeriodoLetivo periodo = new PeriodoLetivo(
-                "2026.1",
-                2026,
-                1,
-                LocalDate.of(2026, 2, 1),
-                LocalDate.of(2026, 6, 30),
-                true
-        );
+        PeriodoLetivo periodo = new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1),
+                LocalDate.of(2026, 6, 30), true);
 
-        // Corrigindo o formato esperado de acordo com a implementação: [PERIODO LETIVO] codigo - ano.semestre | inicio ate fim | status
+        // Corrigindo o formato esperado de acordo com a implementação: [PERIODO LETIVO] codigo - ano.semestre | inicio
+        // ate fim | status
         String esperado = "[PERIODO LETIVO] 2026.1 - 2026.1 | 2026-02-01 ate 2026-06-30 | ATIVO";
 
         assertEquals(esperado, periodo.toString());
@@ -77,14 +65,8 @@ public class PeriodoLetivoModelTest {
     @DisplayName("Deve retornar toString correto para periodo inativo")
     void deveRetornarToStringParaPeriodoInativo() {
 
-        PeriodoLetivo periodo = new PeriodoLetivo(
-                "2025.2",
-                2025,
-                2,
-                LocalDate.of(2025, 8, 10),
-                LocalDate.of(2025, 12, 20),
-                false
-        );
+        PeriodoLetivo periodo = new PeriodoLetivo("2025.2", 2025, 2, LocalDate.of(2025, 8, 10),
+                LocalDate.of(2025, 12, 20), false);
 
         String esperado = "[PERIODO LETIVO] 2025.2 - 2025.2 | 2025-08-10 ate 2025-12-20 | INATIVO";
 

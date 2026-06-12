@@ -2,9 +2,7 @@ package com.classroompb.service;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,8 +22,8 @@ import com.classroompb.model.Usuario;
 import com.classroompb.repository.UsuarioRepository;
 
 /**
- * Testes unitarios para o fluxo de login em UsuarioService.
- * Cobre login por e-mail, login por matricula (RF02) e todos os casos de erro.
+ * Testes unitarios para o fluxo de login em UsuarioService. Cobre login por e-mail, login por matricula (RF02) e todos
+ * os casos de erro.
  */
 
 @ExtendWith(MockitoExtension.class)
@@ -98,8 +96,7 @@ public class LoginServiceTest {
             Usuario usuario = new Aluno("A0001", "Carlos", "usuario@teste.com", "correta");
             when(repository.buscarPorEmail("usuario@teste.com")).thenReturn(Optional.of(usuario));
 
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.login("usuario@teste.com", "errada"));
+            Exception ex = assertThrows(Exception.class, () -> service.login("usuario@teste.com", "errada"));
 
             assertEquals("Erro: Senha incorreta.", ex.getMessage());
         }
@@ -194,8 +191,7 @@ public class LoginServiceTest {
             Usuario usuario = new Aluno("A0001", "Carlos", "carlos@teste.com", "correta");
             when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuario));
 
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.login("A0001", "errada"));
+            Exception ex = assertThrows(Exception.class, () -> service.login("A0001", "errada"));
 
             assertEquals("Erro: Senha incorreta.", ex.getMessage());
         }
@@ -206,8 +202,7 @@ public class LoginServiceTest {
             Usuario usuario = new Aluno("A0001", "Carlos", "carlos@teste.com", "Senha123");
             when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuario));
 
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.login("A0001", "senha123"));
+            Exception ex = assertThrows(Exception.class, () -> service.login("A0001", "senha123"));
 
             assertEquals("Erro: Senha incorreta.", ex.getMessage());
         }
@@ -218,8 +213,7 @@ public class LoginServiceTest {
             Usuario adulterado = new Administrador("P0001", "Fake", "fake@teste.com", "admin");
             when(repository.buscarPorMatricula("P0001")).thenReturn(Optional.of(adulterado));
 
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.login("P0001", "admin"));
+            Exception ex = assertThrows(Exception.class, () -> service.login("P0001", "admin"));
 
             assertEquals("Erro: Dados de acesso inválidos para o perfil do usuário.", ex.getMessage());
         }

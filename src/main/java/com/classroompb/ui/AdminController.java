@@ -12,8 +12,7 @@ import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.UsuarioService;
 
 /**
- * Controlador da interface do Administrador.
- * Responsável pelo menu e todas as ações disponíveis para esse perfil.
+ * Controlador da interface do Administrador. Responsável pelo menu e todas as ações disponíveis para esse perfil.
  */
 public class AdminController {
 
@@ -35,18 +34,20 @@ public class AdminController {
         }
 
         while (true) {
-            List<String> opcoes = Arrays.asList(
-                "Gerenciar usuários",
-                "Gerenciar cursos",
-                "Logout"
-            );
+            List<String> opcoes = Arrays.asList("Gerenciar usuários", "Gerenciar cursos", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU ADMINISTRADOR", opcoes);
 
-            if (escolha == -1 || escolha == opcoes.size() - 1) break;
+            if (escolha == -1 || escolha == opcoes.size() - 1) {
+                break;
+            }
 
             switch (escolha) {
-                case 0: gerenciarUsuarios(); break;
-                case 1: gerenciarCursos(usuario);   break;
+            case 0:
+                gerenciarUsuarios();
+                break;
+            case 1:
+                gerenciarCursos(usuario);
+                break;
             }
         }
     }
@@ -57,44 +58,54 @@ public class AdminController {
 
     private void gerenciarUsuarios() {
         while (true) {
-            List<String> opcoes = Arrays.asList(
-                "Cadastrar novo usuário",
-                "Editar usuário",
-                "Deletar usuário",
-                "Listar usuários",
-                "Voltar"
-            );
+            List<String> opcoes = Arrays.asList("Cadastrar novo usuário", "Editar usuário", "Deletar usuário",
+                    "Listar usuários", "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR USUÁRIOS", opcoes);
 
-            if (escolha == 4 || escolha == -1) break;
+            if (escolha == 4 || escolha == -1) {
+                break;
+            }
 
             switch (escolha) {
-                case 0: cadastrarUsuario(); break;
-                case 1: editarUsuario();    break;
-                case 2: deletarUsuario();   break;
-                case 3: listarUsuarios();   break;
+            case 0:
+                cadastrarUsuario();
+                break;
+            case 1:
+                editarUsuario();
+                break;
+            case 2:
+                deletarUsuario();
+                break;
+            case 3:
+                listarUsuarios();
+                break;
             }
         }
     }
 
     private void gerenciarCursos(Usuario usuario) {
         while (true) {
-            List<String> opcoes = Arrays.asList(
-                "Cadastrar novo curso",
-                "Editar curso",
-                "Listar cursos",
-                "Deletar curso",
-                "Voltar"
-            );
+            List<String> opcoes = Arrays.asList("Cadastrar novo curso", "Editar curso", "Listar cursos",
+                    "Deletar curso", "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR CURSOS", opcoes);
 
-            if (escolha == 4 || escolha == -1) break;
+            if (escolha == 4 || escolha == -1) {
+                break;
+            }
 
             switch (escolha) {
-                case 0: cadastrarCurso(usuario); break;
-                case 1: editarCurso(usuario);    break;
-                case 2: listarCursos();          break;
-                case 3: deletarCurso(usuario);   break;
+            case 0:
+                cadastrarCurso(usuario);
+                break;
+            case 1:
+                editarCurso(usuario);
+                break;
+            case 2:
+                listarCursos();
+                break;
+            case 3:
+                deletarCurso(usuario);
+                break;
             }
         }
     }
@@ -108,13 +119,15 @@ public class AdminController {
         ConsoleUI.limparTela();
         ConsoleUI.exibirCabecalho("CADASTRAR NOVO USUÁRIO");
         try {
-            String nome  = ConsoleUI.lerEntrada("Nome: ");
+            String nome = ConsoleUI.lerEntrada("Nome: ");
             String email = ConsoleUI.lerEntrada("E-mail: ");
             String senha = ConsoleUI.lerSenha("Senha: ");
 
             List<String> tipos = Arrays.asList("Aluno", "Professor", "Coordenador", "Administrador");
             int tipoEscolha = ConsoleUI.exibirMenuInterativo("Tipo de Usuário", tipos);
-            if (tipoEscolha == -1) return;
+            if (tipoEscolha == -1) {
+                return;
+            }
 
             TipoUsuario tipo = TipoUsuario.values()[tipoEscolha];
             String matricula = service.cadastrarUsuarioComMatriculaAutomatica(nome, email, senha, tipo);
@@ -125,9 +138,8 @@ public class AdminController {
     }
 
     /**
-     * Edita os dados de um usuário existente.
-     * Campos deixados em branco mantêm o valor atual.
-     * Permite alterar o cargo, o que gera nova matrícula automaticamente.
+     * Edita os dados de um usuário existente. Campos deixados em branco mantêm o valor atual. Permite alterar o cargo,
+     * o que gera nova matrícula automaticamente.
      */
     private void editarUsuario() {
         ConsoleUI.limparTela();
@@ -139,20 +151,27 @@ public class AdminController {
             System.out.println("\nDados atuais: " + usuario.getNome() + " (" + usuario.getTipo() + ")");
 
             String novoNome = ConsoleUI.lerEntrada("Novo nome (vazio para manter): ");
-            if (novoNome.isEmpty()) novoNome = usuario.getNome();
+            if (novoNome.isEmpty()) {
+                novoNome = usuario.getNome();
+            }
 
             String novoEmail = ConsoleUI.lerEntrada("Novo e-mail (vazio para manter): ");
-            if (novoEmail.isEmpty()) novoEmail = usuario.getEmail();
+            if (novoEmail.isEmpty()) {
+                novoEmail = usuario.getEmail();
+            }
 
             String novaSenha = ConsoleUI.lerSenha("Nova senha (vazio para manter): ");
-            if (novaSenha.isEmpty()) novaSenha = usuario.getSenha();
+            if (novaSenha.isEmpty()) {
+                novaSenha = usuario.getSenha();
+            }
 
             int mudarCargo = ConsoleUI.exibirMenuInterativo("Alterar cargo?", Arrays.asList("Sim", "Não"));
             if (mudarCargo == 0) {
                 List<String> tipos = Arrays.asList("Aluno", "Professor", "Coordenador", "Administrador");
                 int tipoEscolha = ConsoleUI.exibirMenuInterativo("Novo Cargo", tipos);
                 if (tipoEscolha != -1) {
-                    service.editarUsuarioComTipo(matricula, novoNome, novoEmail, novaSenha, TipoUsuario.values()[tipoEscolha]);
+                    service.editarUsuarioComTipo(matricula, novoNome, novoEmail, novaSenha,
+                            TipoUsuario.values()[tipoEscolha]);
                 }
             } else {
                 service.editarUsuario(matricula, novoNome, novoEmail, novaSenha);
@@ -173,7 +192,8 @@ public class AdminController {
             Usuario usuario = service.buscarUsuarioPorMatricula(matricula);
 
             System.out.println("\nUsuário: " + usuario.getNome() + " [" + usuario.getTipo() + "]");
-            int escolha = ConsoleUI.exibirMenuInterativo("Tem certeza?", Arrays.asList("Sim, deletar", "Não, cancelar"));
+            int escolha = ConsoleUI.exibirMenuInterativo("Tem certeza?",
+                    Arrays.asList("Sim, deletar", "Não, cancelar"));
 
             if (escolha == 0) {
                 service.deletarUsuario(matricula);
@@ -197,10 +217,10 @@ public class AdminController {
             return;
         }
 
-        String[] colunas = {"Matrícula", "Nome", "E-mail", "Cargo"};
+        String[] colunas = { "Matrícula", "Nome", "E-mail", "Cargo" };
         List<String[]> linhas = new ArrayList<>();
         for (Usuario u : usuarios) {
-            linhas.add(new String[]{u.getMatricula(), u.getNome(), u.getEmail(), u.getTipo().toString()});
+            linhas.add(new String[] { u.getMatricula(), u.getNome(), u.getEmail(), u.getTipo().toString() });
         }
 
         ConsoleUI.exibirTabela(colunas, linhas);
@@ -235,16 +255,15 @@ public class AdminController {
             String codigo = ConsoleUI.lerEntrada("Código do curso: ");
             com.classroompb.model.Curso atual = cursoService.buscarPorCodigo(codigo);
 
-            System.out.println("\nDados atuais: " + atual.getNome()
-                    + " | " + atual.getCargaHoraria() + "h");
+            System.out.println("\nDados atuais: " + atual.getNome() + " | " + atual.getCargaHoraria() + "h");
 
             String novoNome = ConsoleUI.lerEntrada("Novo nome (vazio para manter): ");
-            if (novoNome.trim().isEmpty()) novoNome = atual.getNome();
+            if (novoNome.trim().isEmpty()) {
+                novoNome = atual.getNome();
+            }
 
             String cargaTexto = ConsoleUI.lerEntrada("Nova carga horária (vazio para manter): ");
-            int novaCarga = cargaTexto.trim().isEmpty()
-                    ? atual.getCargaHoraria()
-                    : Integer.parseInt(cargaTexto);
+            int novaCarga = cargaTexto.trim().isEmpty() ? atual.getCargaHoraria() : Integer.parseInt(cargaTexto);
 
             cursoService.editarCurso(usuario, codigo, novoNome, novaCarga);
             ConsoleUI.exibirMensagem("Curso atualizado com sucesso!", false);
@@ -289,10 +308,10 @@ public class AdminController {
             return;
         }
 
-        String[] colunas = {"Código", "Nome", "Carga Horária"};
+        String[] colunas = { "Código", "Nome", "Carga Horária" };
         List<String[]> linhas = new ArrayList<>();
         for (Curso c : cursos) {
-            linhas.add(new String[]{c.getCodigo(), c.getNome(), c.getCargaHoraria() + "h"});
+            linhas.add(new String[] { c.getCodigo(), c.getNome(), c.getCargaHoraria() + "h" });
         }
 
         ConsoleUI.exibirTabela(colunas, linhas);

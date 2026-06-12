@@ -4,13 +4,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,17 +18,10 @@ import com.classroompb.model.Turma;
 /**
  * Testes de integração para TurmaRepository (RF10).
  *
- * Cobertura:
- *   - Construtores (padrão e com caminho)
- *   - carregarDados() — arquivo inexistente e caminho inválido
- *   - salvarDados()   — caminho somente-leitura
- *   - salvar()
- *   - listarTodos()   — cópia defensiva
- *   - existePorChaveUnica() — true, false, case-insensitive
- *   - listarPorPeriodo()
- *   - listarPorDisciplinaEPeriodo()
- *   - buscarPorChaveUnica() — encontrado e não encontrado
- *   - Persistência entre instâncias
+ * Cobertura: - Construtores (padrão e com caminho) - carregarDados() — arquivo inexistente e caminho inválido -
+ * salvarDados() — caminho somente-leitura - salvar() - listarTodos() — cópia defensiva - existePorChaveUnica() — true,
+ * false, case-insensitive - listarPorPeriodo() - listarPorDisciplinaEPeriodo() - buscarPorChaveUnica() — encontrado e
+ * não encontrado - Persistência entre instâncias
  */
 @DisplayName("Testes de TurmaRepository (RF10)")
 public class TurmaRepositoryTest {
@@ -182,7 +169,7 @@ public class TurmaRepositoryTest {
             List<Turma> turmas = novaInstancia.listarTodos();
 
             assertEquals(1, turmas.size());
-            assertEquals("T01",    turmas.get(0).getCodigo());
+            assertEquals("T01", turmas.get(0).getCodigo());
             assertEquals("MAT001", turmas.get(0).getCodigoDisciplina());
             assertEquals("2026.1", turmas.get(0).getCodigoPeriodo());
         }
@@ -195,9 +182,9 @@ public class TurmaRepositoryTest {
             TurmaRepository novaInstancia = new TurmaRepository(arquivoTemp());
             Turma recuperada = novaInstancia.listarTodos().get(0);
 
-            assertEquals(40,               recuperada.getVagas());
+            assertEquals(40, recuperada.getVagas());
             assertEquals("Seg/Qua 10h-12h", recuperada.getHorario());
-            assertEquals("P0001",          recuperada.getMatriculaProfessor());
+            assertEquals("P0001", recuperada.getMatriculaProfessor());
         }
 
         @Test
@@ -290,7 +277,7 @@ public class TurmaRepositoryTest {
             Turma resultado = repository.buscarPorChaveUnica("MAT001", "2026.1", "T01");
 
             assertNotNull(resultado);
-            assertEquals("T01",    resultado.getCodigo());
+            assertEquals("T01", resultado.getCodigo());
             assertEquals("MAT001", resultado.getCodigoDisciplina());
             assertEquals("2026.1", resultado.getCodigoPeriodo());
         }
@@ -466,10 +453,10 @@ public class TurmaRepositoryTest {
             repository.atualizar(atualizada);
 
             Turma recuperada = repository.buscarPorChaveUnica("MAT001", "2026.1", "T01");
-            assertEquals(99,             recuperada.getVagas());
+            assertEquals(99, recuperada.getVagas());
             assertEquals("Sex 14h-18h", recuperada.getHorario());
             assertEquals("Bloco Z - 999", recuperada.getSala());
-            assertEquals("P9999",        recuperada.getMatriculaProfessor());
+            assertEquals("P9999", recuperada.getMatriculaProfessor());
         }
 
         @Test
@@ -536,8 +523,7 @@ public class TurmaRepositoryTest {
         @Test
         @DisplayName("Deletar turma inexistente deve lançar IllegalArgumentException")
         void deletarInexistenteLancaExcecao() {
-            assertThrows(IllegalArgumentException.class,
-                    () -> repository.deletar("INEXISTENTE", "9999.9", "T99"));
+            assertThrows(IllegalArgumentException.class, () -> repository.deletar("INEXISTENTE", "9999.9", "T99"));
         }
 
         @Test

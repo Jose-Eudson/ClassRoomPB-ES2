@@ -3,13 +3,7 @@ package com.classroompb.repository;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,18 +16,9 @@ import com.classroompb.model.StatusMatricula;
 /**
  * Testes de integração para MatriculaTurmaRepository (RF16).
  *
- * Cobertura:
- *   - Construtores (padrão e com caminho)
- *   - salvar() e listarTodas()
- *   - existeSolicitacaoAtiva()
- *   - listarPorAluno()
- *   - listarPorAlunoEStatus()
- *   - listarPorTurma()
- *   - contarConfirmadasPorTurma()
- *   - buscarPorChaveUnica()
- *   - atualizar()
- *   - case-insensitive
- *   - Persistência entre instâncias
+ * Cobertura: - Construtores (padrão e com caminho) - salvar() e listarTodas() - existeSolicitacaoAtiva() -
+ * listarPorAluno() - listarPorAlunoEStatus() - listarPorTurma() - contarConfirmadasPorTurma() - buscarPorChaveUnica() -
+ * atualizar() - case-insensitive - Persistência entre instâncias
  */
 @DisplayName("Testes de MatriculaTurmaRepository (RF16)")
 public class MatriculaTurmaRepositoryTest {
@@ -315,8 +300,8 @@ public class MatriculaTurmaRepositoryTest {
         @Test
         @DisplayName("Não deve incluir matrículas de outra turma da mesma disciplina")
         void naoDeveIncluirOutraTurma() {
-            repository.salvar(matriculaA1_MAT_T01());  // T01
-            repository.salvar(matriculaA2_MAT_T02());  // T02
+            repository.salvar(matriculaA1_MAT_T01()); // T01
+            repository.salvar(matriculaA2_MAT_T02()); // T02
 
             List<MatriculaTurma> resultado = repository.listarPorTurma("MAT001", "2026.1", "T01");
             assertEquals(1, resultado.size());
@@ -326,8 +311,8 @@ public class MatriculaTurmaRepositoryTest {
         @Test
         @DisplayName("Não deve incluir matrículas de outro período")
         void naoDeveIncluirOutroPeriodo() {
-            repository.salvar(matriculaA1_MAT_T01());       // 2026.1
-            repository.salvar(matriculaA3_MAT_T01_2025());  // 2025.2
+            repository.salvar(matriculaA1_MAT_T01()); // 2026.1
+            repository.salvar(matriculaA3_MAT_T01_2025()); // 2025.2
 
             List<MatriculaTurma> resultado = repository.listarPorTurma("MAT001", "2026.1", "T01");
             assertEquals(1, resultado.size());
@@ -415,10 +400,10 @@ public class MatriculaTurmaRepositoryTest {
             repository.salvar(matriculaA1_MAT_T01());
             MatriculaTurma encontrada = repository.buscarPorChaveUnica("A001", "MAT001", "2026.1", "T01");
             assertNotNull(encontrada);
-            assertEquals("A001",   encontrada.getMatriculaAluno());
+            assertEquals("A001", encontrada.getMatriculaAluno());
             assertEquals("MAT001", encontrada.getCodigoDisciplina());
             assertEquals("2026.1", encontrada.getCodigoPeriodo());
-            assertEquals("T01",    encontrada.getCodigoTurma());
+            assertEquals("T01", encontrada.getCodigoTurma());
         }
 
         @Test

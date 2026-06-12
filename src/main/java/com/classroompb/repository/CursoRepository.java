@@ -55,10 +55,7 @@ public class CursoRepository {
     }
 
     public Curso buscarPorCodigo(String codigo) {
-        return cursos.stream()
-                .filter(c -> c.getCodigo().equalsIgnoreCase(codigo))
-                .findFirst()
-                .orElse(null);
+        return cursos.stream().filter(c -> c.getCodigo().equalsIgnoreCase(codigo)).findFirst().orElse(null);
     }
 
     public void atualizar(Curso atualizado) {
@@ -69,9 +66,7 @@ public class CursoRepository {
                 return;
             }
         }
-        throw new IllegalArgumentException(
-                "Curso com codigo " + atualizado.getCodigo() + " nao encontrado."
-        );
+        throw new IllegalArgumentException("Curso com codigo " + atualizado.getCodigo() + " nao encontrado.");
     }
 
     public void deletar(String codigo) {
@@ -79,9 +74,7 @@ public class CursoRepository {
         if (removido) {
             salvarDados();
         } else {
-            throw new IllegalArgumentException(
-                    "Curso com codigo " + codigo + " nao encontrado."
-            );
+            throw new IllegalArgumentException("Curso com codigo " + codigo + " nao encontrado.");
         }
     }
 }

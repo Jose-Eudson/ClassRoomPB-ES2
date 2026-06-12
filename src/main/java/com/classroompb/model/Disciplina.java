@@ -14,57 +14,65 @@ public class Disciplina implements Serializable {
     private String nome;
     private int cargaHoraria;
     private int creditos;
-    private List<String> pre_requisitos;
-    
+    private List<String> preRequisitos;
+
     /** Construtor padrao necessario para desserializacao. */
     public Disciplina() {
-        this.pre_requisitos = new ArrayList<>();
+        this.preRequisitos = new ArrayList<>();
     }
 
     /** Construtor completo para criacao de disciplinas. */
-    public Disciplina(
-            String codigo,
-            String nome,
-            int cargaHoraria,
-            int creditos,
-            List<String> pre_requisitos
-    ) {
+    public Disciplina(String codigo, String nome, int cargaHoraria, int creditos, List<String> preRequisitos) {
         this.codigo = codigo;
         this.nome = nome;
         this.cargaHoraria = cargaHoraria;
         this.creditos = creditos;
-        this.pre_requisitos = pre_requisitos;
+        this.preRequisitos = preRequisitos != null ? new ArrayList<>(preRequisitos) : new ArrayList<>();
     }
 
-    public String getCodigo() { return codigo; }
-    public void setCodigo(String codigo) { this.codigo = codigo; }
+    public String getCodigo() {
+        return codigo;
+    }
 
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
+    public void setCodigo(String codigo) {
+        this.codigo = codigo;
+    }
 
-    public int getCargaHoraria() { return cargaHoraria; }
-    public void setCargaHoraria(int cargaHoraria) { this.cargaHoraria = cargaHoraria; }
+    public String getNome() {
+        return nome;
+    }
 
-    public int getCreditos() {return creditos;}
-    public void setCreditos(int creditos) {this.creditos = creditos;}
-    
-    
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public int getCargaHoraria() {
+        return cargaHoraria;
+    }
+
+    public void setCargaHoraria(int cargaHoraria) {
+        this.cargaHoraria = cargaHoraria;
+    }
+
+    public int getCreditos() {
+        return creditos;
+    }
+
+    public void setCreditos(int creditos) {
+        this.creditos = creditos;
+    }
+
     public List<String> getPreRequisitos() {
-        return pre_requisitos;
+        return new ArrayList<>(preRequisitos);
     }
 
-    public void setPreRequisitos(List<String> pre_requisitos) {
-        this.pre_requisitos = pre_requisitos;
+    public void setPreRequisitos(List<String> preRequisitos) {
+        this.preRequisitos = preRequisitos != null ? new ArrayList<>(preRequisitos) : new ArrayList<>();
     }
-    
+
     @Override
     public String toString() {
-        return String.format("[DISCIPLINA] %s - %s (%dh, %d créditos) pré-requisitos: %s",
-                codigo,
-                nome,
-                cargaHoraria,
-                creditos,
-                pre_requisitos
-        );
+        return String.format("[DISCIPLINA] %s - %s (%dh, %d créditos) pré-requisitos: %s", codigo, nome, cargaHoraria,
+                creditos, preRequisitos);
     }
 }

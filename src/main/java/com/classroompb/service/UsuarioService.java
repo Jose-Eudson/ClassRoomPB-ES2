@@ -13,8 +13,8 @@ import com.classroompb.repository.UsuarioRepository;
 import com.classroompb.util.MatriculaGenerator;
 
 /**
- * Camada de serviço que contém as regras de negócio para gerenciamento de usuários.
- * Valida os dados recebidos antes de delegar as operações ao repositório.
+ * Camada de serviço que contém as regras de negócio para gerenciamento de usuários. Valida os dados recebidos antes de
+ * delegar as operações ao repositório.
  */
 
 public class UsuarioService {
@@ -26,10 +26,11 @@ public class UsuarioService {
     }
 
     /**
-     * Cadastra um usuário com matrícula fornecida manualmente.
-     * Valida campos obrigatórios e garante que matrícula e e-mail são únicos.
+     * Cadastra um usuário com matrícula fornecida manualmente. Valida campos obrigatórios e garante que matrícula e
+     * e-mail são únicos.
      */
-    public void cadastrarUsuario(String matricula, String nome, String email, String senha, TipoUsuario tipo) throws Exception {
+    public void cadastrarUsuario(String matricula, String nome, String email, String senha, TipoUsuario tipo)
+            throws Exception {
         validarCamposObrigatorios(matricula, nome, email, senha);
         if (tipo == null) {
             throw new Exception("Erro: Tipo de usuário não pode ser nulo.");
@@ -48,10 +49,11 @@ public class UsuarioService {
     }
 
     /**
-     * Cadastra um usuário gerando a matrícula automaticamente via MatriculaGenerator.
-     * Retorna a matrícula gerada para exibição ao usuário.
+     * Cadastra um usuário gerando a matrícula automaticamente via MatriculaGenerator. Retorna a matrícula gerada para
+     * exibição ao usuário.
      */
-    public String cadastrarUsuarioComMatriculaAutomatica(String nome, String email, String senha, TipoUsuario tipo) throws Exception {
+    public String cadastrarUsuarioComMatriculaAutomatica(String nome, String email, String senha, TipoUsuario tipo)
+            throws Exception {
         validarCamposObrigatoriosSeMatricula(nome, email, senha);
         if (tipo == null) {
             throw new Exception("Erro: Tipo de usuário não pode ser nulo.");
@@ -68,8 +70,8 @@ public class UsuarioService {
     }
 
     /**
-     * Edita nome, e-mail e senha de um usuário existente, mantendo o mesmo tipo/matrícula.
-     * Valida unicidade do novo e-mail caso tenha sido alterado.
+     * Edita nome, e-mail e senha de um usuário existente, mantendo o mesmo tipo/matrícula. Valida unicidade do novo
+     * e-mail caso tenha sido alterado.
      */
     public void editarUsuario(String matricula, String novoNome, String novoEmail, String novaSenha) throws Exception {
         validarCamposObrigatorios(matricula, novoNome, novoEmail, novaSenha);
@@ -90,11 +92,11 @@ public class UsuarioService {
     }
 
     /**
-     * Edita um usuário incluindo possível mudança de tipo/cargo.
-     * Se o tipo mudar, remove o usuário antigo e recria com nova matrícula gerada automaticamente,
-     * pois cada tipo tem seu próprio prefixo de matrícula.
+     * Edita um usuário incluindo possível mudança de tipo/cargo. Se o tipo mudar, remove o usuário antigo e recria com
+     * nova matrícula gerada automaticamente, pois cada tipo tem seu próprio prefixo de matrícula.
      */
-    public void editarUsuarioComTipo(String matricula, String novoNome, String novoEmail, String novaSenha, TipoUsuario novoTipo) throws Exception {
+    public void editarUsuarioComTipo(String matricula, String novoNome, String novoEmail, String novaSenha,
+            TipoUsuario novoTipo) throws Exception {
         validarCamposObrigatorios(matricula, novoNome, novoEmail, novaSenha);
         if (novoTipo == null) {
             throw new Exception("Erro: Tipo de usuário não pode ser nulo.");
@@ -119,7 +121,8 @@ public class UsuarioService {
 
         if (tipoMudou) {
             repository.salvar(usuarioAtualizado);
-            System.out.println("Cargo alterado! Matrícula antiga (" + matricula + ") removida. Nova matrícula: " + novaMatricula);
+            System.out.println(
+                    "Cargo alterado! Matrícula antiga (" + matricula + ") removida. Nova matrícula: " + novaMatricula);
         } else {
             repository.atualizar(usuarioAtualizado);
         }
@@ -128,8 +131,7 @@ public class UsuarioService {
     }
 
     /**
-     * Remove um usuário pelo número de matrícula.
-     * Lança exceção se a matrícula não for encontrada.
+     * Remove um usuário pelo número de matrícula. Lança exceção se a matrícula não for encontrada.
      */
     public void deletarUsuario(String matricula) throws Exception {
         if (matricula == null || matricula.trim().isEmpty()) {
@@ -144,8 +146,7 @@ public class UsuarioService {
     }
 
     /**
-     * Busca e retorna um usuário pela matrícula.
-     * Lança exceção se não encontrado ou se a matrícula for vazia.
+     * Busca e retorna um usuário pela matrícula. Lança exceção se não encontrado ou se a matrícula for vazia.
      */
     public Usuario buscarUsuarioPorMatricula(String matricula) throws Exception {
         if (matricula == null || matricula.trim().isEmpty()) {
@@ -156,10 +157,9 @@ public class UsuarioService {
     }
 
     /**
-     * Autentica um usuário pelo identificador (matrícula ou e-mail) e senha.
-     * Se o identificador contiver '@', é tratado como e-mail; caso contrário, como matrícula.
-     * O e-mail é buscado de forma case-insensitive; a matrícula é buscada de forma exata.
-     * A senha é sempre verificada de forma case-sensitive.
+     * Autentica um usuário pelo identificador (matrícula ou e-mail) e senha. Se o identificador contiver '@', é tratado
+     * como e-mail; caso contrário, como matrícula. O e-mail é buscado de forma case-insensitive; a matrícula é buscada
+     * de forma exata. A senha é sempre verificada de forma case-sensitive.
      */
     public Usuario login(String identificador, String senha) throws Exception {
         if (identificador == null || identificador.trim().isEmpty()) {
@@ -225,19 +225,25 @@ public class UsuarioService {
     }
 
     /** Instancia a subclasse concreta de Usuario de acordo com o tipo informado. */
-    private Usuario criarUsuario(String matricula, String nome, String email, String senha, TipoUsuario tipo) throws Exception {
+    private Usuario criarUsuario(String matricula, String nome, String email, String senha, TipoUsuario tipo)
+            throws Exception {
         switch (tipo) {
-            case ALUNO:         return new Aluno(matricula, nome, email, senha);
-            case PROFESSOR:     return new Professor(matricula, nome, email, senha);
-            case COORDENADOR:   return new Coordenador(matricula, nome, email, senha);
-            case ADMINISTRADOR: return new Administrador(matricula, nome, email, senha);
-            default:            throw new Exception("Erro: Tipo de usuário inválido.");
+        case ALUNO:
+            return new Aluno(matricula, nome, email, senha);
+        case PROFESSOR:
+            return new Professor(matricula, nome, email, senha);
+        case COORDENADOR:
+            return new Coordenador(matricula, nome, email, senha);
+        case ADMINISTRADOR:
+            return new Administrador(matricula, nome, email, senha);
+        default:
+            throw new Exception("Erro: Tipo de usuário inválido.");
         }
     }
 
     /**
-     * Garante consistência entre tipo de usuário e formato da matrícula.
-     * ALUNO: A0001 | PROFESSOR: P0001 | COORDENADOR: C0001 | ADMINISTRADOR: AD0001
+     * Garante consistência entre tipo de usuário e formato da matrícula. ALUNO: A0001 | PROFESSOR: P0001 | COORDENADOR:
+     * C0001 | ADMINISTRADOR: AD0001
      */
     private boolean matriculaCompativelComTipo(String matricula, TipoUsuario tipo) {
         if (matricula == null || tipo == null) {
@@ -245,20 +251,20 @@ public class UsuarioService {
         }
         String prefixoEsperado;
         switch (tipo) {
-            case ALUNO:
-                prefixoEsperado = "A";
-                break;
-            case PROFESSOR:
-                prefixoEsperado = "P";
-                break;
-            case COORDENADOR:
-                prefixoEsperado = "C";
-                break;
-            case ADMINISTRADOR:
-                prefixoEsperado = "AD";
-                break;
-            default:
-                return false;
+        case ALUNO:
+            prefixoEsperado = "A";
+            break;
+        case PROFESSOR:
+            prefixoEsperado = "P";
+            break;
+        case COORDENADOR:
+            prefixoEsperado = "C";
+            break;
+        case ADMINISTRADOR:
+            prefixoEsperado = "AD";
+            break;
+        default:
+            return false;
         }
 
         if (!matricula.startsWith(prefixoEsperado)) {

@@ -9,8 +9,8 @@ import com.classroompb.model.Usuario;
 import com.classroompb.util.JsonUtil;
 
 /**
- * Repositório responsável pela persistência de usuários em arquivo JSON.
- * Mantém a lista em memória e sincroniza com o disco a cada operação de escrita.
+ * Repositório responsável pela persistência de usuários em arquivo JSON. Mantém a lista em memória e sincroniza com o
+ * disco a cada operação de escrita.
  */
 
 public class UsuarioRepository {
@@ -26,8 +26,8 @@ public class UsuarioRepository {
     }
 
     /**
-     * Construtor para testes — permite injetar um caminho de arquivo temporário,
-     * evitando que os testes apaguem ou sobrescrevam o "usuarios.json" de produção.
+     * Construtor para testes — permite injetar um caminho de arquivo temporário, evitando que os testes apaguem ou
+     * sobrescrevam o "usuarios.json" de produção.
      */
     public UsuarioRepository(String caminhoArquivo) {
         this.caminhoArquivo = caminhoArquivo;
@@ -66,39 +66,32 @@ public class UsuarioRepository {
 
     /** Busca um usuário pela matrícula. Retorna Optional vazio se não encontrar. */
     public Optional<Usuario> buscarPorMatricula(String matricula) {
-        return usuarios.stream()
-                .filter(u -> u.getMatricula().equals(matricula))
-                .findFirst();
+        return usuarios.stream().filter(u -> u.getMatricula().equals(matricula)).findFirst();
     }
 
     /** Busca um usuário pelo e-mail, ignorando maiúsculas/minúsculas. */
     public Optional<Usuario> buscarPorEmail(String email) {
-        return usuarios.stream()
-                .filter(u -> u.getEmail().equalsIgnoreCase(email))
-                .findFirst();
+        return usuarios.stream().filter(u -> u.getEmail().equalsIgnoreCase(email)).findFirst();
     }
 
     /**
-     * RF04 — Verifica se já existe um usuário com a matrícula informada.
-     * Semântica positiva evita o uso de Optional.isPresent() espalhado pelo service.
+     * RF04 — Verifica se já existe um usuário com a matrícula informada. Semântica positiva evita o uso de
+     * Optional.isPresent() espalhado pelo service.
      */
     public boolean existePorMatricula(String matricula) {
-        return usuarios.stream()
-                .anyMatch(u -> u.getMatricula().equals(matricula));
+        return usuarios.stream().anyMatch(u -> u.getMatricula().equals(matricula));
     }
 
     /**
-     * RF04 — Verifica se já existe um usuário com o e-mail informado,
-     * ignorando diferenças de maiúsculas/minúsculas.
+     * RF04 — Verifica se já existe um usuário com o e-mail informado, ignorando diferenças de maiúsculas/minúsculas.
      */
     public boolean existePorEmail(String email) {
-        return usuarios.stream()
-                .anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
+        return usuarios.stream().anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
     }
 
     /**
-     * Substitui o usuário existente com a mesma matrícula pelos novos dados e persiste.
-     * Lança exceção se a matrícula não for encontrada.
+     * Substitui o usuário existente com a mesma matrícula pelos novos dados e persiste. Lança exceção se a matrícula
+     * não for encontrada.
      */
     public void atualizar(Usuario usuarioAtualizado) {
         for (int i = 0; i < usuarios.size(); i++) {
@@ -108,12 +101,12 @@ public class UsuarioRepository {
                 return;
             }
         }
-        throw new IllegalArgumentException("Usuário com matrícula " + usuarioAtualizado.getMatricula() + " não encontrado.");
+        throw new IllegalArgumentException(
+                "Usuário com matrícula " + usuarioAtualizado.getMatricula() + " não encontrado.");
     }
 
     /**
-     * Remove o usuário com a matrícula informada e persiste.
-     * Lança exceção se a matrícula não for encontrada.
+     * Remove o usuário com a matrícula informada e persiste. Lança exceção se a matrícula não for encontrada.
      */
     public void deletar(String matricula) {
         boolean removido = usuarios.removeIf(u -> u.getMatricula().equals(matricula));

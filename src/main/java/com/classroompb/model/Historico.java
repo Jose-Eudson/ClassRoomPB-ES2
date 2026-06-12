@@ -17,11 +17,7 @@ public class Historico implements Serializable {
     public Historico() {
     }
 
-    public Historico(
-            String matriculaAluno,
-            String codigoDisciplina,
-            double notaFinal,
-            boolean aprovado) {
+    public Historico(String matriculaAluno, String codigoDisciplina, double notaFinal, boolean aprovado) {
 
         this.matriculaAluno = matriculaAluno;
         this.codigoDisciplina = codigoDisciplina;

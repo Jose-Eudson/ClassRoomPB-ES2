@@ -6,16 +6,13 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * RF16: Entidade de domínio que representa a solicitação de matrícula
- * de um aluno em uma turma.
+ * RF16: Entidade de domínio que representa a solicitação de matrícula de um aluno em uma turma.
  *
- * Uma solicitação é identificada pela combinação única
- * (matriculaAluno + codigoDisciplina + codigoPeriodo + codigoTurma).
+ * Uma solicitação é identificada pela combinação única (matriculaAluno + codigoDisciplina + codigoPeriodo +
+ * codigoTurma).
  *
- * Status possíveis:
- *   - PENDENTE  : solicitação registrada, aguardando processamento
- *   - CONFIRMADA: matrícula efetivada (vaga reservada)
- *   - CANCELADA : solicitação cancelada pelo aluno
+ * Status possíveis: - PENDENTE : solicitação registrada, aguardando processamento - CONFIRMADA: matrícula efetivada
+ * (vaga reservada) - CANCELADA : solicitação cancelada pelo aluno
  */
 public class MatriculaTurma implements Serializable {
 
@@ -40,60 +37,89 @@ public class MatriculaTurma implements Serializable {
     private LocalDateTime dataSolicitacao;
 
     /** Construtor padrão necessário para desserialização JSON. */
-    public MatriculaTurma() {}
+    public MatriculaTurma() {
+    }
 
     /**
-     * Construtor completo para criação de uma nova solicitação.
-     * O status inicial é sempre PENDENTE.
+     * Construtor completo para criação de uma nova solicitação. O status inicial é sempre PENDENTE.
      *
-     * @param matriculaAluno    matrícula do aluno
-     * @param codigoDisciplina  código da disciplina
-     * @param codigoPeriodo     código do período letivo
-     * @param codigoTurma       código da turma
+     * @param matriculaAluno
+     *            matrícula do aluno
+     * @param codigoDisciplina
+     *            código da disciplina
+     * @param codigoPeriodo
+     *            código do período letivo
+     * @param codigoTurma
+     *            código da turma
      */
-    public MatriculaTurma(
-            String matriculaAluno,
-            String codigoDisciplina,
-            String codigoPeriodo,
-            String codigoTurma
-    ) {
-        this.matriculaAluno   = matriculaAluno;
+    public MatriculaTurma(String matriculaAluno, String codigoDisciplina, String codigoPeriodo, String codigoTurma) {
+        this.matriculaAluno = matriculaAluno;
         this.codigoDisciplina = codigoDisciplina;
-        this.codigoPeriodo    = codigoPeriodo;
-        this.codigoTurma      = codigoTurma;
-        this.status           = StatusMatricula.PENDENTE;
-        this.dataSolicitacao  = LocalDateTime.now();
+        this.codigoPeriodo = codigoPeriodo;
+        this.codigoTurma = codigoTurma;
+        this.status = StatusMatricula.PENDENTE;
+        this.dataSolicitacao = LocalDateTime.now();
     }
 
     // -------------------------------------------------------------------------
     // Getters e Setters
     // -------------------------------------------------------------------------
 
-    public String getMatriculaAluno() { return matriculaAluno; }
-    public void setMatriculaAluno(String matriculaAluno) { this.matriculaAluno = matriculaAluno; }
+    public String getMatriculaAluno() {
+        return matriculaAluno;
+    }
 
-    public String getCodigoDisciplina() { return codigoDisciplina; }
-    public void setCodigoDisciplina(String codigoDisciplina) { this.codigoDisciplina = codigoDisciplina; }
+    public void setMatriculaAluno(String matriculaAluno) {
+        this.matriculaAluno = matriculaAluno;
+    }
 
-    public String getCodigoPeriodo() { return codigoPeriodo; }
-    public void setCodigoPeriodo(String codigoPeriodo) { this.codigoPeriodo = codigoPeriodo; }
+    public String getCodigoDisciplina() {
+        return codigoDisciplina;
+    }
 
-    public String getCodigoTurma() { return codigoTurma; }
-    public void setCodigoTurma(String codigoTurma) { this.codigoTurma = codigoTurma; }
+    public void setCodigoDisciplina(String codigoDisciplina) {
+        this.codigoDisciplina = codigoDisciplina;
+    }
 
-    public StatusMatricula getStatus() { return status; }
-    public void setStatus(StatusMatricula status) { this.status = status; }
+    public String getCodigoPeriodo() {
+        return codigoPeriodo;
+    }
 
-    public LocalDateTime getDataSolicitacao() { return dataSolicitacao; }
-    public void setDataSolicitacao(LocalDateTime dataSolicitacao) { this.dataSolicitacao = dataSolicitacao; }
+    public void setCodigoPeriodo(String codigoPeriodo) {
+        this.codigoPeriodo = codigoPeriodo;
+    }
+
+    public String getCodigoTurma() {
+        return codigoTurma;
+    }
+
+    public void setCodigoTurma(String codigoTurma) {
+        this.codigoTurma = codigoTurma;
+    }
+
+    public StatusMatricula getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusMatricula status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getDataSolicitacao() {
+        return dataSolicitacao;
+    }
+
+    public void setDataSolicitacao(LocalDateTime dataSolicitacao) {
+        this.dataSolicitacao = dataSolicitacao;
+    }
 
     // -------------------------------------------------------------------------
     // Identificador composto
     // -------------------------------------------------------------------------
 
     /**
-     * Retorna a chave única composta que identifica esta solicitação.
-     * Formato: "{matriculaAluno}_{codigoDisciplina}_{codigoPeriodo}_{codigoTurma}"
+     * Retorna a chave única composta que identifica esta solicitação. Formato:
+     * "{matriculaAluno}_{codigoDisciplina}_{codigoPeriodo}_{codigoTurma}"
      */
     @JsonIgnore
     public String getChaveUnica() {
@@ -105,7 +131,6 @@ public class MatriculaTurma implements Serializable {
         return String.format(
                 "[MATRICULA] Aluno: %s | Turma: %s | Disciplina: %s | Período: %s | Status: %s | Solicitado em: %s",
                 matriculaAluno, codigoTurma, codigoDisciplina, codigoPeriodo, status,
-                dataSolicitacao != null ? dataSolicitacao.toString() : "-"
-        );
+                dataSolicitacao != null ? dataSolicitacao.toString() : "-");
     }
 }

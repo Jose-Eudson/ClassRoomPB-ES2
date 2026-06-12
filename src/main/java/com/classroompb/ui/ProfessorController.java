@@ -9,9 +9,8 @@ import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.UsuarioService;
 
 /**
- * Controlador da interface do Professor.
- * Responsável pelo menu e todas as ações disponíveis para esse perfil.
- * As funcionalidades serão implementadas nas releases seguintes (RF27–RF35).
+ * Controlador da interface do Professor. Responsável pelo menu e todas as ações disponíveis para esse perfil. As
+ * funcionalidades serão implementadas nas releases seguintes (RF27–RF35).
  */
 public class ProfessorController {
 
@@ -32,17 +31,13 @@ public class ProfessorController {
         }
 
         while (true) {
-            List<String> opcoes = Arrays.asList(
-                "Visualizar turmas",
-                "Registrar frequência",
-                "Lançar notas",
-                "Acompanhar alunos",
-                "Alterar notas (antes do fechamento)",
-                "Logout"
-            );
+            List<String> opcoes = Arrays.asList("Visualizar turmas", "Registrar frequência", "Lançar notas",
+                    "Acompanhar alunos", "Alterar notas (antes do fechamento)", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU PROFESSOR", opcoes);
 
-            if (escolha == -1 || escolha == opcoes.size() - 1) break;
+            if (escolha == -1 || escolha == opcoes.size() - 1) {
+                break;
+            }
 
             // Funcionalidades implementadas nas próximas releases
             ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);

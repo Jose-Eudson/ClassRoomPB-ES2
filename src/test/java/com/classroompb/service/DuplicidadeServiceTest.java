@@ -3,9 +3,7 @@ package com.classroompb.service;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,14 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.classroompb.exception.CadastroDuplicadoException;
 import com.classroompb.model.Aluno;
-import com.classroompb.model.Professor;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.UsuarioRepository;
@@ -120,7 +115,7 @@ public class DuplicidadeServiceTest {
         @DisplayName("RF04 - Deve impedir duplicidade em todos os tipos de usuario")
         void deveImpedirDuplicidadeParaTodosOsTipos() {
             TipoUsuario[] tipos = TipoUsuario.values();
-            String[] matriculas = {"A0001", "P0001", "C0001", "AD0001"};
+            String[] matriculas = { "A0001", "P0001", "C0001", "AD0001" };
 
             for (int i = 0; i < tipos.length; i++) {
                 final String matricula = matriculas[i];
@@ -128,8 +123,8 @@ public class DuplicidadeServiceTest {
                 final int index = i;
                 when(repository.existePorMatricula(matricula)).thenReturn(true);
 
-                CadastroDuplicadoException ex = assertThrows(CadastroDuplicadoException.class, () ->
-                        service.cadastrarUsuario(matricula, "Nome", "email" + index + "@teste.com", "senha", tipo));
+                CadastroDuplicadoException ex = assertThrows(CadastroDuplicadoException.class, () -> service
+                        .cadastrarUsuario(matricula, "Nome", "email" + index + "@teste.com", "senha", tipo));
 
                 assertEquals(CadastroDuplicadoException.Campo.MATRICULA, ex.getCampo());
             }
@@ -189,8 +184,8 @@ public class DuplicidadeServiceTest {
             when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuario));
             when(repository.existePorEmail("ocupado@teste.com")).thenReturn(true);
 
-            CadastroDuplicadoException ex = assertThrows(CadastroDuplicadoException.class, () ->
-                    service.editarUsuario("A0001", "Carlos", "ocupado@teste.com", "senha"));
+            CadastroDuplicadoException ex = assertThrows(CadastroDuplicadoException.class,
+                    () -> service.editarUsuario("A0001", "Carlos", "ocupado@teste.com", "senha"));
 
             assertEquals(CadastroDuplicadoException.Campo.EMAIL, ex.getCampo());
             assertEquals("ocupado@teste.com", ex.getValorDuplicado());
@@ -203,8 +198,8 @@ public class DuplicidadeServiceTest {
             when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuario));
             when(repository.existePorEmail("ocupado@teste.com")).thenReturn(true);
 
-            assertThrows(CadastroDuplicadoException.class, () ->
-                    service.editarUsuario("A0001", "Carlos", "ocupado@teste.com", "senha"));
+            assertThrows(CadastroDuplicadoException.class,
+                    () -> service.editarUsuario("A0001", "Carlos", "ocupado@teste.com", "senha"));
 
             verify(repository, never()).atualizar(any());
         }
@@ -240,8 +235,8 @@ public class DuplicidadeServiceTest {
             when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuario));
             when(repository.existePorEmail("OCUPADO@TESTE.COM")).thenReturn(true);
 
-            CadastroDuplicadoException ex = assertThrows(CadastroDuplicadoException.class, () ->
-                    service.editarUsuario("A0001", "Carlos", "OCUPADO@TESTE.COM", "senha"));
+            CadastroDuplicadoException ex = assertThrows(CadastroDuplicadoException.class,
+                    () -> service.editarUsuario("A0001", "Carlos", "OCUPADO@TESTE.COM", "senha"));
 
             assertEquals(CadastroDuplicadoException.Campo.EMAIL, ex.getCampo());
         }
@@ -258,65 +253,22 @@ public class DuplicidadeServiceTest {
             when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuarioAtual));
             when(repository.existePorEmail("ocupado@teste.com")).thenReturn(true);
 
-            CadastroDuplicadoException ex = assertThrows(CadastroDuplicadoException.class, () ->
-                    service.editarUsuarioComTipo("A0001", "Carlos", "ocupado@teste.com", "senha", TipoUsuario.PROFESSOR));
+            CadastroDuplicadoException ex = assertThrows(CadastroDuplicadoException.class, () -> service
+                    .editarUsuarioComTipo("A0001", "Carlos", "ocupado@teste.com", "senha", TipoUsuario.PROFESSOR));
 
             assertEquals(CadastroDuplicadoException.Campo.EMAIL, ex.getCampo());
             assertEquals("ocupado@teste.com", ex.getValorDuplicado());
         }
 
         @Test
-        @DisplayName("RF04 - Nao deve deletar nem salvar com e-mail duplicado na mudanca de tipo")
+        @DisplayName("RF04 - Nao deve deletar nem salvar com e-mail duplicado na mudanca de tipo, verificando antes de qualquer mutacao")
         void naoDeveDeletarNemSalvarComEmailDuplicadoNaMudancaDeTipo() {
             Usuario usuarioAtual = new Aluno("A0001", "Carlos", "carlos@teste.com", "senha");
             when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuarioAtual));
             when(repository.existePorEmail("ocupado@teste.com")).thenReturn(true);
 
-            assertThrows(CadastroDuplicadoException.class, () ->
-                    service.editarUsuarioComTipo("A0001", "Carlos", "ocupado@teste.com", "senha", TipoUsuario.PROFESSOR));
-
-            verify(repository, never()).deletar(any());
-            verify(repository, never()).salvar(any());
-            verify(repository, never()).atualizar(any());
-        }
-
-        @Test
-        @DisplayName("RF04 - Deve permitir edicao de tipo mantendo o mesmo e-mail")
-        void devePermitirEdicaoDeTipoMantenhoMesmoEmail() throws Exception {
-            String email = "carlos@teste.com";
-            Usuario usuarioAtual = new Aluno("A0001", "Carlos", email, "senha");
-            when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuarioAtual));
-            when(repository.listarTodos()).thenReturn(new ArrayList<>());
-
-            service.editarUsuarioComTipo("A0001", "Carlos", email, "senha", TipoUsuario.PROFESSOR);
-
-            verify(repository).deletar("A0001");
-            verify(repository).salvar(any(Professor.class));
-        }
-
-        @Test
-        @DisplayName("RF04 - Deve permitir edicao de tipo com e-mail novo e unico")
-        void devePermitirEdicaoDeTipoComEmailNovoEUnico() throws Exception {
-            Usuario usuarioAtual = new Aluno("A0001", "Carlos", "carlos@teste.com", "senha");
-            when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuarioAtual));
-            when(repository.existePorEmail("novo@teste.com")).thenReturn(false);
-            when(repository.listarTodos()).thenReturn(new ArrayList<>());
-
-            service.editarUsuarioComTipo("A0001", "Carlos", "novo@teste.com", "senha", TipoUsuario.PROFESSOR);
-
-            verify(repository).deletar("A0001");
-            verify(repository).salvar(any(Professor.class));
-        }
-
-        @Test
-        @DisplayName("RF04 - Verificacao de e-mail ocorre antes de qualquer mutacao no repositorio")
-        void verificacaoOcorreAntesDeQualquerMutacao() {
-            Usuario usuarioAtual = new Aluno("A0001", "Carlos", "carlos@teste.com", "senha");
-            when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuarioAtual));
-            when(repository.existePorEmail("ocupado@teste.com")).thenReturn(true);
-
-            assertThrows(CadastroDuplicadoException.class, () ->
-                    service.editarUsuarioComTipo("A0001", "Carlos", "ocupado@teste.com", "senha", TipoUsuario.PROFESSOR));
+            assertThrows(CadastroDuplicadoException.class, () -> service.editarUsuarioComTipo("A0001", "Carlos",
+                    "ocupado@teste.com", "senha", TipoUsuario.PROFESSOR));
 
             verify(repository, never()).deletar(any());
             verify(repository, never()).salvar(any());

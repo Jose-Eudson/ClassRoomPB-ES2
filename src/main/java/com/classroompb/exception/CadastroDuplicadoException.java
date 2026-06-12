@@ -3,10 +3,9 @@ package com.classroompb.exception;
 /**
  * RF04: O sistema deve impedir cadastro duplicado por matrícula ou e-mail.
  *
- * Exceção lançada quando uma tentativa de cadastro viola a unicidade
- * de matrícula ou e-mail. Estende RuntimeException para não obrigar
- * os controladores de UI a declararem checked exceptions desnecessariamente,
- * mantendo a compatibilidade com o tratamento existente via catch (Exception e).
+ * Exceção lançada quando uma tentativa de cadastro viola a unicidade de matrícula ou e-mail. Estende RuntimeException
+ * para não obrigar os controladores de UI a declararem checked exceptions desnecessariamente, mantendo a
+ * compatibilidade com o tratamento existente via catch (Exception e).
  */
 public class CadastroDuplicadoException extends RuntimeException {
 
@@ -19,11 +18,13 @@ public class CadastroDuplicadoException extends RuntimeException {
     private final String valorDuplicado;
 
     /**
-     * @param campo          campo que violou a unicidade (MATRICULA ou EMAIL)
-     * @param valorDuplicado valor que já existe no sistema
+     * @param campo
+     *            campo que violou a unicidade (MATRICULA ou EMAIL)
+     * @param valorDuplicado
+     *            valor que já existe no sistema
      */
     public CadastroDuplicadoException(Campo campo, String valorDuplicado) {
-        super(mensagem(campo, valorDuplicado));
+        super(mensagem(campo));
         this.campo = campo;
         this.valorDuplicado = valorDuplicado;
     }
@@ -38,7 +39,7 @@ public class CadastroDuplicadoException extends RuntimeException {
         return valorDuplicado;
     }
 
-    private static String mensagem(Campo campo, String valor) {
+    private static String mensagem(Campo campo) {
         if (campo == Campo.MATRICULA) {
             return "Erro: Já existe um usuário com esta matrícula.";
         }

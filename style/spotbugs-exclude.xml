@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Filtro de exclusão do SpotBugs para o projeto ClassRoomPB.
+
+    Exclui falsos positivos em classes de interface de usuário (UI):
+    - SF_SWITCH_NO_DEFAULT: menus interativos usam switches exaustivos pelo design do menu;
+      um default redundante apenas poluiria o código sem adicionar segurança.
+    - EI_EXPOSE_REP2: controllers de UI recebem e armazenam um Scanner compartilhado
+      intencionalmente — o ciclo de vida é gerenciado pela classe Main.
+    - DM_DEFAULT_ENCODING: o Scanner da ConsoleUI já usa StandardCharsets.UTF_8.
+-->
+<FindBugsFilter>
+
+    <!-- Switch sem default em controllers de UI (menus interativos exaustivos) -->
+    <Match>
+        <Bug pattern="SF_SWITCH_NO_DEFAULT"/>
+        <Or>
+            <Class name="com.classroompb.ui.AdminController"/>
+            <Class name="com.classroompb.ui.AlunoController"/>
+            <Class name="com.classroompb.ui.CoordenadorController"/>
+            <Class name="com.classroompb.ui.Main"/>
+        </Or>
+    </Match>
+
+    <!-- Scanner compartilhado armazenado nos controllers de UI (design intencional) -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Or>
+            <Class name="com.classroompb.ui.DisciplinaController"/>
+            <Class name="com.classroompb.ui.PeriodoLetivoController"/>
+        </Or>
+    </Match>
+
+</FindBugsFilter>

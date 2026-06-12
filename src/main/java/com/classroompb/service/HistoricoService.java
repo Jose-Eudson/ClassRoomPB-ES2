@@ -19,9 +19,6 @@ public class HistoricoService {
         List<Historico> historicos = repository.buscarPorAluno(matriculaAluno);
 
         return historicos.stream()
-                .anyMatch(h ->
-                        h.getCodigoDisciplina()
-                                .equalsIgnoreCase(codigoDisciplina)
-                        && h.isAprovado());
+                .anyMatch(h -> h.getCodigoDisciplina().equalsIgnoreCase(codigoDisciplina) && h.isAprovado());
     }
 }

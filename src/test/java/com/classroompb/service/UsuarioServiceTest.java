@@ -5,23 +5,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import org.mockito.Mock;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.classroompb.exception.CadastroDuplicadoException;
@@ -155,72 +147,72 @@ public class UsuarioServiceTest {
         @Test
         @DisplayName("Nao deve cadastrar com matricula nula")
         void naoDeveCadastrarComMatriculaNula() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuario(null, "Nome", "email@teste.com", "senha", TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuario(null, "Nome", "email@teste.com", "senha", TipoUsuario.ALUNO));
             assertEquals("Erro: Matrícula não pode ser vazia.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com matricula vazia")
         void naoDeveCadastrarComMatriculaVazia() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuario("   ", "Nome", "email@teste.com", "senha", TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuario("   ", "Nome", "email@teste.com", "senha", TipoUsuario.ALUNO));
             assertEquals("Erro: Matrícula não pode ser vazia.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com nome nulo")
         void naoDeveCadastrarComNomeNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuario("A001", null, "email@teste.com", "senha", TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuario("A001", null, "email@teste.com", "senha", TipoUsuario.ALUNO));
             assertEquals("Erro: Nome não pode ser vazio.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com nome vazio")
         void naoDeveCadastrarComNomeVazio() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuario("A001", "", "email@teste.com", "senha", TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuario("A001", "", "email@teste.com", "senha", TipoUsuario.ALUNO));
             assertEquals("Erro: Nome não pode ser vazio.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com e-mail nulo")
         void naoDeveCadastrarComEmailNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuario("A001", "Nome", null, "senha", TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuario("A001", "Nome", null, "senha", TipoUsuario.ALUNO));
             assertEquals("Erro: E-mail não pode ser vazio.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com e-mail vazio")
         void naoDeveCadastrarComEmailVazio() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuario("A001", "Nome", "", "senha", TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuario("A001", "Nome", "", "senha", TipoUsuario.ALUNO));
             assertEquals("Erro: E-mail não pode ser vazio.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com senha nula")
         void naoDeveCadastrarComSenhaNula() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuario("A001", "Nome", "email@teste.com", null, TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuario("A001", "Nome", "email@teste.com", null, TipoUsuario.ALUNO));
             assertEquals("Erro: Senha não pode ser vazia.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com senha vazia")
         void naoDeveCadastrarComSenhaVazia() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuario("A001", "Nome", "email@teste.com", "", TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuario("A001", "Nome", "email@teste.com", "", TipoUsuario.ALUNO));
             assertEquals("Erro: Senha não pode ser vazia.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com tipo nulo")
         void naoDeveCadastrarComTipoNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuario("A001", "Nome", "email@teste.com", "senha", null));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuario("A001", "Nome", "email@teste.com", "senha", null));
             assertEquals("Erro: Tipo de usuário não pode ser nulo.", ex.getMessage());
         }
 
@@ -276,32 +268,32 @@ public class UsuarioServiceTest {
         @Test
         @DisplayName("Nao deve cadastrar com matricula automatica com nome nulo")
         void naoDeveCadastrarAutomaticoComNomeNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuarioComMatriculaAutomatica(null, "email@teste.com", "senha", TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class, () -> service.cadastrarUsuarioComMatriculaAutomatica(null,
+                    "email@teste.com", "senha", TipoUsuario.ALUNO));
             assertEquals("Erro: Nome não pode ser vazio.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com matricula automatica com e-mail nulo")
         void naoDeveCadastrarAutomaticoComEmailNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuarioComMatriculaAutomatica("Nome", null, "senha", TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuarioComMatriculaAutomatica("Nome", null, "senha", TipoUsuario.ALUNO));
             assertEquals("Erro: E-mail não pode ser vazio.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com matricula automatica com senha nula")
         void naoDeveCadastrarAutomaticoComSenhaNula() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuarioComMatriculaAutomatica("Nome", "email@teste.com", null, TipoUsuario.ALUNO));
+            Exception ex = assertThrows(Exception.class, () -> service.cadastrarUsuarioComMatriculaAutomatica("Nome",
+                    "email@teste.com", null, TipoUsuario.ALUNO));
             assertEquals("Erro: Senha não pode ser vazia.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com matricula automatica com tipo nulo")
         void naoDeveCadastrarAutomaticoComTipoNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.cadastrarUsuarioComMatriculaAutomatica("Nome", "email@teste.com", "senha", null));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.cadastrarUsuarioComMatriculaAutomatica("Nome", "email@teste.com", "senha", null));
             assertEquals("Erro: Tipo de usuário não pode ser nulo.", ex.getMessage());
         }
     }
@@ -393,20 +385,18 @@ public class UsuarioServiceTest {
             Usuario usuario = new Aluno("A001", "Login", "login@teste.com", "correta");
             when(repository.buscarPorEmail("login@teste.com")).thenReturn(Optional.of(usuario));
 
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.login("login@teste.com", "errada"));
+            Exception ex = assertThrows(Exception.class, () -> service.login("login@teste.com", "errada"));
 
             assertEquals("Erro: Senha incorreta.", ex.getMessage());
         }
 
         @Test
-        @DisplayName("Nao deve permitir login com tipo e matricula inconsistentes")
+        @DisplayName("Nao deve permitir login com tipo e matricula inconsistentes (coordenador com prefixo de aluno)")
         void naoDevePermitirLoginComTipoEMatriculaInconsistentes() {
-            Usuario adulterado = new Administrador("P0001", "Fake", "fake@teste.com", "admin");
-            when(repository.buscarPorMatricula("P0001")).thenReturn(Optional.of(adulterado));
+            Usuario adulterado = new Coordenador("A0001", "Fake", "fake@teste.com", "admin");
+            when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(adulterado));
 
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.login("P0001", "admin"));
+            Exception ex = assertThrows(Exception.class, () -> service.login("A0001", "admin"));
 
             assertEquals("Erro: Dados de acesso inválidos para o perfil do usuário.", ex.getMessage());
         }
@@ -445,8 +435,7 @@ public class UsuarioServiceTest {
             Usuario usuario = new Aluno("A0001", "Carlos", "carlos@teste.com", "Senha123");
             when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuario));
 
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.login("A0001", "senha123"));
+            Exception ex = assertThrows(Exception.class, () -> service.login("A0001", "senha123"));
 
             assertEquals("Erro: Senha incorreta.", ex.getMessage());
         }
@@ -494,8 +483,8 @@ public class UsuarioServiceTest {
             when(repository.buscarPorMatricula("A001")).thenReturn(Optional.of(usuario));
             when(repository.existePorEmail("outro@teste.com")).thenReturn(true);
 
-            CadastroDuplicadoException ex = assertThrows(CadastroDuplicadoException.class, () ->
-                    service.editarUsuario("A001", "Novo", "outro@teste.com", "senha"));
+            CadastroDuplicadoException ex = assertThrows(CadastroDuplicadoException.class,
+                    () -> service.editarUsuario("A001", "Novo", "outro@teste.com", "senha"));
 
             assertEquals(CadastroDuplicadoException.Campo.EMAIL, ex.getCampo());
             assertEquals("outro@teste.com", ex.getValorDuplicado());
@@ -504,8 +493,8 @@ public class UsuarioServiceTest {
         @Test
         @DisplayName("Nao deve editar com matricula nula")
         void naoDeveEditarComMatriculaNula() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.editarUsuario(null, "Nome", "email@teste.com", "senha"));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.editarUsuario(null, "Nome", "email@teste.com", "senha"));
             assertEquals("Erro: Matrícula não pode ser vazia.", ex.getMessage());
         }
 
@@ -524,32 +513,29 @@ public class UsuarioServiceTest {
             verify(repository).salvar(any(Professor.class));
         }
 
-        @Test
-        @DisplayName("Deve editar tipo de usuario: aluno para coordenador")
-        void deveEditarTipoAlunoParaCoordenador() throws Exception {
+        private <T extends Usuario> void assertEditaTipoAluno(TipoUsuario novoTipo, Class<T> classeEsperada)
+                throws Exception {
             Usuario usuarioAntigo = new Aluno("A0001", "Velho", "velho@email.com", "123");
             when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuarioAntigo));
             when(repository.existePorEmail("novo@email.com")).thenReturn(false);
             when(repository.listarTodos()).thenReturn(new ArrayList<>());
 
-            service.editarUsuarioComTipo("A0001", "Novo", "novo@email.com", "123", TipoUsuario.COORDENADOR);
+            service.editarUsuarioComTipo("A0001", "Novo", "novo@email.com", "123", novoTipo);
 
             verify(repository).deletar("A0001");
-            verify(repository).salvar(any(Coordenador.class));
+            verify(repository).salvar(any(classeEsperada));
+        }
+
+        @Test
+        @DisplayName("Deve editar tipo de usuario: aluno para coordenador")
+        void deveEditarTipoAlunoParaCoordenador() throws Exception {
+            assertEditaTipoAluno(TipoUsuario.COORDENADOR, Coordenador.class);
         }
 
         @Test
         @DisplayName("Deve editar tipo de usuario: aluno para administrador")
         void deveEditarTipoAlunoParaAdministrador() throws Exception {
-            Usuario usuarioAntigo = new Aluno("A0001", "Velho", "velho@email.com", "123");
-            when(repository.buscarPorMatricula("A0001")).thenReturn(Optional.of(usuarioAntigo));
-            when(repository.existePorEmail("novo@email.com")).thenReturn(false);
-            when(repository.listarTodos()).thenReturn(new ArrayList<>());
-
-            service.editarUsuarioComTipo("A0001", "Novo", "novo@email.com", "123", TipoUsuario.ADMINISTRADOR);
-
-            verify(repository).deletar("A0001");
-            verify(repository).salvar(any(Administrador.class));
+            assertEditaTipoAluno(TipoUsuario.ADMINISTRADOR, Administrador.class);
         }
 
         @Test
@@ -569,8 +555,8 @@ public class UsuarioServiceTest {
         @Test
         @DisplayName("Nao deve editar com tipo nulo")
         void naoDeveEditarComTipoNulo() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.editarUsuarioComTipo("A001", "Nome", "email@teste.com", "senha", null));
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.editarUsuarioComTipo("A001", "Nome", "email@teste.com", "senha", null));
             assertEquals("Erro: Tipo de usuário não pode ser nulo.", ex.getMessage());
         }
 
@@ -620,24 +606,21 @@ public class UsuarioServiceTest {
         @Test
         @DisplayName("Nao deve deletar com matricula nula")
         void naoDeveDeletarComMatriculaNula() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.deletarUsuario(null));
+            Exception ex = assertThrows(Exception.class, () -> service.deletarUsuario(null));
             assertEquals("Erro: Matrícula não pode ser vazia.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve deletar com matricula vazia")
         void naoDeveDeletarComMatriculaVazia() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.deletarUsuario(""));
+            Exception ex = assertThrows(Exception.class, () -> service.deletarUsuario(""));
             assertEquals("Erro: Matrícula não pode ser vazia.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve deletar com matricula apenas espacos")
         void naoDeveDeletarComMatriculaApenasEspacos() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.deletarUsuario("   "));
+            Exception ex = assertThrows(Exception.class, () -> service.deletarUsuario("   "));
             assertEquals("Erro: Matrícula não pode ser vazia.", ex.getMessage());
         }
     }
@@ -672,16 +655,14 @@ public class UsuarioServiceTest {
         @Test
         @DisplayName("Nao deve buscar com matricula nula")
         void naoDeveBuscarComMatriculaNula() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.buscarUsuarioPorMatricula(null));
+            Exception ex = assertThrows(Exception.class, () -> service.buscarUsuarioPorMatricula(null));
             assertEquals("Erro: Matrícula não pode ser vazia.", ex.getMessage());
         }
 
         @Test
         @DisplayName("Nao deve buscar com matricula vazia")
         void naoDeveBuscarComMatriculaVazia() {
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.buscarUsuarioPorMatricula(""));
+            Exception ex = assertThrows(Exception.class, () -> service.buscarUsuarioPorMatricula(""));
             assertEquals("Erro: Matrícula não pode ser vazia.", ex.getMessage());
         }
 
@@ -696,10 +677,8 @@ public class UsuarioServiceTest {
         @Test
         @DisplayName("Deve obter todos os usuarios via obterTodosUsuarios")
         void deveObterTodosUsuarios() {
-            List<Usuario> lista = Arrays.asList(
-                    new Aluno("A001", "Alice", "alice@teste.com", "123"),
-                    new Professor("P001", "Bob", "bob@teste.com", "456")
-            );
+            List<Usuario> lista = Arrays.asList(new Aluno("A001", "Alice", "alice@teste.com", "123"),
+                    new Professor("P001", "Bob", "bob@teste.com", "456"));
             when(repository.listarTodos()).thenReturn(lista);
 
             List<Usuario> resultado = service.obterTodosUsuarios();

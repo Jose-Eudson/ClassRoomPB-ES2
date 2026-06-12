@@ -266,8 +266,8 @@ public class ModelTest {
         @Test
         @DisplayName("toString de Disciplina deve conter todos os dados principais")
         void toStringDisciplinaDeveConterDados() {
-            Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 
-            		60, 4, Arrays.asList("ES1", "POO"));
+            Disciplina disciplina = new Disciplina("ES2", "Engenharia de Software 2", 60, 4,
+                    Arrays.asList("ES1", "POO"));
             String str = disciplina.toString();
             assertTrue(str.contains("ES2"));
             assertTrue(str.contains("Engenharia de Software 2"));
@@ -284,7 +284,7 @@ public class ModelTest {
     class UsuarioAbstractTest {
         // Como Usuario é abstrato, testamos através de uma implementação concreta (Aluno já testado)
         // Mas podemos validar o comportamento comum aqui se necessário.
-        
+
         @Test
         @DisplayName("Deve validar que Usuario retem dados comuns")
         void deveValidarDadosComuns() {

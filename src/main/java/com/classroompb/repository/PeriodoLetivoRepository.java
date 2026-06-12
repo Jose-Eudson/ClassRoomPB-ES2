@@ -30,18 +30,11 @@ public class PeriodoLetivoRepository {
 
         try {
 
-            this.periodos =
-                    JsonUtil.carregarLista(
-                            caminhoArquivo,
-                            PeriodoLetivo.class
-                    );
+            this.periodos = JsonUtil.carregarLista(caminhoArquivo, PeriodoLetivo.class);
 
         } catch (IOException e) {
 
-            System.err.println(
-                    "Erro ao carregar periodos: "
-                            + e.getMessage()
-            );
+            System.err.println("Erro ao carregar periodos: " + e.getMessage());
 
             this.periodos = new ArrayList<>();
         }
@@ -56,17 +49,11 @@ public class PeriodoLetivoRepository {
 
         try {
 
-            JsonUtil.salvar(
-                    caminhoArquivo,
-                    periodos
-            );
+            JsonUtil.salvar(caminhoArquivo, periodos);
 
         } catch (IOException e) {
 
-            System.err.println(
-                    "Erro ao salvar periodos: "
-                            + e.getMessage()
-            );
+            System.err.println("Erro ao salvar periodos: " + e.getMessage());
         }
     }
 
@@ -84,21 +71,11 @@ public class PeriodoLetivoRepository {
 
     public boolean existePorCodigo(String codigo) {
 
-        return periodos.stream()
-                .anyMatch(
-                        p -> p.getCodigo()
-                                .equalsIgnoreCase(codigo)
-                );
+        return periodos.stream().anyMatch(p -> p.getCodigo().equalsIgnoreCase(codigo));
     }
 
     public PeriodoLetivo buscarPorCodigo(String codigo) {
 
-        return periodos.stream()
-                .filter(
-                        p -> p.getCodigo()
-                                .equalsIgnoreCase(codigo)
-                )
-                .findFirst()
-                .orElse(null);
+        return periodos.stream().filter(p -> p.getCodigo().equalsIgnoreCase(codigo)).findFirst().orElse(null);
     }
 }

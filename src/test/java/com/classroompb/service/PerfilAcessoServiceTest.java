@@ -58,8 +58,7 @@ public class PerfilAcessoServiceTest {
     @Test
     @DisplayName("Deve falhar quando usuario nao esta autenticado (null)")
     void deveFalharQuandoUsuarioNaoAutenticado() {
-        Exception ex = assertThrows(Exception.class,
-                () -> PerfilAcessoService.validarPerfil(null, TipoUsuario.ALUNO));
+        Exception ex = assertThrows(Exception.class, () -> PerfilAcessoService.validarPerfil(null, TipoUsuario.ALUNO));
 
         assertEquals("Erro: Usuário não autenticado.", ex.getMessage());
     }
@@ -69,8 +68,7 @@ public class PerfilAcessoServiceTest {
     void deveFalharQuandoPerfilEsperadoNulo() {
         Usuario aluno = new Aluno("A0001", "Carlos", "carlos@teste.com", "123");
 
-        Exception ex = assertThrows(Exception.class,
-                () -> PerfilAcessoService.validarPerfil(aluno, null));
+        Exception ex = assertThrows(Exception.class, () -> PerfilAcessoService.validarPerfil(aluno, null));
 
         assertEquals("Erro: Perfil esperado não pode ser nulo.", ex.getMessage());
     }

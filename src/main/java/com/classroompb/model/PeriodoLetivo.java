@@ -17,16 +17,11 @@ public class PeriodoLetivo implements Serializable {
     private LocalDate dataFim;
     private boolean ativo;
 
-    public PeriodoLetivo() {}
+    public PeriodoLetivo() {
+    }
 
-    public PeriodoLetivo(
-            String codigo,  //2026.1
-            int ano,
-            int semestre,
-            LocalDate dataInicio,
-            LocalDate dataFim,
-            boolean ativo 
-    ) {
+    public PeriodoLetivo(String codigo, // 2026.1
+            int ano, int semestre, LocalDate dataInicio, LocalDate dataFim, boolean ativo) {
         this.codigo = codigo;
         this.ano = ano;
         this.semestre = semestre;
@@ -88,14 +83,7 @@ public class PeriodoLetivo implements Serializable {
 
         String status = ativo ? "ATIVO" : "INATIVO";
 
-        return String.format(
-                "[PERIODO LETIVO] %s - %d.%d | %s ate %s | %s",
-                codigo,
-                ano,
-                semestre,
-                dataInicio,
-                dataFim,
-                status
-        );
+        return String.format("[PERIODO LETIVO] %s - %d.%d | %s ate %s | %s", codigo, ano, semestre, dataInicio, dataFim,
+                status);
     }
 }

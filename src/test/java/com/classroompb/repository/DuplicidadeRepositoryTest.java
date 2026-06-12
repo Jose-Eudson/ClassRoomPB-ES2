@@ -20,9 +20,8 @@ import com.classroompb.model.Professor;
  *
  * RF04: O sistema deve impedir cadastro duplicado por matrícula ou e-mail.
  *
- * Complementa os testes de PrevenirCadastroDuplicado em UsuarioRepositoryTest
- * cobrindo cenários de borda: persistência entre sessões, todos os tipos de
- * usuário, variações de casing no e-mail e sequências de operações.
+ * Complementa os testes de PrevenirCadastroDuplicado em UsuarioRepositoryTest cobrindo cenários de borda: persistência
+ * entre sessões, todos os tipos de usuário, variações de casing no e-mail e sequências de operações.
  */
 @DisplayName("RF04 — Validação de duplicidade no UsuarioRepository")
 public class DuplicidadeRepositoryTest {

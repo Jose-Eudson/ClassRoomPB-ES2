@@ -1,12 +1,14 @@
 package com.classroompb.ui;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Scanner;
 
 /**
- * Utilitário de interface de usuário para o console.
- * Fornece métodos estáticos para exibir menus interativos, tabelas, mensagens
- * e capturar entradas do usuário, com suporte a cores ANSI.
+ * Utilitário de interface de usuário para o console. Fornece métodos estáticos para exibir menus interativos, tabelas,
+ * mensagens e capturar entradas do usuário, com suporte a cores ANSI.
  */
 
 public class ConsoleUI {
@@ -18,15 +20,16 @@ public class ConsoleUI {
     private static final String GREEN = "\u001B[32m";
     private static final String RED = "\u001B[31m";
 
-    private static final Scanner scanner = new Scanner(System.in);
+    private static final Scanner SCANNER = new Scanner(new InputStreamReader(System.in, StandardCharsets.UTF_8));
     private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
 
     /**
      * Repete uma string N vezes — substitui String.repeat() ausente em Java 8/10.
      */
     private static String repeat(String str, int count) {
-        if (count <= 0)
+        if (count <= 0) {
             return "";
+        }
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < count; i++) {
             sb.append(str);
@@ -35,14 +38,13 @@ public class ConsoleUI {
     }
 
     /**
-     * Limpa a tela do terminal. No Windows usa 'cls'; nos demais, usa sequência
-     * ANSI.
+     * Limpa a tela do terminal. No Windows usa 'cls'; nos demais, usa sequência ANSI.
      */
     public static void limparTela() {
         if (IS_WINDOWS) {
             try {
                 new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
-            } catch (Exception e) {
+            } catch (IOException | InterruptedException e) {
                 System.out.print(CLEAR_SCREEN);
             }
         } else {
@@ -61,8 +63,7 @@ public class ConsoleUI {
     }
 
     /**
-     * Centraliza um texto dentro de uma largura fixa preenchendo com espaços à
-     * esquerda.
+     * Centraliza um texto dentro de uma largura fixa preenchendo com espaços à esquerda.
      */
     private static String centralizarTexto(String texto, int largura) {
         int espacos = (largura - texto.length()) / 2;
@@ -70,16 +71,15 @@ public class ConsoleUI {
     }
 
     /**
-     * Exibe um menu interativo por numeração.
-     * Retorna o índice da opção selecionada.
+     * Exibe um menu interativo por numeração. Retorna o índice da opção selecionada.
      */
     public static int exibirMenuInterativo(String titulo, List<String> opcoes) {
         return exibirMenuNumerico(titulo, opcoes);
     }
 
     /**
-     * Menu de fallback para ambientes sem suporte a captura de teclas.
-     * O usuário digita o número da opção e confirma com ENTER.
+     * Menu de fallback para ambientes sem suporte a captura de teclas. O usuário digita o número da opção e confirma
+     * com ENTER.
      */
     private static int exibirMenuNumerico(String titulo, List<String> opcoes) {
         while (true) {
@@ -93,7 +93,7 @@ public class ConsoleUI {
             }
 
             System.out.print("\n" + BOLD + "Escolha: " + RESET);
-            String entrada = scanner.nextLine();
+            String entrada = SCANNER.nextLine();
 
             if (entrada == null || entrada.trim().isEmpty()) {
                 continue;
@@ -119,12 +119,12 @@ public class ConsoleUI {
     /** Exibe um prompt e lê uma linha de texto digitada pelo usuário. */
     public static String lerEntrada(String prompt) {
         System.out.print(BOLD + prompt + RESET);
-        return scanner.nextLine();
+        return SCANNER.nextLine();
     }
 
     /**
-     * Lê uma senha de forma oculta (sem ecoar no terminal) se o console suportar.
-     * Caso contrário, usa lerEntrada como fallback.
+     * Lê uma senha de forma oculta (sem ecoar no terminal) se o console suportar. Caso contrário, usa lerEntrada como
+     * fallback.
      */
     public static String lerSenha(String prompt) {
         if (System.console() != null) {
@@ -135,14 +135,14 @@ public class ConsoleUI {
     }
 
     public static void aguardarEnter() {
-        scanner.nextLine();
+        SCANNER.nextLine();
     }
 
     /**
-     * Exibe uma mensagem de sucesso (verde) ou erro (vermelho) e aguarda ENTER para
-     * continuar.
+     * Exibe uma mensagem de sucesso (verde) ou erro (vermelho) e aguarda ENTER para continuar.
      *
-     * @param erro true para mensagem de erro, false para mensagem de sucesso
+     * @param erro
+     *            true para mensagem de erro, false para mensagem de sucesso
      */
     public static void exibirMensagem(String mensagem, boolean erro) {
         String cor = erro ? RED : GREEN;
@@ -152,12 +152,13 @@ public class ConsoleUI {
     }
 
     /**
-     * Exibe uma tabela formatada com bordas no console.
-     * Calcula automaticamente a largura de cada coluna com base no conteúdo.
+     * Exibe uma tabela formatada com bordas no console. Calcula automaticamente a largura de cada coluna com base no
+     * conteúdo.
      *
-     * @param colunas Nomes das colunas (cabeçalho)
-     * @param linhas  Dados de cada linha, onde cada String[] representa uma linha
-     *                da tabela
+     * @param colunas
+     *            Nomes das colunas (cabeçalho)
+     * @param linhas
+     *            Dados de cada linha, onde cada String[] representa uma linha da tabela
      */
     public static void exibirTabela(String[] colunas, List<String[]> linhas) {
         StringBuilder sb = new StringBuilder();
@@ -175,8 +176,9 @@ public class ConsoleUI {
 
         // Linha separadora superior
         sb.append(CYAN);
-        for (int w : larguras)
+        for (int w : larguras) {
             sb.append("+").append(repeat("-", w + 2));
+        }
         sb.append("+\n");
 
         // Linha de cabeçalho
@@ -186,8 +188,9 @@ public class ConsoleUI {
         sb.append("|\n");
 
         // Linha separadora após cabeçalho
-        for (int w : larguras)
+        for (int w : larguras) {
             sb.append("+").append(repeat("-", w + 2));
+        }
         sb.append("+\n").append(RESET);
 
         // Linhas de dados
@@ -201,8 +204,9 @@ public class ConsoleUI {
 
         // Linha separadora inferior
         sb.append(CYAN);
-        for (int w : larguras)
+        for (int w : larguras) {
             sb.append("+").append(repeat("-", w + 2));
+        }
         sb.append("+\n").append(RESET);
 
         System.out.print(sb.toString());

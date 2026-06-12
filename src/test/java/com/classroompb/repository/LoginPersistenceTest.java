@@ -19,9 +19,8 @@ import com.classroompb.service.UsuarioService;
 /**
  * Testes de persistência do fluxo de login.
  *
- * Simula o ciclo "fechar e reabrir o programa" criando novas instâncias de
- * UsuarioRepository que leem do mesmo arquivo temporário.
- * O @TempDir garante isolamento total entre testes.
+ * Simula o ciclo "fechar e reabrir o programa" criando novas instâncias de UsuarioRepository que leem do mesmo arquivo
+ * temporário. O @TempDir garante isolamento total entre testes.
  */
 
 @DisplayName("Testes de persistência de Login")
@@ -72,8 +71,7 @@ public class LoginPersistenceTest {
             UsuarioRepository novoRepo = new UsuarioRepository(arquivoTemp());
             UsuarioService novoService = new UsuarioService(novoRepo);
 
-            assertThrows(Exception.class, () ->
-                    novoService.login("naoexiste@teste.com", "123"));
+            assertThrows(Exception.class, () -> novoService.login("naoexiste@teste.com", "123"));
         }
 
         @Test
@@ -85,8 +83,7 @@ public class LoginPersistenceTest {
             UsuarioRepository novoRepo = new UsuarioRepository(arquivoTemp());
             UsuarioService novoService = new UsuarioService(novoRepo);
 
-            assertThrows(Exception.class, () ->
-                    novoService.login("joao@teste.com", "senha"));
+            assertThrows(Exception.class, () -> novoService.login("joao@teste.com", "senha"));
         }
 
         @Test
@@ -105,8 +102,7 @@ public class LoginPersistenceTest {
             assertNotNull(novoService.login("joao@teste.com", "senhaNova"));
 
             // Senha antiga não deve mais funcionar
-            assertThrows(Exception.class, () ->
-                    novoService.login("joao@teste.com", "senhaAntiga"));
+            assertThrows(Exception.class, () -> novoService.login("joao@teste.com", "senhaAntiga"));
         }
     }
 
@@ -125,7 +121,7 @@ public class LoginPersistenceTest {
             UsuarioService novoService = new UsuarioService(novoRepo);
 
             Usuario alice = novoService.login("alice@teste.com", "pass1");
-            Usuario bob   = novoService.login("bob@teste.com",   "pass2");
+            Usuario bob = novoService.login("bob@teste.com", "pass2");
 
             assertEquals("A001", alice.getMatricula());
             assertEquals("P001", bob.getMatricula());
@@ -135,16 +131,14 @@ public class LoginPersistenceTest {
         @DisplayName("Não deve misturar senhas entre usuários distintos")
         void naoDeveMisturarSenhasEntreUsuarios() throws Exception {
             repository.salvar(new Aluno("A001", "Alice", "alice@teste.com", "senhaAlice"));
-            repository.salvar(new Aluno("A002", "Bob",   "bob@teste.com",   "senhaBob"));
+            repository.salvar(new Aluno("A002", "Bob", "bob@teste.com", "senhaBob"));
 
             UsuarioRepository novoRepo = new UsuarioRepository(arquivoTemp());
             UsuarioService novoService = new UsuarioService(novoRepo);
 
             // Alice não pode logar com a senha de Bob e vice-versa
-            assertThrows(Exception.class, () ->
-                    novoService.login("alice@teste.com", "senhaBob"));
-            assertThrows(Exception.class, () ->
-                    novoService.login("bob@teste.com", "senhaAlice"));
+            assertThrows(Exception.class, () -> novoService.login("alice@teste.com", "senhaBob"));
+            assertThrows(Exception.class, () -> novoService.login("bob@teste.com", "senhaAlice"));
         }
     }
 
@@ -175,8 +169,7 @@ public class LoginPersistenceTest {
             UsuarioRepository novoRepo = new UsuarioRepository(arquivoTemp());
             UsuarioService novoService = new UsuarioService(novoRepo);
 
-            assertThrows(Exception.class, () ->
-                    novoService.login("A9999", "senha"));
+            assertThrows(Exception.class, () -> novoService.login("A9999", "senha"));
         }
     }
 }

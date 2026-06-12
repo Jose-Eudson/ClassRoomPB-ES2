@@ -30,10 +30,7 @@ public class JsonUtilTest {
         @DisplayName("Deve salvar lista e criar arquivo")
         void deveSalvarListaECriarArquivo() throws IOException {
             String caminho = tempDir.resolve("cursos.json").toString();
-            List<Curso> cursos = Arrays.asList(
-                    new Curso("ADS", "Analise", 3200),
-                    new Curso("SI", "Sistemas", 3000)
-            );
+            List<Curso> cursos = Arrays.asList(new Curso("ADS", "Analise", 3200), new Curso("SI", "Sistemas", 3000));
             JsonUtil.salvar(caminho, cursos);
             assertTrue(new File(caminho).exists());
         }
@@ -67,10 +64,7 @@ public class JsonUtilTest {
         @DisplayName("Deve carregar lista salva anteriormente")
         void deveCarregarListaSalvaAnteriormente() throws IOException {
             String caminho = tempDir.resolve("cursos.json").toString();
-            List<Curso> original = Arrays.asList(
-                    new Curso("ADS", "Analise", 3200),
-                    new Curso("SI", "Sistemas", 3000)
-            );
+            List<Curso> original = Arrays.asList(new Curso("ADS", "Analise", 3200), new Curso("SI", "Sistemas", 3000));
             JsonUtil.salvar(caminho, original);
             List<Curso> carregado = JsonUtil.carregarLista(caminho, Curso.class);
             assertEquals(2, carregado.size());

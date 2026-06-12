@@ -156,6 +156,70 @@ O projeto segue a arquitetura em camadas padrão:
 
 ---
 
+## 🎨 Guia de Estilo e Qualidade de Código
+
+O projeto utiliza uma cadeia completa de ferramentas de qualidade integradas ao Maven. Elas rodam automaticamente no build — você não precisa configurar nada manualmente.
+
+### Ferramentas utilizadas
+
+| Ferramenta | Papel | Executa em |
+|---|---|---|
+| **EditorConfig** | Formatação básica no editor (charset, indentação, EOL) | Ao salvar (IDE) |
+| **formatter-maven-plugin** | Auto-formatação Java uniforme | `mvn compile` |
+| **Checkstyle** | Convenções de nomenclatura e imports | `mvn validate` |
+| **PMD + CPD** | Boas práticas e detecção de código duplicado | `mvn verify` |
+| **SpotBugs** | Bugs potenciais no bytecode | `mvn verify` |
+| **JaCoCo** | Cobertura de testes (mínimo **80%**) | `mvn test` |
+
+### Convenções de nomenclatura (Checkstyle)
+
+| Elemento | Convenção | Exemplo |
+|---|---|---|
+| Classes e interfaces | `PascalCase` | `UsuarioService` |
+| Métodos | `camelCase` | `buscarPorEmail()` |
+| Variáveis e parâmetros | `camelCase` | `nomeAluno` |
+| Constantes | `UPPER_SNAKE_CASE` | `MAX_VAGAS` |
+| Pacotes | `minúsculas` | `com.classroompb.service` |
+
+Regras adicionais: sem `import *` no código de produção, chaves obrigatórias em `if/else/for/while`, proibido `==` para comparar Strings, complexidade ciclomática máxima de 25 por método.
+
+**Exceção para testes:** arquivos `*Test.java` permitem `import static.*` de Assertions e nomes de método com `_` (padrão BDD: `deveFazerX_quandoY`).
+
+### Comandos úteis de qualidade
+
+```bash
+# Rodar tudo (formatter + checkstyle + testes + jacoco)
+mvn test
+
+# Rodar tudo incluindo PMD e SpotBugs (recomendado antes de commit)
+mvn verify
+
+# Formatar código manualmente
+mvn formatter:format
+
+# Ver relatório de cobertura (abrir no navegador após mvn test)
+# target/site/jacoco/index.html
+
+# Ver relatório de bugs do SpotBugs com interface visual
+mvn spotbugs:spotbugs spotbugs:gui
+
+# Ver relatórios PMD/CPD
+mvn pmd:pmd pmd:cpd
+# target/site/pmd.html e target/site/cpd.html
+```
+
+### Arquivos de configuração de estilo
+
+| Arquivo | Descrição |
+|---|---|
+| `.editorconfig` | Configurações básicas de formatação para os editores |
+| `checkstyle.xml` | Regras customizadas do Checkstyle (nomenclatura, imports, complexidade) |
+| `style/spotbugs-exclude.xml` | Exclusões de falsos positivos do SpotBugs para classes de UI |
+
+> Para mais detalhes sobre cada ferramenta, consulte o documento **`guia-de-estilo-classroompb.pdf`** na pasta `releases/`.
+
+---
+
 ## 🔧 Dependências Principais
 
 | Dependência | Versão | Uso |

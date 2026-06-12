@@ -19,8 +19,7 @@ import com.classroompb.service.UsuarioService;
 import com.classroompb.model.StatusMatricula;
 
 /**
- * Controlador da interface do Aluno.
- * Responsável pelo menu e todas as ações disponíveis para esse perfil.
+ * Controlador da interface do Aluno. Responsável pelo menu e todas as ações disponíveis para esse perfil.
  */
 public class AlunoController {
 
@@ -35,19 +34,13 @@ public class AlunoController {
         this(service, null, null, null, null);
     }
 
-    public AlunoController(
-            UsuarioService service,
-            DisciplinaService disciplinaService,
-            PeriodoLetivoService periodoLetivoService,
-            TurmaService turmaService) {
+    public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
+            PeriodoLetivoService periodoLetivoService, TurmaService turmaService) {
         this(service, disciplinaService, periodoLetivoService, turmaService, null);
     }
 
-    public AlunoController(
-            UsuarioService service,
-            DisciplinaService disciplinaService,
-            PeriodoLetivoService periodoLetivoService,
-            TurmaService turmaService,
+    public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
+            PeriodoLetivoService periodoLetivoService, TurmaService turmaService,
             MatriculaTurmaService matriculaService) {
         this.service = service;
         this.disciplinaService = disciplinaService;
@@ -66,33 +59,30 @@ public class AlunoController {
         }
 
         while (true) {
-            List<String> opcoes = Arrays.asList(
-                    "Consultar disciplinas e turmas",
-                    "Solicitar matrícula em turma",
-                    "Cancelar matrícula",
-                    "Minhas solicitações de matrícula",
-                    "Logout");
+            List<String> opcoes = Arrays.asList("Consultar disciplinas e turmas", "Solicitar matrícula em turma",
+                    "Cancelar matrícula", "Minhas solicitações de matrícula", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU ALUNO", opcoes);
 
-            if (escolha == -1 || escolha == opcoes.size() - 1)
+            if (escolha == -1 || escolha == opcoes.size() - 1) {
                 break;
+            }
 
             switch (escolha) {
-                case 0:
-                    consultarDisciplinasETurmas();
-                    break;
-                case 1:
-                    solicitarMatricula(usuario);
-                    break;
-                case 2:
-                    cancelarSolicitacaoMatricula(usuario);
-                    break;
-                case 3:
-                    listarMinhasSolicitacoes(usuario);
-                    break;
-                default:
-                    ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
-                    break;
+            case 0:
+                consultarDisciplinasETurmas();
+                break;
+            case 1:
+                solicitarMatricula(usuario);
+                break;
+            case 2:
+                cancelarSolicitacaoMatricula(usuario);
+                break;
+            case 3:
+                listarMinhasSolicitacoes(usuario);
+                break;
+            default:
+                ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
+                break;
             }
         }
     }
@@ -102,9 +92,8 @@ public class AlunoController {
     // -------------------------------------------------------------------------
 
     /**
-     * Fluxo principal de consulta de disciplinas e turmas.
-     * Permite ao aluno visualizar disciplinas cadastradas e as turmas
-     * ofertadas no período letivo ativo.
+     * Fluxo principal de consulta de disciplinas e turmas. Permite ao aluno visualizar disciplinas cadastradas e as
+     * turmas ofertadas no período letivo ativo.
      */
     private void consultarDisciplinasETurmas() {
         if (disciplinaService == null || periodoLetivoService == null || turmaService == null) {
@@ -113,26 +102,24 @@ public class AlunoController {
         }
 
         while (true) {
-            List<String> opcoes = Arrays.asList(
-                    "Listar todas as disciplinas",
-                    "Listar turmas do período ativo",
-                    "Buscar turmas por disciplina",
-                    "Voltar");
+            List<String> opcoes = Arrays.asList("Listar todas as disciplinas", "Listar turmas do período ativo",
+                    "Buscar turmas por disciplina", "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("CONSULTAR DISCIPLINAS E TURMAS", opcoes);
 
-            if (escolha == -1 || escolha == opcoes.size() - 1)
+            if (escolha == -1 || escolha == opcoes.size() - 1) {
                 return;
+            }
 
             switch (escolha) {
-                case 0:
-                    listarTodasDisciplinas();
-                    break;
-                case 1:
-                    listarTurmasDoPeriodoAtivo();
-                    break;
-                case 2:
-                    buscarTurmasPorDisciplina();
-                    break;
+            case 0:
+                listarTodasDisciplinas();
+                break;
+            case 1:
+                listarTurmasDoPeriodoAtivo();
+                break;
+            case 2:
+                buscarTurmasPorDisciplina();
+                break;
             }
         }
     }
@@ -152,16 +139,10 @@ public class AlunoController {
         String[] colunas = { "Código", "Nome", "C.H. (h)", "Créditos", "Pré-requisitos" };
         List<String[]> linhas = new ArrayList<>();
         for (Disciplina d : disciplinas) {
-            String preReqs = (d.getPreRequisitos() == null || d.getPreRequisitos().isEmpty())
-                    ? "Nenhum"
+            String preReqs = (d.getPreRequisitos() == null || d.getPreRequisitos().isEmpty()) ? "Nenhum"
                     : String.join(", ", d.getPreRequisitos());
-            linhas.add(new String[] {
-                    d.getCodigo(),
-                    d.getNome(),
-                    String.valueOf(d.getCargaHoraria()),
-                    String.valueOf(d.getCreditos()),
-                    preReqs
-            });
+            linhas.add(new String[] { d.getCodigo(), d.getNome(), String.valueOf(d.getCargaHoraria()),
+                    String.valueOf(d.getCreditos()), preReqs });
         }
 
         ConsoleUI.exibirTabela(colunas, linhas);
@@ -182,9 +163,8 @@ public class AlunoController {
             return;
         }
 
-        System.out.println("  Período: " + periodoAtivo.getCodigo()
-                + " | " + periodoAtivo.getDataInicio()
-                + " até " + periodoAtivo.getDataFim() + "\n");
+        System.out.println("  Período: " + periodoAtivo.getCodigo() + " | " + periodoAtivo.getDataInicio() + " até "
+                + periodoAtivo.getDataFim() + "\n");
 
         List<Turma> turmas = turmaService.listarTurmasPorPeriodo(periodoAtivo.getCodigo());
 
@@ -200,8 +180,7 @@ public class AlunoController {
     }
 
     /**
-     * Permite ao aluno buscar turmas de uma disciplina específica
-     * dentro do período letivo ativo.
+     * Permite ao aluno buscar turmas de uma disciplina específica dentro do período letivo ativo.
      */
     private void buscarTurmasPorDisciplina() {
         ConsoleUI.limparTela();
@@ -233,22 +212,19 @@ public class AlunoController {
         ConsoleUI.exibirCabecalho("TURMAS DE " + disciplina.getNome().toUpperCase());
 
         System.out.println("  Disciplina : " + disciplina.getCodigo() + " - " + disciplina.getNome());
-        System.out.println("  Carga Horária: " + disciplina.getCargaHoraria() + "h"
-                + " | Créditos: " + disciplina.getCreditos());
+        System.out.println(
+                "  Carga Horária: " + disciplina.getCargaHoraria() + "h" + " | Créditos: " + disciplina.getCreditos());
 
-        String preReqs = (disciplina.getPreRequisitos() == null || disciplina.getPreRequisitos().isEmpty())
-                ? "Nenhum"
+        String preReqs = (disciplina.getPreRequisitos() == null || disciplina.getPreRequisitos().isEmpty()) ? "Nenhum"
                 : String.join(", ", disciplina.getPreRequisitos());
         System.out.println("  Pré-requisitos: " + preReqs);
         System.out.println("  Período: " + periodoAtivo.getCodigo() + "\n");
 
-        List<Turma> turmas = turmaService.listarTurmasPorDisciplinaEPeriodo(
-                codigoDisciplina, periodoAtivo.getCodigo());
+        List<Turma> turmas = turmaService.listarTurmasPorDisciplinaEPeriodo(codigoDisciplina, periodoAtivo.getCodigo());
 
         if (turmas.isEmpty()) {
             ConsoleUI.exibirMensagem(
-                    "Nenhuma turma ofertada para esta disciplina no período " + periodoAtivo.getCodigo() + ".",
-                    false);
+                    "Nenhuma turma ofertada para esta disciplina no período " + periodoAtivo.getCodigo() + ".", false);
             return;
         }
 
@@ -263,8 +239,8 @@ public class AlunoController {
     // -------------------------------------------------------------------------
 
     /**
-     * Fluxo de solicitação de matrícula em turma para o aluno.
-     * Lista as turmas do período ativo e permite ao aluno escolher uma.
+     * Fluxo de solicitação de matrícula em turma para o aluno. Lista as turmas do período ativo e permite ao aluno
+     * escolher uma.
      */
     private void solicitarMatricula(Usuario aluno) {
         if (matriculaService == null || turmaService == null || periodoLetivoService == null) {
@@ -281,8 +257,7 @@ public class AlunoController {
             return;
         }
 
-        System.out.println("  Período ativo: " + periodoAtivo.getCodigo()
-                + " | " + periodoAtivo.getDataInicio()
+        System.out.println("  Período ativo: " + periodoAtivo.getCodigo() + " | " + periodoAtivo.getDataInicio()
                 + " até " + periodoAtivo.getDataFim() + "\n");
 
         String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
@@ -291,14 +266,11 @@ public class AlunoController {
             return;
         }
 
-        List<Turma> turmas = turmaService.listarTurmasPorDisciplinaEPeriodo(
-                codigoDisciplina, periodoAtivo.getCodigo());
+        List<Turma> turmas = turmaService.listarTurmasPorDisciplinaEPeriodo(codigoDisciplina, periodoAtivo.getCodigo());
 
         if (turmas.isEmpty()) {
-            ConsoleUI.exibirMensagem(
-                    "Nenhuma turma ofertada para a disciplina '" + codigoDisciplina
-                            + "' no período " + periodoAtivo.getCodigo() + ".",
-                    false);
+            ConsoleUI.exibirMensagem("Nenhuma turma ofertada para a disciplina '" + codigoDisciplina + "' no período "
+                    + periodoAtivo.getCodigo() + ".", false);
             return;
         }
 
@@ -314,30 +286,19 @@ public class AlunoController {
         }
 
         try {
-            StatusMatricula status = matriculaService.solicitarMatricula(
-                    aluno,
-                    codigoDisciplina,
-                    periodoAtivo.getCodigo(),
-                    codigoTurma);
+            StatusMatricula status = matriculaService.solicitarMatricula(aluno, codigoDisciplina,
+                    periodoAtivo.getCodigo(), codigoTurma);
 
             if (status == StatusMatricula.LISTA_ESPERA) {
-                ConsoleUI.exibirMensagem(
-                        "Turma cheia. Você foi adicionado à lista de espera. "
-                                + "Turma: " + codigoTurma
-                                + " | Disciplina: " + codigoDisciplina
-                                + " | Período: " + periodoAtivo.getCodigo() + ".",
-                        false);
+                ConsoleUI.exibirMensagem("Turma cheia. Você foi adicionado à lista de espera. " + "Turma: "
+                        + codigoTurma + " | Disciplina: " + codigoDisciplina + " | Período: " + periodoAtivo.getCodigo()
+                        + ".", false);
             } else if (status == StatusMatricula.CONFIRMADA) {
-                ConsoleUI.exibirMensagem(
-                        "Matrícula confirmada com sucesso! "
-                                + "Turma: " + codigoTurma
-                                + " | Disciplina: " + codigoDisciplina
-                                + " | Período: " + periodoAtivo.getCodigo() + ".",
+                ConsoleUI.exibirMensagem("Matrícula confirmada com sucesso! " + "Turma: " + codigoTurma
+                        + " | Disciplina: " + codigoDisciplina + " | Período: " + periodoAtivo.getCodigo() + ".",
                         false);
             } else {
-                ConsoleUI.exibirMensagem(
-                        "Solicitação de matrícula registrada com status: " + status + ".",
-                        false);
+                ConsoleUI.exibirMensagem("Solicitação de matrícula registrada com status: " + status + ".", false);
             }
 
         } catch (Exception e) {
@@ -387,15 +348,11 @@ public class AlunoController {
         String codigoPeriodo = solicitacoes.stream()
                 .filter(m -> m.getCodigoDisciplina().equalsIgnoreCase(codigoDisciplina)
                         && m.getCodigoTurma().equalsIgnoreCase(codigoTurma))
-                .map(MatriculaTurma::getCodigoPeriodo)
-                .findFirst()
-                .orElse(null);
+                .map(MatriculaTurma::getCodigoPeriodo).findFirst().orElse(null);
 
         if (codigoPeriodo == null) {
-            ConsoleUI.exibirMensagem(
-                    "Nenhuma solicitação encontrada para a turma '" + codigoTurma
-                            + "' da disciplina '" + codigoDisciplina + "'.",
-                    true);
+            ConsoleUI.exibirMensagem("Nenhuma solicitação encontrada para a turma '" + codigoTurma + "' da disciplina '"
+                    + codigoDisciplina + "'.", true);
             return;
         }
 
@@ -448,8 +405,9 @@ public class AlunoController {
     private PeriodoLetivo encontrarPeriodoAtivo() {
         List<PeriodoLetivo> periodos = periodoLetivoService.listarPeriodos();
         for (PeriodoLetivo p : periodos) {
-            if (p.isAtivo())
+            if (p.isAtivo()) {
                 return p;
+            }
         }
         return null;
     }
@@ -460,16 +418,9 @@ public class AlunoController {
         List<String[]> linhas = new ArrayList<>();
         for (Turma t : turmas) {
             String prof = (t.getMatriculaProfessor() == null || t.getMatriculaProfessor().trim().isEmpty())
-                    ? "A definir"
-                    : t.getMatriculaProfessor();
-            linhas.add(new String[] {
-                    t.getCodigo(),
-                    t.getCodigoDisciplina(),
-                    t.getHorario(),
-                    t.getSala(),
-                    String.valueOf(t.getVagas()),
-                    prof
-            });
+                    ? "A definir" : t.getMatriculaProfessor();
+            linhas.add(new String[] { t.getCodigo(), t.getCodigoDisciplina(), t.getHorario(), t.getSala(),
+                    String.valueOf(t.getVagas()), prof });
         }
         ConsoleUI.exibirTabela(colunas, linhas);
     }
@@ -480,15 +431,9 @@ public class AlunoController {
         List<String[]> linhas = new ArrayList<>();
         for (MatriculaTurma m : solicitacoes) {
             String data = m.getDataSolicitacao() != null
-                    ? m.getDataSolicitacao().toString().replace("T", " ").substring(0, 16)
-                    : "-";
-            linhas.add(new String[] {
-                    m.getCodigoDisciplina(),
-                    m.getCodigoTurma(),
-                    m.getCodigoPeriodo(),
-                    m.getStatus().toString(),
-                    data
-            });
+                    ? m.getDataSolicitacao().toString().replace("T", " ").substring(0, 16) : "-";
+            linhas.add(new String[] { m.getCodigoDisciplina(), m.getCodigoTurma(), m.getCodigoPeriodo(),
+                    m.getStatus().toString(), data });
         }
         ConsoleUI.exibirTabela(colunas, linhas);
     }

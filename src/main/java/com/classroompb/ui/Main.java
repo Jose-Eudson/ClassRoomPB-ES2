@@ -14,16 +14,14 @@ import com.classroompb.repository.TurmaRepository;
 import com.classroompb.repository.UsuarioRepository;
 import com.classroompb.service.CursoService;
 import com.classroompb.service.DisciplinaService;
-import com.classroompb.service.HistoricoService;
 import com.classroompb.service.MatriculaTurmaService;
 import com.classroompb.service.PeriodoLetivoService;
 import com.classroompb.service.TurmaService;
 import com.classroompb.service.UsuarioService;
 
 /**
- * Ponto de entrada da aplicação.
- * Responsável apenas por inicializar os serviços, exibir a tela inicial
- * e rotear o usuário logado para o controlador correto do seu perfil.
+ * Ponto de entrada da aplicação. Responsável apenas por inicializar os serviços, exibir a tela inicial e rotear o
+ * usuário logado para o controlador correto do seu perfil.
  */
 
 public class Main {
@@ -34,11 +32,10 @@ public class Main {
     private static PeriodoLetivoService periodoLetivoService;
     private static TurmaService turmaService;
 
-
-    private static AlunoController       alunoController;
-    private static ProfessorController   professorController;
+    private static AlunoController alunoController;
+    private static ProfessorController professorController;
     private static CoordenadorController coordenadorController;
-    private static AdminController       adminController;
+    private static AdminController adminController;
 
     public static void main(String[] args) {
         UsuarioRepository repository = new UsuarioRepository();
@@ -53,27 +50,30 @@ public class Main {
         disciplinaService = new DisciplinaService(disciplinaRepository);
         periodoLetivoService = new PeriodoLetivoService(periodoLetivoRepository);
         turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoLetivoRepository);
-        MatriculaTurmaService matriculaService = new MatriculaTurmaService(matriculaRepository, turmaRepository, 
-            periodoLetivoRepository, disciplinaRepository, historicoRepository);
+        MatriculaTurmaService matriculaService = new MatriculaTurmaService(matriculaRepository, turmaRepository,
+                periodoLetivoRepository, disciplinaRepository, historicoRepository);
 
-        alunoController       = new AlunoController(service, disciplinaService, periodoLetivoService, turmaService, matriculaService);
-        professorController   = new ProfessorController(service);
-        coordenadorController = new CoordenadorController(service, disciplinaService, periodoLetivoService, turmaService, matriculaService);
-        adminController       = new AdminController(service, cursoService);
+        alunoController = new AlunoController(service, disciplinaService, periodoLetivoService, turmaService,
+                matriculaService);
+        professorController = new ProfessorController(service);
+        coordenadorController = new CoordenadorController(service, disciplinaService, periodoLetivoService,
+                turmaService, matriculaService);
+        adminController = new AdminController(service, cursoService);
 
         while (true) {
-            List<String> opcoes = Arrays.asList(
-                "Login",
-                "Cadastrar-se (Apenas Alunos)",
-                "Sair"
-            );
+            List<String> opcoes = Arrays.asList("Login", "Cadastrar-se (Apenas Alunos)", "Sair");
             int escolha = ConsoleUI.exibirMenuInterativo("ClassRoomPB - Sistema Academico", opcoes);
 
-            if (escolha == 2 || escolha == -1) break;
-
+            if (escolha == 2 || escolha == -1) {
+                break;
+            }
             switch (escolha) {
-                case 0: realizarLogin();      break;
-                case 1: cadastrarAutoAluno(); break;
+            case 0:
+                realizarLogin();
+                break;
+            case 1:
+                cadastrarAutoAluno();
+                break;
             }
         }
 
@@ -106,7 +106,7 @@ public class Main {
         ConsoleUI.limparTela();
         ConsoleUI.exibirCabecalho("CADASTRO DE ALUNO");
         try {
-            String nome  = ConsoleUI.lerEntrada("Nome: ");
+            String nome = ConsoleUI.lerEntrada("Nome: ");
             String email = ConsoleUI.lerEntrada("E-mail: ");
             String senha = ConsoleUI.lerSenha("Senha: ");
 
@@ -122,8 +122,8 @@ public class Main {
     // -------------------------------------------------------------------------
 
     /**
-     * Direciona o usuario logado para o controller correspondente ao seu tipo.
-     * Cada controller e responsavel pelo proprio menu e loop de navegacao.
+     * Direciona o usuario logado para o controller correspondente ao seu tipo. Cada controller e responsavel pelo
+     * proprio menu e loop de navegacao.
      */
     private static void rotearPorPerfil(Usuario usuario) {
         if (usuario == null || usuario.getTipo() == null) {
@@ -132,13 +132,21 @@ public class Main {
         }
 
         switch (usuario.getTipo()) {
-            case ALUNO:         alunoController.exibirMenu(usuario);         break;
-            case PROFESSOR:     professorController.exibirMenu(usuario);     break;
-            case COORDENADOR:   coordenadorController.exibirMenu(usuario);   break;
-            case ADMINISTRADOR: adminController.exibirMenu(usuario);         break;
-            default:
-                ConsoleUI.exibirMensagem("Erro: Perfil de acesso inválido.", true);
-                break;
+        case ALUNO:
+            alunoController.exibirMenu(usuario);
+            break;
+        case PROFESSOR:
+            professorController.exibirMenu(usuario);
+            break;
+        case COORDENADOR:
+            coordenadorController.exibirMenu(usuario);
+            break;
+        case ADMINISTRADOR:
+            adminController.exibirMenu(usuario);
+            break;
+        default:
+            ConsoleUI.exibirMensagem("Erro: Perfil de acesso inválido.", true);
+            break;
         }
     }
 }

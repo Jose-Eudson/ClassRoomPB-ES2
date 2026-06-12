@@ -16,8 +16,7 @@ import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
 
 /**
- * Testes unitários para MatriculaGenerator.
- * Verifica a geração correta de matrículas para cada tipo de usuário,
+ * Testes unitários para MatriculaGenerator. Verifica a geração correta de matrículas para cada tipo de usuário,
  * incluindo sequenciamento, independência entre tipos e tratamento de edge cases.
  */
 
@@ -123,7 +122,7 @@ public class MatriculaGeneratorTest {
         usuarios.add(new Professor("P0001", "Bob", "bob@email.com", "2"));
         usuarios.add(new Aluno("A0002", "Carol", "carol@email.com", "3"));
 
-        String proximoAluno     = MatriculaGenerator.gerarMatricula(TipoUsuario.ALUNO, usuarios);
+        String proximoAluno = MatriculaGenerator.gerarMatricula(TipoUsuario.ALUNO, usuarios);
         String proximoProfessor = MatriculaGenerator.gerarMatricula(TipoUsuario.PROFESSOR, usuarios);
 
         assertEquals("A0003", proximoAluno);
@@ -134,7 +133,6 @@ public class MatriculaGeneratorTest {
     @DisplayName("Deve lançar exceção para tipo nulo")
     void deveLancarExcecaoParaTipoNulo() {
         // O switch do obterPrefixo recebe null e lança NullPointerException antes do default
-        assertThrows(NullPointerException.class, () ->
-                MatriculaGenerator.gerarMatricula(null, new ArrayList<>()));
+        assertThrows(NullPointerException.class, () -> MatriculaGenerator.gerarMatricula(null, new ArrayList<>()));
     }
 }

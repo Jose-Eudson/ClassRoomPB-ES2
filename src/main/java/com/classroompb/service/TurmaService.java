@@ -19,20 +19,13 @@ import com.classroompb.repository.UsuarioRepository;
 /**
  * RF10/RF11: Serviço responsável pela oferta e gestão de turmas.
  *
- * Regras de negócio aplicadas:
- *   - Apenas coordenadores podem ofertar, editar ou excluir turmas.
- *   - A disciplina informada deve existir.
- *   - O período letivo informado deve existir.
- *   - Não é permitido cadastrar turmas em períodos inativos.
- *   - O código da turma não pode ser vazio.
- *   - O número de vagas deve ser positivo.
- *   - O horário não pode ser vazio.
- *   - A sala não pode ser vazia. (RF11)
- *   - Não pode existir outra turma com o mesmo código para a mesma
- *     disciplina no mesmo período (unicidade pela chave composta).
- *   - RF12: O professor não pode ministrar duas turmas no mesmo horário.
- *   - RF13: Não é permitido ofertar turma sem professor responsável.
- *   - RF14: Edição/cancelamento de turma só é permitido antes do início das aulas.
+ * Regras de negócio aplicadas: - Apenas coordenadores podem ofertar, editar ou excluir turmas. - A disciplina informada
+ * deve existir. - O período letivo informado deve existir. - Não é permitido cadastrar turmas em períodos inativos. - O
+ * código da turma não pode ser vazio. - O número de vagas deve ser positivo. - O horário não pode ser vazio. - A sala
+ * não pode ser vazia. (RF11) - Não pode existir outra turma com o mesmo código para a mesma disciplina no mesmo período
+ * (unicidade pela chave composta). - RF12: O professor não pode ministrar duas turmas no mesmo horário. - RF13: Não é
+ * permitido ofertar turma sem professor responsável. - RF14: Edição/cancelamento de turma só é permitido antes do
+ * início das aulas.
  */
 public class TurmaService {
 
@@ -41,20 +34,13 @@ public class TurmaService {
     private final PeriodoLetivoRepository periodoRepository;
     private final UsuarioRepository usuarioRepository;
 
-    public TurmaService(
-            TurmaRepository turmaRepository,
-            DisciplinaRepository disciplinaRepository,
-            PeriodoLetivoRepository periodoRepository
-    ) {
+    public TurmaService(TurmaRepository turmaRepository, DisciplinaRepository disciplinaRepository,
+            PeriodoLetivoRepository periodoRepository) {
         this(turmaRepository, disciplinaRepository, periodoRepository, new UsuarioRepository());
     }
 
-    public TurmaService(
-            TurmaRepository turmaRepository,
-            DisciplinaRepository disciplinaRepository,
-            PeriodoLetivoRepository periodoRepository,
-            UsuarioRepository usuarioRepository
-    ) {
+    public TurmaService(TurmaRepository turmaRepository, DisciplinaRepository disciplinaRepository,
+            PeriodoLetivoRepository periodoRepository, UsuarioRepository usuarioRepository) {
         this.turmaRepository = turmaRepository;
         this.disciplinaRepository = disciplinaRepository;
         this.periodoRepository = periodoRepository;
@@ -64,26 +50,28 @@ public class TurmaService {
     /**
      * Oferta (cadastra) uma nova turma para uma disciplina em um período letivo.
      *
-     * @param coordenador        usuário que está realizando a operação (deve ser COORDENADOR)
-     * @param codigoDisciplina   código da disciplina a ser ofertada
-     * @param codigoPeriodo      código do período letivo (ex: "2026.1")
-     * @param codigoTurma        identificador da turma (ex: "T01")
-     * @param vagas              número máximo de vagas disponíveis
-     * @param horario            descrição do horário das aulas
-     * @param sala               sala onde as aulas serão realizadas (RF11)
-     * @param matriculaProfessor matrícula do professor responsável (obrigatória; não pode ser nula/vazia)
-     * @throws Exception se qualquer regra de negócio for violada
+     * @param coordenador
+     *            usuário que está realizando a operação (deve ser COORDENADOR)
+     * @param codigoDisciplina
+     *            código da disciplina a ser ofertada
+     * @param codigoPeriodo
+     *            código do período letivo (ex: "2026.1")
+     * @param codigoTurma
+     *            identificador da turma (ex: "T01")
+     * @param vagas
+     *            número máximo de vagas disponíveis
+     * @param horario
+     *            descrição do horário das aulas
+     * @param sala
+     *            sala onde as aulas serão realizadas (RF11)
+     * @param matriculaProfessor
+     *            matrícula do professor responsável (obrigatória; não pode ser nula/vazia)
+     *
+     * @throws Exception
+     *             se qualquer regra de negócio for violada
      */
-    public void ofertarTurma(
-            Usuario coordenador,
-            String codigoDisciplina,
-            String codigoPeriodo,
-            String codigoTurma,
-            int vagas,
-            String horario,
-            String sala,
-            String matriculaProfessor
-    ) throws Exception {
+    public void ofertarTurma(Usuario coordenador, String codigoDisciplina, String codigoPeriodo, String codigoTurma,
+            int vagas, String horario, String sala, String matriculaProfessor) throws Exception {
 
         // Permissão: apenas coordenadores
         if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
@@ -123,33 +111,24 @@ public class TurmaService {
         // Regra: disciplina deve existir
         Disciplina disciplina = disciplinaRepository.buscarPorCodigo(codigoDisciplina);
         if (disciplina == null) {
-            throw new Exception(
-                    "Erro: Disciplina com código '" + codigoDisciplina + "' não encontrada."
-            );
+            throw new Exception("Erro: Disciplina com código '" + codigoDisciplina + "' não encontrada.");
         }
 
         // Regra: período letivo deve existir
         PeriodoLetivo periodo = periodoRepository.buscarPorCodigo(codigoPeriodo);
         if (periodo == null) {
-            throw new Exception(
-                    "Erro: Período letivo '" + codigoPeriodo + "' não encontrado."
-            );
+            throw new Exception("Erro: Período letivo '" + codigoPeriodo + "' não encontrado.");
         }
 
         // Regra: não ofertar em período inativo
         if (!periodo.isAtivo()) {
-            throw new Exception(
-                    "Erro: Não é possível ofertar turmas em um período letivo inativo."
-            );
+            throw new Exception("Erro: Não é possível ofertar turmas em um período letivo inativo.");
         }
 
         // Regra: unicidade da turma no contexto disciplina + período
         if (turmaRepository.existePorChaveUnica(codigoDisciplina, codigoPeriodo, codigoTurma)) {
-            throw new Exception(
-                    "Erro: Já existe uma turma '" + codigoTurma
-                    + "' para a disciplina '" + codigoDisciplina
-                    + "' no período '" + codigoPeriodo + "'."
-            );
+            throw new Exception("Erro: Já existe uma turma '" + codigoTurma + "' para a disciplina '" + codigoDisciplina
+                    + "' no período '" + codigoPeriodo + "'.");
         }
 
         // Professor responsável é obrigatório para ofertar turma
@@ -160,26 +139,17 @@ public class TurmaService {
         String matriculaProfessorFinal = matriculaProfessor.trim();
 
         // Verifica se o professor existe e é do tipo PROFESSOR
-        Usuario prof = usuarioRepository.buscarPorMatricula(matriculaProfessorFinal)
-                .orElseThrow(() -> new Exception(
-                        "Erro: Professor com matrícula '" + matriculaProfessorFinal + "' não encontrado."));
+        Usuario prof = usuarioRepository.buscarPorMatricula(matriculaProfessorFinal).orElseThrow(
+                () -> new Exception("Erro: Professor com matrícula '" + matriculaProfessorFinal + "' não encontrado."));
         if (prof.getTipo() != TipoUsuario.PROFESSOR) {
-            throw new Exception(
-                    "Erro: O usuário '" + matriculaProfessorFinal + "' não é um professor.");
+            throw new Exception("Erro: O usuário '" + matriculaProfessorFinal + "' não é um professor.");
         }
 
         // Professor não pode ministrar duas turmas no mesmo horário
         validarChoqueHorarioProfessor(codigoPeriodo.trim(), matriculaProfessorFinal, horario.trim(), null);
 
-        Turma turma = new Turma(
-                codigoTurma.trim(),
-                codigoDisciplina.trim(),
-                codigoPeriodo.trim(),
-                vagas,
-                horario.trim(),
-                sala.trim(),
-                matriculaProfessorFinal
-        );
+        Turma turma = new Turma(codigoTurma.trim(), codigoDisciplina.trim(), codigoPeriodo.trim(), vagas,
+                horario.trim(), sala.trim(), matriculaProfessorFinal);
 
         turmaRepository.salvar(turma);
     }
@@ -187,7 +157,9 @@ public class TurmaService {
     /**
      * Lista todas as turmas ofertadas em um determinado período letivo.
      *
-     * @param codigoPeriodo código do período letivo
+     * @param codigoPeriodo
+     *            código do período letivo
+     *
      * @return lista de turmas do período (pode ser vazia)
      */
     public List<Turma> listarTurmasPorPeriodo(String codigoPeriodo) {
@@ -197,8 +169,11 @@ public class TurmaService {
     /**
      * Lista todas as turmas de uma disciplina em um período letivo específico.
      *
-     * @param codigoDisciplina código da disciplina
-     * @param codigoPeriodo    código do período letivo
+     * @param codigoDisciplina
+     *            código da disciplina
+     * @param codigoPeriodo
+     *            código do período letivo
+     *
      * @return lista de turmas encontradas (pode ser vazia)
      */
     public List<Turma> listarTurmasPorDisciplinaEPeriodo(String codigoDisciplina, String codigoPeriodo) {
@@ -217,55 +192,57 @@ public class TurmaService {
     /**
      * Busca uma turma pela chave composta e a retorna.
      *
-     * @param codigoDisciplina código da disciplina
-     * @param codigoPeriodo    código do período letivo
-     * @param codigoTurma      código da turma
+     * @param codigoDisciplina
+     *            código da disciplina
+     * @param codigoPeriodo
+     *            código do período letivo
+     * @param codigoTurma
+     *            código da turma
+     *
      * @return a turma encontrada
-     * @throws Exception se a turma não for encontrada
+     *
+     * @throws Exception
+     *             se a turma não for encontrada
      */
-    public Turma buscarTurma(String codigoDisciplina, String codigoPeriodo, String codigoTurma)
-            throws Exception {
-        if (codigoDisciplina == null || codigoDisciplina.trim().isEmpty()
-                || codigoPeriodo == null || codigoPeriodo.trim().isEmpty()
-                || codigoTurma == null || codigoTurma.trim().isEmpty()) {
+    public Turma buscarTurma(String codigoDisciplina, String codigoPeriodo, String codigoTurma) throws Exception {
+        if (codigoDisciplina == null || codigoDisciplina.trim().isEmpty() || codigoPeriodo == null
+                || codigoPeriodo.trim().isEmpty() || codigoTurma == null || codigoTurma.trim().isEmpty()) {
             throw new Exception("Erro: Disciplina, período e código da turma são obrigatórios.");
         }
         Turma turma = turmaRepository.buscarPorChaveUnica(codigoDisciplina, codigoPeriodo, codigoTurma);
         if (turma == null) {
-            throw new Exception(
-                    "Erro: Turma '" + codigoTurma
-                    + "' da disciplina '" + codigoDisciplina
-                    + "' no período '" + codigoPeriodo + "' não encontrada."
-            );
+            throw new Exception("Erro: Turma '" + codigoTurma + "' da disciplina '" + codigoDisciplina
+                    + "' no período '" + codigoPeriodo + "' não encontrada.");
         }
         return turma;
     }
 
     /**
-     * Edita os atributos de uma turma existente.
-     * O código da turma, disciplina e período são a chave de identificação
-     * e não podem ser alterados nesta operação.
+     * Edita os atributos de uma turma existente. O código da turma, disciplina e período são a chave de identificação e
+     * não podem ser alterados nesta operação.
      *
-     * @param coordenador        usuário que está realizando a operação (deve ser COORDENADOR)
-     * @param codigoDisciplina   código da disciplina da turma a editar
-     * @param codigoPeriodo      código do período letivo da turma a editar
-     * @param codigoTurma        código da turma a editar
-     * @param novasVagas         novo número de vagas (mantém o atual se zero ou negativo)
-     * @param novoHorario        novo horário (mantém o atual se vazio ou nulo)
-     * @param novaSala           nova sala (mantém a atual se vazio ou nulo)
-     * @param novaMatriculaProf  nova matrícula do professor (null ou vazio = sem professor)
-     * @throws Exception se qualquer regra de negócio for violada
+     * @param coordenador
+     *            usuário que está realizando a operação (deve ser COORDENADOR)
+     * @param codigoDisciplina
+     *            código da disciplina da turma a editar
+     * @param codigoPeriodo
+     *            código do período letivo da turma a editar
+     * @param codigoTurma
+     *            código da turma a editar
+     * @param novasVagas
+     *            novo número de vagas (mantém o atual se zero ou negativo)
+     * @param novoHorario
+     *            novo horário (mantém o atual se vazio ou nulo)
+     * @param novaSala
+     *            nova sala (mantém a atual se vazio ou nulo)
+     * @param novaMatriculaProf
+     *            nova matrícula do professor (null ou vazio = sem professor)
+     *
+     * @throws Exception
+     *             se qualquer regra de negócio for violada
      */
-    public void editarTurma(
-            Usuario coordenador,
-            String codigoDisciplina,
-            String codigoPeriodo,
-            String codigoTurma,
-            int novasVagas,
-            String novoHorario,
-            String novaSala,
-            String novaMatriculaProf
-    ) throws Exception {
+    public void editarTurma(Usuario coordenador, String codigoDisciplina, String codigoPeriodo, String codigoTurma,
+            int novasVagas, String novoHorario, String novaSala, String novaMatriculaProf) throws Exception {
 
         // Permissão: apenas coordenadores
         if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
@@ -275,12 +252,11 @@ public class TurmaService {
         // Localiza a turma — lança exceção se não existir
         Turma turma = buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
 
-        //! RF14: Só é possível editar antes do início das aulas
+        // ! RF14: Só é possível editar antes do início das aulas
         PeriodoLetivo periodoEditar = periodoRepository.buscarPorCodigo(codigoPeriodo);
         if (periodoEditar != null && periodoEditar.getDataInicio() != null
                 && !LocalDate.now().isBefore(periodoEditar.getDataInicio())) {
-            throw new Exception(
-                    "Erro: RF14 - Não é possível editar uma turma após o início das aulas (início: "
+            throw new Exception("Erro: RF14 - Não é possível editar uma turma após o início das aulas (início: "
                     + periodoEditar.getDataInicio() + ").");
         }
 
@@ -312,8 +288,7 @@ public class TurmaService {
                     .orElseThrow(() -> new Exception(
                             "Erro: Professor com matrícula '" + novaMatriculaProf.trim() + "' não encontrado."));
             if (novoProf.getTipo() != TipoUsuario.PROFESSOR) {
-                throw new Exception(
-                        "Erro: O usuário '" + novaMatriculaProf.trim() + "' não é um professor.");
+                throw new Exception("Erro: O usuário '" + novaMatriculaProf.trim() + "' não é um professor.");
             }
             turma.setMatriculaProfessor(novaMatriculaProf.trim());
         }
@@ -328,18 +303,20 @@ public class TurmaService {
     /**
      * Exclui uma turma do sistema.
      *
-     * @param coordenador      usuário que está realizando a operação (deve ser COORDENADOR)
-     * @param codigoDisciplina código da disciplina da turma a excluir
-     * @param codigoPeriodo    código do período letivo da turma a excluir
-     * @param codigoTurma      código da turma a excluir
-     * @throws Exception se o usuário não tiver permissão ou a turma não existir
+     * @param coordenador
+     *            usuário que está realizando a operação (deve ser COORDENADOR)
+     * @param codigoDisciplina
+     *            código da disciplina da turma a excluir
+     * @param codigoPeriodo
+     *            código do período letivo da turma a excluir
+     * @param codigoTurma
+     *            código da turma a excluir
+     *
+     * @throws Exception
+     *             se o usuário não tiver permissão ou a turma não existir
      */
-    public void excluirTurma(
-            Usuario coordenador,
-            String codigoDisciplina,
-            String codigoPeriodo,
-            String codigoTurma
-    ) throws Exception {
+    public void excluirTurma(Usuario coordenador, String codigoDisciplina, String codigoPeriodo, String codigoTurma)
+            throws Exception {
 
         // Permissão: apenas coordenadores
         if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
@@ -353,8 +330,7 @@ public class TurmaService {
         PeriodoLetivo periodoExcluir = periodoRepository.buscarPorCodigo(codigoPeriodo);
         if (periodoExcluir != null && periodoExcluir.getDataInicio() != null
                 && !LocalDate.now().isBefore(periodoExcluir.getDataInicio())) {
-            throw new Exception(
-                    "Erro: RF14 - Não é possível cancelar uma turma após o início das aulas (início: "
+            throw new Exception("Erro: RF14 - Não é possível cancelar uma turma após o início das aulas (início: "
                     + periodoExcluir.getDataInicio() + ").");
         }
 
@@ -365,12 +341,8 @@ public class TurmaService {
     // Choque de horario do professor
     // -------------------------------------------------------------------------
 
-    private void validarChoqueHorarioProfessor(
-            String codigoPeriodo,
-            String matriculaProfessor,
-            String horario,
-            Turma turmaIgnorar
-    ) throws Exception {
+    private void validarChoqueHorarioProfessor(String codigoPeriodo, String matriculaProfessor, String horario,
+            Turma turmaIgnorar) throws Exception {
         String professorNormalizado = normalizarIdentificador(matriculaProfessor);
         String horarioNormalizado = normalizarHorario(horario);
         if (professorNormalizado.isEmpty() || horarioNormalizado.isEmpty()) {
@@ -379,8 +351,7 @@ public class TurmaService {
 
         List<Turma> turmasExistentes = turmaRepository.listarPorPeriodo(codigoPeriodo);
         for (Turma t : turmasExistentes) {
-            if (turmaIgnorar != null
-                    && t.getChaveUnica().equalsIgnoreCase(turmaIgnorar.getChaveUnica())) {
+            if (turmaIgnorar != null && t.getChaveUnica().equalsIgnoreCase(turmaIgnorar.getChaveUnica())) {
                 continue;
             }
             String professorTurma = normalizarIdentificador(t.getMatriculaProfessor());
@@ -388,11 +359,8 @@ public class TurmaService {
                 continue;
             }
             if (horariosConflitam(horarioNormalizado, t.getHorario())) {
-                throw new Exception(
-                        "Erro: RF12/RN06 - O professor '" + professorNormalizado
-                        + "' já ministra uma turma no horário '" + horarioNormalizado
-                        + "' neste período."
-                );
+                throw new Exception("Erro: RF12/RN06 - O professor '" + professorNormalizado
+                        + "' já ministra uma turma no horário '" + horarioNormalizado + "' neste período.");
             }
         }
     }
@@ -444,22 +412,22 @@ public class TurmaService {
 
     private static DayOfWeek mapDia(String token) {
         switch (token) {
-            case "seg":
-                return DayOfWeek.MONDAY;
-            case "ter":
-                return DayOfWeek.TUESDAY;
-            case "qua":
-                return DayOfWeek.WEDNESDAY;
-            case "qui":
-                return DayOfWeek.THURSDAY;
-            case "sex":
-                return DayOfWeek.FRIDAY;
-            case "sab":
-                return DayOfWeek.SATURDAY;
-            case "dom":
-                return DayOfWeek.SUNDAY;
-            default:
-                return null;
+        case "seg":
+            return DayOfWeek.MONDAY;
+        case "ter":
+            return DayOfWeek.TUESDAY;
+        case "qua":
+            return DayOfWeek.WEDNESDAY;
+        case "qui":
+            return DayOfWeek.THURSDAY;
+        case "sex":
+            return DayOfWeek.FRIDAY;
+        case "sab":
+            return DayOfWeek.SATURDAY;
+        case "dom":
+            return DayOfWeek.SUNDAY;
+        default:
+            return null;
         }
     }
 

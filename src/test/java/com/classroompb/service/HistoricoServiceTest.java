@@ -33,22 +33,11 @@ class HistoricoServiceTest {
     @DisplayName("Deve retornar verdadeiro quando aluno foi aprovado")
     void deveRetornarVerdadeiroQuandoAprovado() {
 
-        Historico historico =
-                new Historico(
-                        "2023001",
-                        "ES1",
-                        8.5,
-                        true
-                );
+        Historico historico = new Historico("2023001", "ES1", 8.5, true);
 
-        when(repository.buscarPorAluno("2023001"))
-                .thenReturn(List.of(historico));
+        when(repository.buscarPorAluno("2023001")).thenReturn(List.of(historico));
 
-        boolean resultado =
-                service.alunoFoiAprovado(
-                        "2023001",
-                        "ES1"
-                );
+        boolean resultado = service.alunoFoiAprovado("2023001", "ES1");
 
         assertTrue(resultado);
     }
@@ -57,22 +46,11 @@ class HistoricoServiceTest {
     @DisplayName("Deve retornar falso quando aluno foi reprovado")
     void deveRetornarFalsoQuandoReprovado() {
 
-        Historico historico =
-                new Historico(
-                        "2023001",
-                        "ES1",
-                        3.0,
-                        false
-                );
+        Historico historico = new Historico("2023001", "ES1", 3.0, false);
 
-        when(repository.buscarPorAluno("2023001"))
-                .thenReturn(List.of(historico));
+        when(repository.buscarPorAluno("2023001")).thenReturn(List.of(historico));
 
-        boolean resultado =
-                service.alunoFoiAprovado(
-                        "2023001",
-                        "ES1"
-                );
+        boolean resultado = service.alunoFoiAprovado("2023001", "ES1");
 
         assertFalse(resultado);
     }

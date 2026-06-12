@@ -9,8 +9,8 @@ import com.classroompb.model.Turma;
 import com.classroompb.util.JsonUtil;
 
 /**
- * RF10: Repositório responsável pela persistência de turmas em arquivo JSON.
- * Segue o mesmo padrão dos demais repositórios do sistema.
+ * RF10: Repositório responsável pela persistência de turmas em arquivo JSON. Segue o mesmo padrão dos demais
+ * repositórios do sistema.
  */
 public class TurmaRepository {
 
@@ -58,48 +58,41 @@ public class TurmaRepository {
     }
 
     /**
-     * Verifica se já existe uma turma com a mesma chave única
-     * (codigoDisciplina + codigoPeriodo + codigo).
+     * Verifica se já existe uma turma com a mesma chave única (codigoDisciplina + codigoPeriodo + codigo).
      */
     public boolean existePorChaveUnica(String codigoDisciplina, String codigoPeriodo, String codigo) {
         String chave = codigoDisciplina + "_" + codigoPeriodo + "_" + codigo;
-        return turmas.stream()
-                .anyMatch(t -> t.getChaveUnica().equalsIgnoreCase(chave));
+        return turmas.stream().anyMatch(t -> t.getChaveUnica().equalsIgnoreCase(chave));
     }
 
     /** Retorna todas as turmas de uma disciplina em um determinado período. */
     public List<Turma> listarPorDisciplinaEPeriodo(String codigoDisciplina, String codigoPeriodo) {
-        return turmas.stream()
-                .filter(t -> t.getCodigoDisciplina().equalsIgnoreCase(codigoDisciplina)
-                && t.getCodigoPeriodo().equalsIgnoreCase(codigoPeriodo))
-                .collect(Collectors.toList());
+        return turmas.stream().filter(t -> t.getCodigoDisciplina().equalsIgnoreCase(codigoDisciplina)
+                && t.getCodigoPeriodo().equalsIgnoreCase(codigoPeriodo)).collect(Collectors.toList());
     }
 
     /** Retorna todas as turmas de um determinado período. */
     public List<Turma> listarPorPeriodo(String codigoPeriodo) {
-        return turmas.stream()
-                .filter(t -> t.getCodigoPeriodo().equalsIgnoreCase(codigoPeriodo))
+        return turmas.stream().filter(t -> t.getCodigoPeriodo().equalsIgnoreCase(codigoPeriodo))
                 .collect(Collectors.toList());
     }
 
     /**
-     * Busca uma turma pela chave única composta.
-     * Retorna null se não encontrada.
+     * Busca uma turma pela chave única composta. Retorna null se não encontrada.
      */
     public Turma buscarPorChaveUnica(String codigoDisciplina, String codigoPeriodo, String codigo) {
         String chave = codigoDisciplina + "_" + codigoPeriodo + "_" + codigo;
-        return turmas.stream()
-                .filter(t -> t.getChaveUnica().equalsIgnoreCase(chave))
-                .findFirst()
-                .orElse(null);
+        return turmas.stream().filter(t -> t.getChaveUnica().equalsIgnoreCase(chave)).findFirst().orElse(null);
     }
 
     /**
-     * Substitui uma turma existente pela versão atualizada,
-     * identificando-a pela chave única composta.
+     * Substitui uma turma existente pela versão atualizada, identificando-a pela chave única composta.
      *
-     * @param atualizada turma com os dados novos (chave deve coincidir com a existente)
-     * @throws IllegalArgumentException se a turma não for encontrada
+     * @param atualizada
+     *            turma com os dados novos (chave deve coincidir com a existente)
+     *
+     * @throws IllegalArgumentException
+     *             se a turma não for encontrada
      */
     public void atualizar(Turma atualizada) {
         for (int i = 0; i < turmas.size(); i++) {
@@ -109,30 +102,29 @@ public class TurmaRepository {
                 return;
             }
         }
-        throw new IllegalArgumentException(
-                "Turma com chave " + atualizada.getChaveUnica() + " nao encontrada."
-        );
+        throw new IllegalArgumentException("Turma com chave " + atualizada.getChaveUnica() + " nao encontrada.");
     }
 
     /**
      * Remove a turma identificada pela chave única composta.
      *
-     * @param codigoDisciplina código da disciplina
-     * @param codigoPeriodo    código do período letivo
-     * @param codigo           código da turma
-     * @throws IllegalArgumentException se a turma não for encontrada
+     * @param codigoDisciplina
+     *            código da disciplina
+     * @param codigoPeriodo
+     *            código do período letivo
+     * @param codigo
+     *            código da turma
+     *
+     * @throws IllegalArgumentException
+     *             se a turma não for encontrada
      */
     public void deletar(String codigoDisciplina, String codigoPeriodo, String codigo) {
         String chave = codigoDisciplina + "_" + codigoPeriodo + "_" + codigo;
-        boolean removida = turmas.removeIf(
-                t -> t.getChaveUnica().equalsIgnoreCase(chave)
-        );
+        boolean removida = turmas.removeIf(t -> t.getChaveUnica().equalsIgnoreCase(chave));
         if (removida) {
             salvarDados();
         } else {
-            throw new IllegalArgumentException(
-                    "Turma com chave " + chave + " nao encontrada."
-            );
+            throw new IllegalArgumentException("Turma com chave " + chave + " nao encontrada.");
         }
     }
 }

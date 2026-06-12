@@ -15,14 +15,8 @@ public class DisciplinaService {
         this.repository = repository;
     }
 
-    public void cadastrarDisciplina(
-            Usuario coordenador,
-            String codigo,
-            String nome,
-            int cargaHoraria,
-            int creditos,
-            List<String> preRequisitos
-    ) throws Exception {
+    public void cadastrarDisciplina(Usuario coordenador, String codigo, String nome, int cargaHoraria, int creditos,
+            List<String> preRequisitos) throws Exception {
 
         if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
             throw new Exception("Erro: Apenas coordenadores podem cadastrar disciplinas.");
@@ -30,37 +24,27 @@ public class DisciplinaService {
 
         if (codigo == null || codigo.trim().isEmpty()) {
 
-            throw new Exception(
-                    "Erro: Codigo da disciplina nao pode ser vazio."
-            );
+            throw new Exception("Erro: Codigo da disciplina nao pode ser vazio.");
         }
 
         if (nome == null || nome.trim().isEmpty()) {
 
-            throw new Exception(
-                    "Erro: Nome da disciplina nao pode ser vazio."
-            );
+            throw new Exception("Erro: Nome da disciplina nao pode ser vazio.");
         }
 
         if (cargaHoraria <= 0) {
 
-            throw new Exception(
-                    "Erro: Carga horaria deve ser maior que zero."
-            );
+            throw new Exception("Erro: Carga horaria deve ser maior que zero.");
         }
 
         if (creditos <= 0) {
 
-            throw new Exception(
-                    "Erro: Creditos devem ser maiores que zero."
-            );
+            throw new Exception("Erro: Creditos devem ser maiores que zero.");
         }
 
         if (repository.existePorCodigo(codigo)) {
 
-            throw new Exception(
-                    "Erro: Ja existe uma disciplina com este codigo."
-            );
+            throw new Exception("Erro: Ja existe uma disciplina com este codigo.");
         }
 
         // RF07/RN04: valida que cada pré-requisito informado existe no sistema
@@ -68,21 +52,13 @@ public class DisciplinaService {
             for (String codigoPreReq : preRequisitos) {
                 String codigoTrimmed = codigoPreReq.trim();
                 if (!codigoTrimmed.isEmpty() && repository.buscarPorCodigo(codigoTrimmed) == null) {
-                    throw new Exception(
-                            "Erro: Pré-requisito '" + codigoTrimmed + "' não encontrado. Cadastre a disciplina antes de usá-la como pré-requisito."
-                    );
+                    throw new Exception("Erro: Pré-requisito '" + codigoTrimmed
+                            + "' não encontrado. Cadastre a disciplina antes de usá-la como pré-requisito.");
                 }
             }
         }
 
-        Disciplina disciplina =
-                new Disciplina(
-                        codigo,
-                        nome,
-                        cargaHoraria,
-                        creditos,
-                        preRequisitos
-                );
+        Disciplina disciplina = new Disciplina(codigo, nome, cargaHoraria, creditos, preRequisitos);
 
         repository.salvar(disciplina);
     }
@@ -107,14 +83,8 @@ public class DisciplinaService {
         return d;
     }
 
-    public void editarDisciplina(
-            Usuario coordenador,
-            String codigo,
-            String novoNome,
-            int novaCargaHoraria,
-            int novosCreditos,
-            List<String> novosPreRequisitos
-    ) throws Exception {
+    public void editarDisciplina(Usuario coordenador, String codigo, String novoNome, int novaCargaHoraria,
+            int novosCreditos, List<String> novosPreRequisitos) throws Exception {
 
         if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
             throw new Exception("Erro: Apenas coordenadores podem editar disciplinas.");
@@ -138,12 +108,10 @@ public class DisciplinaService {
                 String codigoTrimmed = codigoPreReq.trim();
                 // Um pré-requisito não pode ser a própria disciplina
                 if (codigoTrimmed.equalsIgnoreCase(codigo)) {
-                    throw new Exception(
-                            "Erro: Uma disciplina não pode ser pré-requisito de si mesma.");
+                    throw new Exception("Erro: Uma disciplina não pode ser pré-requisito de si mesma.");
                 }
                 if (!codigoTrimmed.isEmpty() && repository.buscarPorCodigo(codigoTrimmed) == null) {
-                    throw new Exception(
-                            "Erro: Pré-requisito '" + codigoTrimmed + "' não encontrado.");
+                    throw new Exception("Erro: Pré-requisito '" + codigoTrimmed + "' não encontrado.");
                 }
             }
         }

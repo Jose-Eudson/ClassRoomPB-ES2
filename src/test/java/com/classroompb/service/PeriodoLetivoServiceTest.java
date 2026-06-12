@@ -1,14 +1,8 @@
 package com.classroompb.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -70,41 +64,36 @@ public class PeriodoLetivoServiceTest {
         @Test
         @DisplayName("Nao deve cadastrar com codigo nulo")
         void naoDeveCadastrarComCodigoNulo() {
-            assertThrows(Exception.class, () ->
-                    service.cadastrarPeriodo(null, 2026, 2,
-                            LocalDate.now(), LocalDate.now().plusMonths(4), true));
+            assertThrows(Exception.class, () -> service.cadastrarPeriodo(null, 2026, 2, LocalDate.now(),
+                    LocalDate.now().plusMonths(4), true));
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com codigo vazio")
         void naoDeveCadastrarComCodigoVazio() {
-            assertThrows(Exception.class, () ->
-                    service.cadastrarPeriodo("  ", 2026, 2,
-                            LocalDate.now(), LocalDate.now().plusMonths(4), true));
+            assertThrows(Exception.class, () -> service.cadastrarPeriodo("  ", 2026, 2, LocalDate.now(),
+                    LocalDate.now().plusMonths(4), true));
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com semestre invalido (0)")
         void naoDeveCadastrarComSemestreZero() {
-            assertThrows(Exception.class, () ->
-                    service.cadastrarPeriodo("2026.0", 2026, 0,
-                            LocalDate.now(), LocalDate.now().plusMonths(4), true));
+            assertThrows(Exception.class, () -> service.cadastrarPeriodo("2026.0", 2026, 0, LocalDate.now(),
+                    LocalDate.now().plusMonths(4), true));
         }
 
         @Test
         @DisplayName("Nao deve cadastrar com semestre invalido (3)")
         void naoDeveCadastrarComSemestreTres() {
-            assertThrows(Exception.class, () ->
-                    service.cadastrarPeriodo("2026.3", 2026, 3,
-                            LocalDate.now(), LocalDate.now().plusMonths(4), true));
+            assertThrows(Exception.class, () -> service.cadastrarPeriodo("2026.3", 2026, 3, LocalDate.now(),
+                    LocalDate.now().plusMonths(4), true));
         }
 
         @Test
         @DisplayName("Nao deve cadastrar quando data inicio e posterior a data fim")
         void naoDeveCadastrarComDataInicioMaiorQueFim() {
-            assertThrows(Exception.class, () ->
-                    service.cadastrarPeriodo("2026.2", 2026, 2,
-                            LocalDate.of(2026, 12, 20), LocalDate.of(2026, 8, 10), true));
+            assertThrows(Exception.class, () -> service.cadastrarPeriodo("2026.2", 2026, 2, LocalDate.of(2026, 12, 20),
+                    LocalDate.of(2026, 8, 10), true));
         }
     }
 
@@ -127,10 +116,10 @@ public class PeriodoLetivoServiceTest {
         @Test
         @DisplayName("Deve desativar outros periodos ao ativar um novo")
         void deveDesativarOutrosPeriodosAoAtivar() throws Exception {
-            PeriodoLetivo p1 = new PeriodoLetivo("2026.1", 2026, 1,
-                    LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true);
-            PeriodoLetivo p2 = new PeriodoLetivo("2026.2", 2026, 2,
-                    LocalDate.of(2026, 8, 10), LocalDate.of(2026, 12, 20), false);
+            PeriodoLetivo p1 = new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30),
+                    true);
+            PeriodoLetivo p2 = new PeriodoLetivo("2026.2", 2026, 2, LocalDate.of(2026, 8, 10),
+                    LocalDate.of(2026, 12, 20), false);
             when(repository.buscarPorCodigo("2026.2")).thenReturn(p2);
             when(repository.listarTodos()).thenReturn(Arrays.asList(p1, p2));
             service.ativarPeriodo(coordenador, "2026.2");
@@ -195,7 +184,7 @@ public class PeriodoLetivoServiceTest {
         void deveListarPeriodos() {
             List<PeriodoLetivo> lista = Arrays.asList(new PeriodoLetivo(), new PeriodoLetivo());
             when(repository.listarTodos()).thenReturn(lista);
-            
+
             List<PeriodoLetivo> resultado = service.listarPeriodos();
             assertEquals(2, resultado.size());
             verify(repository).listarTodos();
@@ -207,7 +196,7 @@ public class PeriodoLetivoServiceTest {
             PeriodoLetivo periodo = new PeriodoLetivo();
             periodo.setCodigo("2026.1");
             when(repository.buscarPorCodigo("2026.1")).thenReturn(periodo);
-            
+
             PeriodoLetivo resultado = service.buscarPorCodigo("2026.1");
             assertNotNull(resultado);
             assertEquals("2026.1", resultado.getCodigo());
@@ -228,15 +217,15 @@ public class PeriodoLetivoServiceTest {
         @Test
         @DisplayName("Deve editar periodo com sucesso")
         void deveEditarPeriodo() throws Exception {
-            PeriodoLetivo periodo = new PeriodoLetivo("2026.1", 2026, 1, 
-                LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true);
+            PeriodoLetivo periodo = new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1),
+                    LocalDate.of(2026, 6, 30), true);
             when(repository.buscarPorCodigo("2026.1")).thenReturn(periodo);
-            
+
             LocalDate novaInicio = LocalDate.of(2026, 2, 15);
             LocalDate novaFim = LocalDate.of(2026, 7, 10);
-            
+
             service.editarPeriodo("2026.1", novaInicio, novaFim);
-            
+
             assertEquals(novaInicio, periodo.getDataInicio());
             assertEquals(novaFim, periodo.getDataFim());
             verify(repository).atualizarDados();
@@ -246,7 +235,7 @@ public class PeriodoLetivoServiceTest {
         @DisplayName("Nao deve editar periodo inexistente")
         void naoDeveEditarInexistente() {
             when(repository.buscarPorCodigo("XPTO")).thenReturn(null);
-            assertThrows(Exception.class, () -> 
+            assertThrows(Exception.class, () ->
                 service.editarPeriodo("XPTO", LocalDate.now(), LocalDate.now().plusMonths(1)));
         }
 
@@ -255,9 +244,9 @@ public class PeriodoLetivoServiceTest {
         void naoDeveEditarComDataInvalida() {
             PeriodoLetivo periodo = new PeriodoLetivo();
             when(repository.buscarPorCodigo("2026.1")).thenReturn(periodo);
-            
-            assertThrows(Exception.class, () -> 
-                service.editarPeriodo("2026.1", LocalDate.now().plusDays(1), LocalDate.now()));
+
+            assertThrows(Exception.class,
+                    () -> service.editarPeriodo("2026.1", LocalDate.now().plusDays(1), LocalDate.now()));
         }
     }
 }

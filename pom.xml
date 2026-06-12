@@ -14,6 +14,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mockito.version>4.11.0</mockito.version>
         <bytebuddy.version>1.17.8</bytebuddy.version>
+
+        <!-- Versões das ferramentas de qualidade -->
+        <checkstyle.version>3.4.0</checkstyle.version>
+        <!-- Força o Checkstyle 10.x para evitar conflito com Guava antigo no cache local -->
+        <checkstyle.tool.version>10.17.0</checkstyle.tool.version>
+        <spotbugs.version>4.8.3.1</spotbugs.version>
+        <pmd.version>3.21.2</pmd.version>
+        <formatter.version>2.23.0</formatter.version>
     </properties>
 
     <dependencies>
@@ -27,6 +35,7 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.15.2.redhat-00001</version>
         </dependency>
+
         <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -40,7 +49,8 @@
             <version>5.10.0</version>
             <scope>test</scope>
         </dependency>
-        <!-- Mockito for easier testing of Service layer -->
+
+        <!-- Mockito -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
@@ -53,7 +63,8 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- Force a recent Byte Buddy to support newer JDKs (e.g., 22/23) -->
+
+        <!-- Byte Buddy para suporte a JDKs mais recentes -->
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
@@ -67,6 +78,7 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
     <repositories>
         <repository>
             <id>redhat-ga</id>
@@ -77,11 +89,19 @@
     <build>
         <plugins>
 
+            <!-- =====================================================
+                 EXEC: rodar o projeto via linha de comando
+                 mvn exec:java -Dexec.mainClass="com.classroompb.ui.Main"
+                 ===================================================== -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.5.0</version>
             </plugin>
+
+            <!-- =====================================================
+                 SUREFIRE: executar os testes JUnit 5
+                 ===================================================== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -90,6 +110,152 @@
                     <argLine>@{argLine} -Dnet.bytebuddy.experimental=true</argLine>
                 </configuration>
             </plugin>
+
+            <!-- =====================================================
+                 FORMATTER: formata o código automaticamente
+                 Roda antes da compilação para garantir código uniforme.
+                 Para formatar manualmente: mvn formatter:format
+                 Para só verificar sem formatar: mvn formatter:validate
+                 ===================================================== -->
+            <plugin>
+                <groupId>net.revelc.code.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <version>${formatter.version}</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <lineEnding>LF</lineEnding>
+                    <!-- Para usar um perfil customizado do Eclipse/IntelliJ,
+                         descomente e aponte para o arquivo XML:
+                    <configFile>${project.basedir}/style/eclipse-formatter.xml</configFile>
+                    -->
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <!-- "format" aplica a formatação automaticamente no build -->
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- =====================================================
+                 CHECKSTYLE: verifica convenções de código
+                 Usa o Google Java Style Guide por padrão.
+                 Para ver o relatório: mvn checkstyle:checkstyle
+                 Para só verificar: mvn checkstyle:check
+                 ===================================================== -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${checkstyle.version}</version>
+                <!-- Força o Checkstyle 10.x — corrige o NoSuchMethodError do Guava
+                     causado pelo checkstyle-9.3.jar que ficou em cache no .m2 -->
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.tool.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <!-- Arquivo de regras customizado do projeto (na raiz do projeto) -->
+                    <configLocation>${project.basedir}/checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
+                    <!-- Aplica o checkstyle também nos testes -->
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <violationSeverity>warning</violationSeverity>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>checkstyle-validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- =====================================================
+                 PMD: detecta código ruim e duplicado
+                 - Métodos muito longos (MatriculaTurmaService tem 26KB!)
+                 - Variáveis não usadas
+                 - Código duplicado (CPD)
+                 - Complexidade ciclomática alta
+                 Para ver o relatório: mvn pmd:pmd pmd:cpd
+                 Para só verificar: mvn pmd:check pmd:cpd-check
+                 ===================================================== -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${pmd.version}</version>
+                <configuration>
+                    <rulesets>
+                        <ruleset>/rulesets/java/maven-pmd-plugin-default.xml</ruleset>
+                    </rulesets>
+                    <failOnViolation>true</failOnViolation>
+                    <printFailingErrors>true</printFailingErrors>
+                    <!-- Ignora classes geradas e UI -->
+                    <excludes>
+                        <exclude>**/ui/**</exclude>
+                    </excludes>
+                    <!-- Tamanho mínimo de bloco duplicado para alertar (tokens) -->
+                    <minimumTokens>80</minimumTokens>
+                    <includeTests>true</includeTests>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>pmd-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <!-- Verifica violações de boas práticas -->
+                            <goal>check</goal>
+                            <!-- Verifica código duplicado (Copy-Paste Detector) -->
+                            <goal>cpd-check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- =====================================================
+                 SPOTBUGS: detecta bugs potenciais no bytecode
+                 - NullPointerException não tratado
+                 - Recursos não fechados (streams, connections)
+                 - Comparação incorreta de Strings (== ao invés de .equals)
+                 - Problemas de thread safety
+                 Para ver o relatório: mvn spotbugs:spotbugs spotbugs:gui
+                 Para só verificar: mvn spotbugs:check
+                 ===================================================== -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs.version}</version>
+                <configuration>
+                    <!-- "Max" é o nível mais rigoroso de análise -->
+                    <effort>Max</effort>
+                    <!-- Reporta apenas bugs de prioridade High e Medium -->
+                    <threshold>Medium</threshold>
+                    <failOnError>true</failOnError>
+                    <excludeFilterFile>${project.basedir}/style/spotbugs-exclude.xml</excludeFilterFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotbugs-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- =====================================================
+                 JACOCO: cobertura de testes (já existia no projeto)
+                 Mínimo exigido: 80% de cobertura de linhas
+                 Para ver o relatório: target/site/jacoco/index.html
+                 ===================================================== -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -135,6 +301,11 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- =====================================================
+                 SHADE: gera o JAR executável com todas as dependências
+                 mvn package → gera target/classroompb-1.0-SNAPSHOT.jar
+                 ===================================================== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -155,6 +326,40 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
+
+    <!-- =====================================================
+         RELATÓRIOS: mvn site gera um site HTML com todos os
+         relatórios de qualidade juntos em target/site/
+         ===================================================== -->
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${checkstyle.version}</version>
+                <configuration>
+                    <configLocation>${project.basedir}/checkstyle.xml</configLocation>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${pmd.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+            </plugin>
+        </plugins>
+    </reporting>
+
 </project>

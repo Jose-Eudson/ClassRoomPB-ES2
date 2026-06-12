@@ -13,7 +13,8 @@ public class Curso implements Serializable {
     private int cargaHoraria;
 
     /** Construtor padrão necessário para desserialização. */
-    public Curso() {}
+    public Curso() {
+    }
 
     /** Construtor completo para criação de cursos. */
     public Curso(String codigo, String nome, int cargaHoraria) {
@@ -22,14 +23,29 @@ public class Curso implements Serializable {
         this.cargaHoraria = cargaHoraria;
     }
 
-    public String getCodigo() { return codigo; }
-    public void setCodigo(String codigo) { this.codigo = codigo; }
+    public String getCodigo() {
+        return codigo;
+    }
 
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
+    public void setCodigo(String codigo) {
+        this.codigo = codigo;
+    }
 
-    public int getCargaHoraria() { return cargaHoraria; }
-    public void setCargaHoraria(int cargaHoraria) { this.cargaHoraria = cargaHoraria; }
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public int getCargaHoraria() {
+        return cargaHoraria;
+    }
+
+    public void setCargaHoraria(int cargaHoraria) {
+        this.cargaHoraria = cargaHoraria;
+    }
 
     @Override
     public String toString() {

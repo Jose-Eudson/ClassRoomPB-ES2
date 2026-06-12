@@ -5,15 +5,12 @@ import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * RF10/RF11: Entidade de domínio que representa uma turma ofertada
- * para uma disciplina em um período letivo.
+ * RF10/RF11: Entidade de domínio que representa uma turma ofertada para uma disciplina em um período letivo.
  *
- * Uma turma é identificada de forma única pela combinação
- * (codigoDisciplina + codigoPeriodo + codigo), permitindo que
- * a mesma disciplina tenha múltiplas turmas no mesmo período.
+ * Uma turma é identificada de forma única pela combinação (codigoDisciplina + codigoPeriodo + codigo), permitindo que a
+ * mesma disciplina tenha múltiplas turmas no mesmo período.
  *
- * RF11: Cada turma possui professor responsável, limite de vagas,
- * horário e sala.
+ * RF11: Cada turma possui professor responsável, limite de vagas, horário e sala.
  */
 public class Turma implements Serializable {
 
@@ -41,28 +38,29 @@ public class Turma implements Serializable {
     private String matriculaProfessor;
 
     /** Construtor padrão necessário para desserialização JSON. */
-    public Turma() {}
+    public Turma() {
+    }
 
     /**
      * Construtor completo para criação de turmas (RF11).
      *
-     * @param codigo             identificador da turma (ex: "T01")
-     * @param codigoDisciplina   código da disciplina ofertada
-     * @param codigoPeriodo      código do período letivo (ex: "2026.1")
-     * @param vagas              número máximo de vagas
-     * @param horario            descrição do horário das aulas
-     * @param sala               sala onde as aulas serão realizadas
-     * @param matriculaProfessor matrícula do professor (nullable)
+     * @param codigo
+     *            identificador da turma (ex: "T01")
+     * @param codigoDisciplina
+     *            código da disciplina ofertada
+     * @param codigoPeriodo
+     *            código do período letivo (ex: "2026.1")
+     * @param vagas
+     *            número máximo de vagas
+     * @param horario
+     *            descrição do horário das aulas
+     * @param sala
+     *            sala onde as aulas serão realizadas
+     * @param matriculaProfessor
+     *            matrícula do professor (nullable)
      */
-    public Turma(
-            String codigo,
-            String codigoDisciplina,
-            String codigoPeriodo,
-            int vagas,
-            String horario,
-            String sala,
-            String matriculaProfessor
-    ) {
+    public Turma(String codigo, String codigoDisciplina, String codigoPeriodo, int vagas, String horario, String sala,
+            String matriculaProfessor) {
         this.codigo = codigo;
         this.codigoDisciplina = codigoDisciplina;
         this.codigoPeriodo = codigoPeriodo;
@@ -76,35 +74,69 @@ public class Turma implements Serializable {
     // Getters e Setters
     // -------------------------------------------------------------------------
 
-    public String getCodigo() { return codigo; }
-    public void setCodigo(String codigo) { this.codigo = codigo; }
+    public String getCodigo() {
+        return codigo;
+    }
 
-    public String getCodigoDisciplina() { return codigoDisciplina; }
-    public void setCodigoDisciplina(String codigoDisciplina) { this.codigoDisciplina = codigoDisciplina; }
+    public void setCodigo(String codigo) {
+        this.codigo = codigo;
+    }
 
-    public String getCodigoPeriodo() { return codigoPeriodo; }
-    public void setCodigoPeriodo(String codigoPeriodo) { this.codigoPeriodo = codigoPeriodo; }
+    public String getCodigoDisciplina() {
+        return codigoDisciplina;
+    }
 
-    public int getVagas() { return vagas; }
-    public void setVagas(int vagas) { this.vagas = vagas; }
+    public void setCodigoDisciplina(String codigoDisciplina) {
+        this.codigoDisciplina = codigoDisciplina;
+    }
 
-    public String getHorario() { return horario; }
-    public void setHorario(String horario) { this.horario = horario; }
+    public String getCodigoPeriodo() {
+        return codigoPeriodo;
+    }
 
-    public String getSala() { return sala; }
-    public void setSala(String sala) { this.sala = sala; }
+    public void setCodigoPeriodo(String codigoPeriodo) {
+        this.codigoPeriodo = codigoPeriodo;
+    }
 
-    public String getMatriculaProfessor() { return matriculaProfessor; }
-    public void setMatriculaProfessor(String matriculaProfessor) { this.matriculaProfessor = matriculaProfessor; }
+    public int getVagas() {
+        return vagas;
+    }
+
+    public void setVagas(int vagas) {
+        this.vagas = vagas;
+    }
+
+    public String getHorario() {
+        return horario;
+    }
+
+    public void setHorario(String horario) {
+        this.horario = horario;
+    }
+
+    public String getSala() {
+        return sala;
+    }
+
+    public void setSala(String sala) {
+        this.sala = sala;
+    }
+
+    public String getMatriculaProfessor() {
+        return matriculaProfessor;
+    }
+
+    public void setMatriculaProfessor(String matriculaProfessor) {
+        this.matriculaProfessor = matriculaProfessor;
+    }
 
     // -------------------------------------------------------------------------
     // Identificador composto: disciplina + período + código
     // -------------------------------------------------------------------------
 
     /**
-     * Retorna a chave única composta que identifica esta turma no sistema.
-     * Formato: "{codigoDisciplina}_{codigoPeriodo}_{codigo}"
-     * Exemplo: "MAT001_2026.1_T01"
+     * Retorna a chave única composta que identifica esta turma no sistema. Formato:
+     * "{codigoDisciplina}_{codigoPeriodo}_{codigo}" Exemplo: "MAT001_2026.1_T01"
      */
     @JsonIgnore
     public String getChaveUnica() {
@@ -113,13 +145,10 @@ public class Turma implements Serializable {
 
     @Override
     public String toString() {
-        String prof = (matriculaProfessor == null || matriculaProfessor.trim().isEmpty())
-                ? "sem professor"
+        String prof = matriculaProfessor == null || matriculaProfessor.trim().isEmpty() ? "sem professor"
                 : matriculaProfessor;
-        String salaStr = (sala == null || sala.trim().isEmpty()) ? "sem sala" : sala;
-        return String.format(
-                "[TURMA] %s | Disciplina: %s | Período: %s | %d vagas | %s | Sala: %s | Prof: %s",
-                codigo, codigoDisciplina, codigoPeriodo, vagas, horario, salaStr, prof
-        );
+        String salaStr = sala == null || sala.trim().isEmpty() ? "sem sala" : sala;
+        return String.format("[TURMA] %s | Disciplina: %s | Período: %s | %d vagas | %s | Sala: %s | Prof: %s", codigo,
+                codigoDisciplina, codigoPeriodo, vagas, horario, salaStr, prof);
     }
 }
