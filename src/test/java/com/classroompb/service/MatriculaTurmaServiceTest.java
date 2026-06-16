@@ -6,18 +6,24 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mock;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.classroompb.model.Administrador;
@@ -1053,7 +1059,7 @@ public class MatriculaTurmaServiceTest {
             MatriculaTurma cancelado = matriculaComStatus("A0004", StatusMatricula.CANCELADA,
                     LocalDateTime.now().minusMinutes(5));
 
-            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
                     .thenReturn(Arrays.asList(confirmado, espera1, espera2, cancelado));
 
             mockTurmaExiste();
@@ -1075,7 +1081,7 @@ public class MatriculaTurmaServiceTest {
             MatriculaTurma esperaMaisAntiga = matriculaComStatus("A0002", StatusMatricula.LISTA_ESPERA,
                     LocalDateTime.now().minusMinutes(30));
 
-            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
                     .thenReturn(Arrays.asList(esperaMaisNova, esperaMaisAntiga));
 
             mockTurmaExiste();
@@ -1094,7 +1100,7 @@ public class MatriculaTurmaServiceTest {
                     () -> service.listarListaEsperaPorTurma(aluno, DISC, PER, TURMA));
 
             assertTrue(ex.getMessage().contains("Apenas coordenadores"));
-            verify(matriculaRepository, never()).listarPorTurma(any(), any(), any());
+            verify(matriculaRepository, never()).listarListaEsperaPorTurmaOrdenada(any(), any(), any());
         }
 
         @Test
@@ -1106,7 +1112,7 @@ public class MatriculaTurmaServiceTest {
             when(periodoRepository.buscarPorCodigo(PER)).thenReturn(periodoPermitido());
             when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
             when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
-            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA)).thenReturn(listaEspera);
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA)).thenReturn(listaEspera);
             return confirmada;
         }
 
@@ -1172,7 +1178,7 @@ public class MatriculaTurmaServiceTest {
             assertDoesNotThrow(() -> service.cancelarMatricula(aluno, DISC, PER, TURMA));
 
             verify(matriculaRepository, times(1)).atualizar(any(MatriculaTurma.class));
-            verify(matriculaRepository, never()).listarPorTurma(any(), any(), any());
+            verify(matriculaRepository, never()).listarListaEsperaPorTurmaOrdenada(any(), any(), any());
         }
     }
     // =========================================================================
@@ -1192,7 +1198,7 @@ public class MatriculaTurmaServiceTest {
             when(matriculaRepository.buscarPorChaveUnica("A0001", DISC, PER, TURMA)).thenReturn(solicitacaoNegada);
             when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
             when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
-            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
                     .thenReturn(Collections.singletonList(esperaA0002));
 
             service.negarMatricula(coordenador, "A0001", DISC, PER, TURMA);
@@ -1216,7 +1222,8 @@ public class MatriculaTurmaServiceTest {
             when(matriculaRepository.buscarPorChaveUnica("A0001", DISC, PER, TURMA)).thenReturn(solicitacaoNegada);
             when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
             when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
-            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA)).thenReturn(Collections.emptyList());
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
+                    .thenReturn(Collections.emptyList());
 
             service.negarMatricula(coordenador, "A0001", DISC, PER, TURMA);
 
@@ -1233,7 +1240,7 @@ public class MatriculaTurmaServiceTest {
             when(matriculaRepository.buscarPorChaveUnica("A0001", DISC, PER, TURMA)).thenReturn(solicitacaoNegada);
             when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
             when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
-            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
                     .thenReturn(Arrays.asList(esperaMaisNova, esperaMaisAntiga));
 
             service.negarMatricula(coordenador, "A0001", DISC, PER, TURMA);
@@ -1255,7 +1262,7 @@ public class MatriculaTurmaServiceTest {
             service.negarMatricula(coordenador, "A0001", DISC, PER, TURMA);
 
             verify(matriculaRepository, times(1)).atualizar(any(MatriculaTurma.class));
-            verify(matriculaRepository, never()).listarPorTurma(any(), any(), any());
+            verify(matriculaRepository, never()).listarListaEsperaPorTurmaOrdenada(any(), any(), any());
         }
     }
 
@@ -1276,7 +1283,7 @@ public class MatriculaTurmaServiceTest {
             when(matriculaRepository.buscarPorChaveUnica("A0001", DISC, PER, TURMA)).thenReturn(solicitacao);
             when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
             when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
-            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
                     .thenReturn(Collections.singletonList(esperaA0002));
 
             service.cancelarSolicitacao(aluno, DISC, PER, TURMA);
@@ -1295,7 +1302,8 @@ public class MatriculaTurmaServiceTest {
             when(matriculaRepository.buscarPorChaveUnica("A0001", DISC, PER, TURMA)).thenReturn(solicitacao);
             when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
             when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
-            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA)).thenReturn(Collections.emptyList());
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
+                    .thenReturn(Collections.emptyList());
 
             service.cancelarSolicitacao(aluno, DISC, PER, TURMA);
 
@@ -1312,7 +1320,7 @@ public class MatriculaTurmaServiceTest {
             when(matriculaRepository.buscarPorChaveUnica("A0001", DISC, PER, TURMA)).thenReturn(solicitacao);
             when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
             when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
-            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
                     .thenReturn(Arrays.asList(esperaMaisNova, esperaMaisAntiga));
 
             service.cancelarSolicitacao(aluno, DISC, PER, TURMA);
@@ -1333,7 +1341,7 @@ public class MatriculaTurmaServiceTest {
             service.cancelarSolicitacao(aluno, DISC, PER, TURMA);
 
             verify(matriculaRepository, times(1)).atualizar(any(MatriculaTurma.class));
-            verify(matriculaRepository, never()).listarPorTurma(any(), any(), any());
+            verify(matriculaRepository, never()).listarListaEsperaPorTurmaOrdenada(any(), any(), any());
         }
     }
 
@@ -1574,12 +1582,13 @@ public class MatriculaTurmaServiceTest {
         void deveListarSolicitacoesPorTurma() throws Exception {
             MatriculaTurma m1 = new MatriculaTurma("A01", DISC, PER, TURMA);
 
-            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA)).thenReturn(Collections.singletonList(m1));
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
+                    .thenReturn(Collections.singletonList(m1));
 
             List<MatriculaTurma> resultado = service.listarSolicitacoesPorTurma(coordenador, DISC, PER, TURMA);
 
             assertEquals(1, resultado.size());
-            verify(matriculaRepository).listarPorTurma(DISC, PER, TURMA);
+            verify(matriculaRepository).listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA);
         }
 
         @Test
@@ -1626,6 +1635,86 @@ public class MatriculaTurmaServiceTest {
                     () -> service.negarMatricula(coordenador, "A01", DISC, PER, TURMA));
 
             assertTrue(ex.getMessage().contains("PENDENTES"));
+            verify(matriculaRepository, never()).atualizar(any());
+        }
+    }
+
+    // =========================================================================
+    // 17. RF23 — CHAMADA EXPLICITA DA LISTA DE ESPERA (chamarProximoDaListaEspera)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("17. RF23 - Chamada explicita da lista de espera")
+    class ChamadaExplicitaListaEspera {
+
+        @Test
+        @DisplayName("17.1 Deve promover o primeiro da lista de espera quando ha vaga disponivel")
+        void devePromoverQuandoHaVagaDisponivel() {
+            MatriculaTurma espera = matriculaEmEspera("A0002", LocalDateTime.now().minusMinutes(30));
+
+            when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
+            when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
+                    .thenReturn(Collections.singletonList(espera));
+
+            service.chamarProximoDaListaEspera(DISC, PER, TURMA);
+
+            ArgumentCaptor<MatriculaTurma> captor = ArgumentCaptor.forClass(MatriculaTurma.class);
+            verify(matriculaRepository, times(1)).atualizar(captor.capture());
+            assertEquals(StatusMatricula.CONFIRMADA, captor.getValue().getStatus());
+            assertEquals("A0002", captor.getValue().getMatriculaAluno());
+        }
+
+        @Test
+        @DisplayName("17.2 Nao deve promover quando turma esta cheia")
+        void naoDevePromoverQuandoTurmaCheiaExplicit() {
+            when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
+            when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(40L);
+
+            service.chamarProximoDaListaEspera(DISC, PER, TURMA);
+
+            verify(matriculaRepository, never()).atualizar(any());
+            verify(matriculaRepository, never()).listarListaEsperaPorTurmaOrdenada(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("17.3 Nao deve lancar excecao quando turma nao existe")
+        void naoDeveLancarExcecaoQuandoTurmaNaoExiste() {
+            when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(null);
+
+            assertDoesNotThrow(() -> service.chamarProximoDaListaEspera(DISC, PER, TURMA));
+            verify(matriculaRepository, never()).atualizar(any());
+        }
+
+        @Test
+        @DisplayName("17.4 Deve promover o mais antigo quando ha varios na lista de espera")
+        void devePromoverOMaisAntigoExplicit() {
+            MatriculaTurma esperaMaisAntiga = matriculaEmEspera("A0002", LocalDateTime.now().minusHours(3));
+            MatriculaTurma esperaMaisNova = matriculaEmEspera("A0003", LocalDateTime.now().minusMinutes(10));
+
+            when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
+            when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
+                    .thenReturn(Arrays.asList(esperaMaisNova, esperaMaisAntiga));
+
+            service.chamarProximoDaListaEspera(DISC, PER, TURMA);
+
+            ArgumentCaptor<MatriculaTurma> captor = ArgumentCaptor.forClass(MatriculaTurma.class);
+            verify(matriculaRepository, times(1)).atualizar(captor.capture());
+            assertEquals("A0002", captor.getValue().getMatriculaAluno(),
+                    "Deve promover o aluno com solicitacao mais antiga");
+            assertEquals(StatusMatricula.CONFIRMADA, captor.getValue().getStatus());
+        }
+
+        @Test
+        @DisplayName("17.5 Nao deve fazer nada quando lista de espera esta vazia")
+        void naoDeveFazerNadaComListaVaziaExplicit() {
+            when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
+            when(matriculaRepository.contarOcupadasPorTurma(DISC, PER, TURMA)).thenReturn(0L);
+            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA)).thenReturn(Collections.emptyList());
+
+            service.chamarProximoDaListaEspera(DISC, PER, TURMA);
+
             verify(matriculaRepository, never()).atualizar(any());
         }
     }

@@ -1,9 +1,16 @@
 package com.classroompb.repository;
 
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,8 +24,8 @@ import com.classroompb.model.StatusMatricula;
  * Testes de integração para MatriculaTurmaRepository (RF16).
  *
  * Cobertura: - Construtores (padrão e com caminho) - salvar() e listarTodas() - existeSolicitacaoAtiva() -
- * listarPorAluno() - listarPorAlunoEStatus() - listarPorTurma() - contarConfirmadasPorTurma() - buscarPorChaveUnica() -
- * atualizar() - case-insensitive - Persistência entre instâncias
+ * listarPorAluno() - listarPorAlunoEStatus() - listarPorTurma() - listarListaEsperaPorTurmaOrdenada() -
+ * contarConfirmadasPorTurma() - buscarPorChaveUnica() - atualizar() - case-insensitive - Persistência entre instâncias
  */
 @DisplayName("Testes de MatriculaTurmaRepository (RF16)")
 public class MatriculaTurmaRepositoryTest {
@@ -179,6 +186,40 @@ public class MatriculaTurmaRepositoryTest {
             repository.salvar(matriculaA1_MAT_T01());
             assertTrue(repository.existeSolicitacaoAtiva("a001", "mat001", "2026.1", "t01"));
         }
+
+        @Test
+        @DisplayName("Deve retornar true para solicitação em LISTA_ESPERA (impede duplicata na fila)")
+        void deveRetornarTrueParaListaEspera() {
+            MatriculaTurma m = matriculaA1_MAT_T01();
+            m.setStatus(StatusMatricula.LISTA_ESPERA);
+            repository.salvar(m);
+            assertTrue(repository.existeSolicitacaoAtiva("A001", "MAT001", "2026.1", "T01"),
+                    "Aluno em lista de espera não pode re-solicitar a mesma turma");
+        }
+
+        @Test
+        @DisplayName("Deve retornar true para solicitação REJEITADA (bloqueia re-tentativa imediata)")
+        void deveRetornarTrueParaRejeitada() {
+            MatriculaTurma m = matriculaA1_MAT_T01();
+            m.setStatus(StatusMatricula.REJEITADA);
+            repository.salvar(m);
+            assertTrue(repository.existeSolicitacaoAtiva("A001", "MAT001", "2026.1", "T01"),
+                    "Solicitação rejeitada ainda consta no histórico e bloqueia nova tentativa");
+        }
+
+        @Test
+        @DisplayName("Deve permitir nova solicitação após cancelamento de LISTA_ESPERA")
+        void devePermitirNovaSolicitacaoAposCancelamentoDeListaEspera() {
+            MatriculaTurma m = matriculaA1_MAT_T01();
+            m.setStatus(StatusMatricula.LISTA_ESPERA);
+            repository.salvar(m);
+
+            m.setStatus(StatusMatricula.CANCELADA);
+            repository.atualizar(m);
+
+            assertFalse(repository.existeSolicitacaoAtiva("A001", "MAT001", "2026.1", "T01"),
+                    "Após cancelar da lista de espera, aluno deve poder solicitar novamente");
+        }
     }
 
     // =========================================================================
@@ -327,6 +368,108 @@ public class MatriculaTurmaRepositoryTest {
     }
 
     // =========================================================================
+    // listarListaEsperaPorTurmaOrdenada()
+    // =========================================================================
+
+    @Nested
+    @DisplayName("listarListaEsperaPorTurmaOrdenada() — RF23: ordem de solicitação")
+    class ListarListaEsperaPorTurmaOrdenada {
+
+        @Test
+        @DisplayName("Deve retornar apenas alunos em LISTA_ESPERA, do mais antigo ao mais novo")
+        void deveRetornarListaEsperaOrdenadaPorDataSolicitacao() {
+            MatriculaTurma maisNova = new MatriculaTurma("A001", "MAT001", "2026.1", "T01");
+            maisNova.setStatus(StatusMatricula.LISTA_ESPERA);
+            maisNova.setDataSolicitacao(LocalDateTime.now().minusMinutes(5));
+
+            MatriculaTurma maisAntiga = new MatriculaTurma("A002", "MAT001", "2026.1", "T01");
+            maisAntiga.setStatus(StatusMatricula.LISTA_ESPERA);
+            maisAntiga.setDataSolicitacao(LocalDateTime.now().minusHours(2));
+
+            repository.salvar(maisNova);
+            repository.salvar(maisAntiga);
+
+            List<MatriculaTurma> resultado = repository.listarListaEsperaPorTurmaOrdenada("MAT001", "2026.1", "T01");
+
+            assertEquals(2, resultado.size());
+            assertEquals("A002", resultado.get(0).getMatriculaAluno(),
+                    "O aluno com solicitação mais antiga deve aparecer primeiro");
+            assertEquals("A001", resultado.get(1).getMatriculaAluno(),
+                    "O aluno com solicitação mais recente deve aparecer por último");
+        }
+
+        @Test
+        @DisplayName("Deve excluir matrículas CONFIRMADAS e PENDENTES da lista de espera")
+        void deveExcluirStatusDiferentesDeListaEspera() {
+            MatriculaTurma confirmada = new MatriculaTurma("A001", "MAT001", "2026.1", "T01");
+            confirmada.setStatus(StatusMatricula.CONFIRMADA);
+            confirmada.setDataSolicitacao(LocalDateTime.now().minusHours(3));
+
+            MatriculaTurma espera = new MatriculaTurma("A002", "MAT001", "2026.1", "T01");
+            espera.setStatus(StatusMatricula.LISTA_ESPERA);
+            espera.setDataSolicitacao(LocalDateTime.now().minusMinutes(30));
+
+            repository.salvar(confirmada);
+            repository.salvar(espera);
+
+            List<MatriculaTurma> resultado = repository.listarListaEsperaPorTurmaOrdenada("MAT001", "2026.1", "T01");
+
+            assertEquals(1, resultado.size());
+            assertEquals("A002", resultado.get(0).getMatriculaAluno());
+            assertEquals(StatusMatricula.LISTA_ESPERA, resultado.get(0).getStatus());
+        }
+
+        @Test
+        @DisplayName("Deve retornar lista vazia quando não há ninguém em espera")
+        void deveRetornarVaziaQuandoSemListaEspera() {
+            repository.salvar(matriculaA1_MAT_T01()); // PENDENTE
+
+            List<MatriculaTurma> resultado = repository.listarListaEsperaPorTurmaOrdenada("MAT001", "2026.1", "T01");
+
+            assertTrue(resultado.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Deve ser case-insensitive nos parâmetros")
+        void deveSerCaseInsensitive() {
+            MatriculaTurma espera = new MatriculaTurma("A001", "MAT001", "2026.1", "T01");
+            espera.setStatus(StatusMatricula.LISTA_ESPERA);
+            espera.setDataSolicitacao(LocalDateTime.now());
+            repository.salvar(espera);
+
+            assertFalse(repository.listarListaEsperaPorTurmaOrdenada("mat001", "2026.1", "t01").isEmpty());
+        }
+
+        @Test
+        @DisplayName("Deve preservar a ordem correta com três alunos em espera inseridos fora de ordem")
+        void devePreservarOrdemComTresAlunos() {
+            MatriculaTurma terceiro = new MatriculaTurma("A003", "MAT001", "2026.1", "T01");
+            terceiro.setStatus(StatusMatricula.LISTA_ESPERA);
+            terceiro.setDataSolicitacao(LocalDateTime.now().minusMinutes(1));
+
+            MatriculaTurma primeiro = new MatriculaTurma("A001", "MAT001", "2026.1", "T01");
+            primeiro.setStatus(StatusMatricula.LISTA_ESPERA);
+            primeiro.setDataSolicitacao(LocalDateTime.now().minusHours(3));
+
+            MatriculaTurma segundo = new MatriculaTurma("A002", "MAT001", "2026.1", "T01");
+            segundo.setStatus(StatusMatricula.LISTA_ESPERA);
+            segundo.setDataSolicitacao(LocalDateTime.now().minusHours(1));
+
+            // Inseridos fora de ordem para garantir que a ordenação é por data, não por inserção
+            repository.salvar(terceiro);
+            repository.salvar(primeiro);
+            repository.salvar(segundo);
+
+            List<MatriculaTurma> resultado = repository.listarListaEsperaPorTurmaOrdenada("MAT001", "2026.1", "T01");
+
+            assertEquals(3, resultado.size());
+            assertEquals("A001", resultado.get(0).getMatriculaAluno(), "1º: solicitação mais antiga");
+            assertEquals("A002", resultado.get(1).getMatriculaAluno(), "2º: solicitação intermediária");
+            assertEquals("A003", resultado.get(2).getMatriculaAluno(), "3º: solicitação mais recente");
+        }
+    }
+
+    // =========================================================================
     // contarConfirmadasPorTurma()
     // =========================================================================
 
@@ -383,6 +526,53 @@ public class MatriculaTurmaRepositoryTest {
             repository.salvar(cancelada);
 
             assertEquals(0L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"));
+        }
+
+        @Test
+        @DisplayName("Não deve contar alunos em LISTA_ESPERA como vagas ocupadas")
+        void naoDeveContarListaEsperaComoOcupada() {
+            // Aluno em lista de espera ainda não ocupa vaga — a vaga é reservada
+            // somente ao ser promovido para CONFIRMADA
+            MatriculaTurma espera = matriculaA1_MAT_T01();
+            espera.setStatus(StatusMatricula.LISTA_ESPERA);
+            repository.salvar(espera);
+
+            assertEquals(0L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"),
+                    "LISTA_ESPERA não deve ocupar vaga na turma");
+        }
+
+        @Test
+        @DisplayName("Deve contar apenas CONFIRMADAS e PENDENTES quando há mix de status")
+        void deveContarApenasConfirmadasEPendentesComMixDeStatus() {
+            MatriculaTurma confirmada = matriculaA1_MAT_T01();
+            confirmada.setStatus(StatusMatricula.CONFIRMADA);
+            repository.salvar(confirmada);
+
+            MatriculaTurma espera = matriculaA2_MAT_T01();
+            espera.setStatus(StatusMatricula.LISTA_ESPERA);
+            repository.salvar(espera);
+
+            // Apenas a CONFIRMADA conta como vaga ocupada; LISTA_ESPERA não
+            assertEquals(1L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"),
+                    "Apenas CONFIRMADA deve ser contada; LISTA_ESPERA não ocupa vaga");
+        }
+
+        @Test
+        @DisplayName("Após promoção de LISTA_ESPERA para CONFIRMADA, deve incrementar contagem")
+        void aposPromocaoDeEsperaParaConfirmadaDeveIncrementarContagem() {
+            MatriculaTurma espera = matriculaA1_MAT_T01();
+            espera.setStatus(StatusMatricula.LISTA_ESPERA);
+            repository.salvar(espera);
+
+            assertEquals(0L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"),
+                    "Antes da promoção: LISTA_ESPERA não conta");
+
+            // Simula promoção automática: atualiza status para CONFIRMADA
+            espera.setStatus(StatusMatricula.CONFIRMADA);
+            repository.atualizar(espera);
+
+            assertEquals(1L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"),
+                    "Após promoção: CONFIRMADA deve ser contada como vaga ocupada");
         }
     }
 

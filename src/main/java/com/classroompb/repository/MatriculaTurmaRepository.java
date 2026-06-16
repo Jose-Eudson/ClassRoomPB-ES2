@@ -2,6 +2,7 @@ package com.classroompb.repository;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -155,6 +156,29 @@ public class MatriculaTurmaRepository {
             String codigoTurma) {
         String chave = matriculaAluno + "_" + codigoDisciplina + "_" + codigoPeriodo + "_" + codigoTurma;
         return matriculas.stream().filter(m -> m.getChaveUnica().equalsIgnoreCase(chave)).findFirst().orElse(null);
+    }
+
+    /**
+     * RF23: Retorna os alunos em lista de espera de uma turma, ordenados pela data da solicitação (mais antigo
+     * primeiro), respeitando a ordem de chegada.
+     *
+     * @param codigoDisciplina
+     *            código da disciplina
+     * @param codigoPeriodo
+     *            código do período letivo
+     * @param codigoTurma
+     *            código da turma
+     *
+     * @return lista de solicitações com status LISTA_ESPERA, ordenadas por dataSolicitacao ascendente
+     */
+    public List<MatriculaTurma> listarListaEsperaPorTurmaOrdenada(String codigoDisciplina, String codigoPeriodo,
+            String codigoTurma) {
+        return matriculas.stream().filter(m -> m.getCodigoDisciplina().equalsIgnoreCase(codigoDisciplina)
+                && m.getCodigoPeriodo().equalsIgnoreCase(codigoPeriodo)
+                && m.getCodigoTurma().equalsIgnoreCase(codigoTurma) && m.getStatus() == StatusMatricula.LISTA_ESPERA)
+                .sorted(Comparator.comparing(MatriculaTurma::getDataSolicitacao,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
     }
 
     /**

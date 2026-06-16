@@ -1,6 +1,9 @@
 package com.classroompb.service;
 
+import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.classroompb.model.Aluno;
 import com.classroompb.model.Disciplina;
@@ -13,10 +16,8 @@ import com.classroompb.model.Usuario;
 import com.classroompb.repository.DisciplinaRepository;
 import com.classroompb.repository.HistoricoRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
-
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
-import java.time.LocalDate;
 
 /**
  * RF16: Serviço responsável pela solicitação e gestão de matrículas de alunos em turmas.
@@ -306,6 +307,21 @@ public class MatriculaTurmaService {
 
     /**
      * RF23: Promove automaticamente o primeiro aluno da lista de espera quando surgir vaga em uma turma.
+     *
+     * <p>
+     * Chamado internamente apos qualquer evento que libere uma vaga: cancelamento de matricula CONFIRMADA ou PENDENTE
+     * (RF22), rejeicao pelo coordenador, ou cancelamento de solicitacao PENDENTE pelo aluno (RF23).
+     *
+     * <p>
+     * Pode ser invocado externamente via {@link #chamarProximoDaListaEspera} quando o numero de vagas for aumentado
+     * pelo coordenador.
+     */
+    public void chamarProximoDaListaEspera(String codigoDisciplina, String codigoPeriodo, String codigoTurma) {
+        promoverPrimeiroDaListaEsperaSeHouverVaga(codigoDisciplina, codigoPeriodo, codigoTurma);
+    }
+
+    /**
+     * RF23: Promove automaticamente o primeiro aluno da lista de espera quando surgir vaga em uma turma.
      */
     private void promoverPrimeiroDaListaEsperaSeHouverVaga(String codigoDisciplina, String codigoPeriodo,
             String codigoTurma) {
@@ -333,15 +349,14 @@ public class MatriculaTurmaService {
     }
 
     /**
-     * Retorna apenas matrículas com status LISTA_ESPERA de uma turma, ordenadas pela data da solicitação.
+     * RF23: Retorna apenas matrículas com status LISTA_ESPERA de uma turma, ordenadas pela data de solicitação (mais
+     * antigo primeiro), respeitando a ordem de chegada — via repositório.
      */
     private List<MatriculaTurma> obterListaEsperaOrdenada(String codigoDisciplina, String codigoPeriodo,
             String codigoTurma) {
-        return matriculaRepository.listarPorTurma(codigoDisciplina, codigoPeriodo, codigoTurma).stream()
-                .filter(m -> m.getStatus() == StatusMatricula.LISTA_ESPERA)
-                .sorted(java.util.Comparator.comparing(MatriculaTurma::getDataSolicitacao,
-                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
-                .collect(java.util.stream.Collectors.toList());
+        return matriculaRepository.listarListaEsperaPorTurmaOrdenada(codigoDisciplina, codigoPeriodo, codigoTurma)
+                .stream().filter(m -> m.getStatus() == StatusMatricula.LISTA_ESPERA)
+                .sorted(Comparator.comparing(MatriculaTurma::getDataSolicitacao)).collect(Collectors.toList());
     }
     // =========================================================================
     // Gestão pelo Coordenador
@@ -425,10 +440,14 @@ public class MatriculaTurmaService {
      */
     public List<MatriculaTurma> listarSolicitacoesPorTurma(Usuario coordenador, String codigoDisciplina,
             String codigoPeriodo, String codigoTurma) throws Exception {
-        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
-            throw new Exception("Erro: Apenas coordenadores podem listar solicitações de matrícula.");
-        }
-        return matriculaRepository.listarPorTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+        validarCoordenador(coordenador);
+
+        String[] normatizados = validarCamposTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+        String discNorm = normatizados[0];
+        String periodoNorm = normatizados[1];
+        String turmaNorm = normatizados[2];
+
+        return matriculaRepository.listarListaEsperaPorTurmaOrdenada(discNorm, periodoNorm, turmaNorm);
     }
 
     /**
@@ -601,6 +620,10 @@ public class MatriculaTurmaService {
 
         String[] partes1 = horario1.split(" ");
         String[] partes2 = horario2.split(" ");
+
+        if (partes1.length < 2 || partes2.length < 2) {
+            return false;
+        }
 
         String dias1 = partes1[0];
         String dias2 = partes2[0];
