@@ -286,7 +286,7 @@ public class MatriculaTurmaService {
     // =========================================================================
 
     /**
-     * RF23: Lista os alunos em lista de espera de uma turma específica.
+     * RF26: Lista os alunos em lista de espera de uma turma específica para visualização pelo coordenador.
      *
      * A lista é ordenada pela data de solicitação, mantendo a ordem de chegada.
      */
@@ -349,7 +349,7 @@ public class MatriculaTurmaService {
     }
 
     /**
-     * RF23: Retorna apenas matrículas com status LISTA_ESPERA de uma turma, ordenadas pela data de solicitação (mais
+     * RF26: Retorna apenas matrículas com status LISTA_ESPERA de uma turma, ordenadas pela data de solicitação (mais
      * antigo primeiro), respeitando a ordem de chegada — via repositório.
      */
     private List<MatriculaTurma> obterListaEsperaOrdenada(String codigoDisciplina, String codigoPeriodo,
@@ -447,7 +447,9 @@ public class MatriculaTurmaService {
         String periodoNorm = normatizados[1];
         String turmaNorm = normatizados[2];
 
-        return matriculaRepository.listarListaEsperaPorTurmaOrdenada(discNorm, periodoNorm, turmaNorm);
+        buscarTurmaOuFalhar(discNorm, periodoNorm, turmaNorm);
+
+        return matriculaRepository.listarPorTurma(discNorm, periodoNorm, turmaNorm);
     }
 
     /**

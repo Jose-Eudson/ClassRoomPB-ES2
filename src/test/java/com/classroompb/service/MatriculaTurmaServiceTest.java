@@ -1023,11 +1023,11 @@ public class MatriculaTurmaServiceTest {
         }
     }
     // =========================================================================
-    // 11. RF23 — MANUTENÇÃO DA LISTA DE ESPERA POR TURMA
+    // 11. RF23/RF26 — MANUTENÇÃO E VISUALIZAÇÃO DA LISTA DE ESPERA POR TURMA
     // =========================================================================
 
     @Nested
-    @DisplayName("11. RF23 - Manutenção da lista de espera por turma")
+    @DisplayName("11. RF23/RF26 - Manutenção e visualização da lista de espera por turma")
     class ManutencaoListaEsperaRF23 {
 
         private PeriodoLetivo periodoPermitido() {
@@ -1104,6 +1104,17 @@ public class MatriculaTurmaServiceTest {
         }
 
         @Test
+        @DisplayName("11.4 Turma inexistente não deve listar lista de espera")
+        void turmaInexistenteNaoDeveListarListaEspera() {
+            when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(null);
+
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.listarListaEsperaPorTurma(coordenador, DISC, PER, TURMA));
+
+            assertTrue(ex.getMessage().contains("Turma"));
+            verify(matriculaRepository, never()).listarListaEsperaPorTurmaOrdenada(any(), any(), any());
+        }
+
         private MatriculaTurma configurarCancelamentoComPromoção(List<MatriculaTurma> listaEspera) {
             MatriculaTurma confirmada = matriculaComStatus("A0001", StatusMatricula.CONFIRMADA,
                     LocalDateTime.now().minusHours(1));
@@ -1117,7 +1128,7 @@ public class MatriculaTurmaServiceTest {
         }
 
         @Test
-        @DisplayName("11.4 Ao cancelar matrícula CONFIRMADA, deve promover primeiro da lista de espera")
+        @DisplayName("11.5 Ao cancelar matrícula CONFIRMADA, deve promover primeiro da lista de espera")
         void aoCancelarConfirmadaDevePromoverPrimeiroDaListaEspera() {
             MatriculaTurma espera = matriculaComStatus("A0002", StatusMatricula.LISTA_ESPERA,
                     LocalDateTime.now().minusMinutes(30));
@@ -1134,7 +1145,7 @@ public class MatriculaTurmaServiceTest {
         }
 
         @Test
-        @DisplayName("11.5 Se não houver aluno na lista de espera, deve apenas cancelar")
+        @DisplayName("11.6 Se não houver aluno na lista de espera, deve apenas cancelar")
         void seNaoHouverListaEsperaDeveApenasCancelar() {
             configurarCancelamentoComPromoção(Collections.emptyList());
 
@@ -1581,14 +1592,17 @@ public class MatriculaTurmaServiceTest {
         @DisplayName("16.5 Coordenador deve listar solicitações de uma turma específica")
         void deveListarSolicitacoesPorTurma() throws Exception {
             MatriculaTurma m1 = new MatriculaTurma("A01", DISC, PER, TURMA);
+            MatriculaTurma m2 = new MatriculaTurma("A02", DISC, PER, TURMA);
+            m2.setStatus(StatusMatricula.LISTA_ESPERA);
 
-            when(matriculaRepository.listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA))
-                    .thenReturn(Collections.singletonList(m1));
+            mockTurmaExiste();
+            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA)).thenReturn(Arrays.asList(m1, m2));
 
             List<MatriculaTurma> resultado = service.listarSolicitacoesPorTurma(coordenador, DISC, PER, TURMA);
 
-            assertEquals(1, resultado.size());
-            verify(matriculaRepository).listarListaEsperaPorTurmaOrdenada(DISC, PER, TURMA);
+            assertEquals(2, resultado.size());
+            verify(matriculaRepository).listarPorTurma(DISC, PER, TURMA);
+            verify(matriculaRepository, never()).listarListaEsperaPorTurmaOrdenada(any(), any(), any());
         }
 
         @Test
@@ -1598,21 +1612,30 @@ public class MatriculaTurmaServiceTest {
         }
 
         @Test
-        @DisplayName("16.7 Usuário null não pode aprovar matrícula")
+        @DisplayName("16.7 Turma inexistente não deve listar solicitações")
+        void turmaInexistenteNaoDeveListarSolicitacoes() {
+            when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(null);
+
+            assertThrows(Exception.class, () -> service.listarSolicitacoesPorTurma(coordenador, DISC, PER, TURMA));
+            verify(matriculaRepository, never()).listarPorTurma(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("16.8 Usuário null não pode aprovar matrícula")
         void usuarioNuloNaoPodeAprovar() {
             assertThrows(Exception.class, () -> service.aprovarMatricula(null, "A01", DISC, PER, TURMA));
             verify(matriculaRepository, never()).atualizar(any());
         }
 
         @Test
-        @DisplayName("16.8 Aluno não pode negar matrícula")
+        @DisplayName("16.9 Aluno não pode negar matrícula")
         void alunoNaoPodeNegarMatricula() {
             assertThrows(Exception.class, () -> service.negarMatricula(aluno, "A01", DISC, PER, TURMA));
             verify(matriculaRepository, never()).atualizar(any());
         }
 
         @Test
-        @DisplayName("16.9 Não deve negar solicitação inexistente")
+        @DisplayName("16.10 Não deve negar solicitação inexistente")
         void naoDeveNegarSolicitacaoInexistente() {
             when(matriculaRepository.buscarPorChaveUnica("A99", DISC, PER, TURMA)).thenReturn(null);
 
@@ -1624,7 +1647,7 @@ public class MatriculaTurmaServiceTest {
         }
 
         @Test
-        @DisplayName("16.10 Não deve negar solicitação que não esteja PENDENTE")
+        @DisplayName("16.11 Não deve negar solicitação que não esteja PENDENTE")
         void naoDeveNegarSolicitacaoNaoPendente() {
             MatriculaTurma confirmada = new MatriculaTurma("A01", DISC, PER, TURMA);
             confirmada.setStatus(StatusMatricula.CONFIRMADA);
