@@ -1,0 +1,145 @@
+package com.classroompb.service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import com.classroompb.model.MatriculaTurma;
+import com.classroompb.model.RegistroFrequencia;
+import com.classroompb.model.StatusFrequencia;
+import com.classroompb.model.StatusMatricula;
+import com.classroompb.model.TipoUsuario;
+import com.classroompb.model.Turma;
+import com.classroompb.model.Usuario;
+import com.classroompb.repository.FrequenciaRepository;
+import com.classroompb.repository.MatriculaTurmaRepository;
+import com.classroompb.repository.TurmaRepository;
+
+/**
+ * RF27: Servico responsavel pelo registro de presenca/falta dos alunos por aula.
+ */
+public class FrequenciaService {
+
+    private final FrequenciaRepository frequenciaRepository;
+    private final TurmaRepository turmaRepository;
+    private final MatriculaTurmaRepository matriculaRepository;
+
+    public FrequenciaService(FrequenciaRepository frequenciaRepository, TurmaRepository turmaRepository,
+            MatriculaTurmaRepository matriculaRepository) {
+        this.frequenciaRepository = frequenciaRepository;
+        this.turmaRepository = turmaRepository;
+        this.matriculaRepository = matriculaRepository;
+    }
+
+    /**
+     * Registra ou corrige a frequencia de um aluno em uma aula.
+     */
+    public RegistroFrequencia registrarFrequencia(Usuario professor, String matriculaAluno, String codigoDisciplina,
+            String codigoPeriodo, String codigoTurma, LocalDate dataAula, StatusFrequencia status) throws Exception {
+        validarProfessor(professor);
+        String alunoNorm = validarCampoObrigatorio(matriculaAluno, "matricula do aluno");
+        String discNorm = validarCampoObrigatorio(codigoDisciplina, "codigo da disciplina");
+        String periodoNorm = validarCampoObrigatorio(codigoPeriodo, "codigo do periodo letivo");
+        String turmaNorm = validarCampoObrigatorio(codigoTurma, "codigo da turma");
+
+        if (dataAula == null) {
+            throw new Exception("Erro: Data da aula nao pode ser vazia.");
+        }
+        if (status == null) {
+            throw new Exception("Erro: Status da frequencia nao pode ser vazio.");
+        }
+
+        Turma turma = buscarTurmaOuFalhar(discNorm, periodoNorm, turmaNorm);
+        validarProfessorResponsavel(professor, turma);
+        validarMatriculaConfirmada(alunoNorm, discNorm, periodoNorm, turmaNorm);
+
+        RegistroFrequencia frequencia = frequenciaRepository.buscarPorChaveUnica(alunoNorm, discNorm, periodoNorm,
+                turmaNorm, dataAula);
+
+        if (frequencia == null) {
+            frequencia = new RegistroFrequencia(alunoNorm, discNorm, periodoNorm, turmaNorm, dataAula, status,
+                    professor.getMatricula());
+            frequenciaRepository.salvar(frequencia);
+        } else {
+            frequencia.setStatus(status);
+            frequencia.setMatriculaProfessor(professor.getMatricula());
+            frequencia.setDataRegistro(LocalDateTime.now());
+            frequenciaRepository.atualizar(frequencia);
+        }
+
+        return frequencia;
+    }
+
+    /** Registra presenca para um aluno em uma aula. */
+    public RegistroFrequencia registrarPresenca(Usuario professor, String matriculaAluno, String codigoDisciplina,
+            String codigoPeriodo, String codigoTurma, LocalDate dataAula) throws Exception {
+        return registrarFrequencia(professor, matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma, dataAula,
+                StatusFrequencia.PRESENTE);
+    }
+
+    /** Registra falta para um aluno em uma aula. */
+    public RegistroFrequencia registrarFalta(Usuario professor, String matriculaAluno, String codigoDisciplina,
+            String codigoPeriodo, String codigoTurma, LocalDate dataAula) throws Exception {
+        return registrarFrequencia(professor, matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma, dataAula,
+                StatusFrequencia.FALTA);
+    }
+
+    /** Lista a frequencia lancada para uma turma em uma aula. */
+    public List<RegistroFrequencia> listarFrequenciaDaAula(Usuario professor, String codigoDisciplina,
+            String codigoPeriodo, String codigoTurma, LocalDate dataAula) throws Exception {
+        validarProfessor(professor);
+        String discNorm = validarCampoObrigatorio(codigoDisciplina, "codigo da disciplina");
+        String periodoNorm = validarCampoObrigatorio(codigoPeriodo, "codigo do periodo letivo");
+        String turmaNorm = validarCampoObrigatorio(codigoTurma, "codigo da turma");
+
+        if (dataAula == null) {
+            throw new Exception("Erro: Data da aula nao pode ser vazia.");
+        }
+
+        Turma turma = buscarTurmaOuFalhar(discNorm, periodoNorm, turmaNorm);
+        validarProfessorResponsavel(professor, turma);
+
+        return frequenciaRepository.listarPorTurmaEData(discNorm, periodoNorm, turmaNorm, dataAula);
+    }
+
+    private void validarProfessor(Usuario professor) throws Exception {
+        if (professor == null || professor.getTipo() != TipoUsuario.PROFESSOR) {
+            throw new Exception("Erro: Apenas professores podem registrar frequencia.");
+        }
+    }
+
+    private String validarCampoObrigatorio(String valor, String nomeCampo) throws Exception {
+        if (valor == null || valor.trim().isEmpty()) {
+            throw new Exception("Erro: " + nomeCampo + " nao pode ser vazio.");
+        }
+        return valor.trim();
+    }
+
+    private Turma buscarTurmaOuFalhar(String codigoDisciplina, String codigoPeriodo, String codigoTurma)
+            throws Exception {
+        Turma turma = turmaRepository.buscarPorChaveUnica(codigoDisciplina, codigoPeriodo, codigoTurma);
+        if (turma == null) {
+            throw new Exception("Erro: Turma '" + codigoTurma + "' da disciplina '" + codigoDisciplina
+                    + "' no periodo '" + codigoPeriodo + "' nao encontrada.");
+        }
+        return turma;
+    }
+
+    private void validarProfessorResponsavel(Usuario professor, Turma turma) throws Exception {
+        String responsavel = turma.getMatriculaProfessor();
+        if (responsavel == null || responsavel.trim().isEmpty()
+                || !responsavel.trim().equalsIgnoreCase(professor.getMatricula())) {
+            throw new Exception("Erro: Apenas o professor responsavel pela turma pode registrar frequencia.");
+        }
+    }
+
+    private void validarMatriculaConfirmada(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
+            String codigoTurma) throws Exception {
+        MatriculaTurma matricula = matriculaRepository.buscarPorChaveUnica(matriculaAluno, codigoDisciplina,
+                codigoPeriodo, codigoTurma);
+
+        if (matricula == null || matricula.getStatus() != StatusMatricula.CONFIRMADA) {
+            throw new Exception("Erro: Frequencia so pode ser registrada para alunos com matricula confirmada.");
+        }
+    }
+}
