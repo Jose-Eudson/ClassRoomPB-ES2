@@ -80,6 +80,16 @@ public class FrequenciaRepository {
                 .collect(Collectors.toList());
     }
 
+    public List<RegistroFrequencia> listarPorAlunoETurma(String matriculaAluno, String codigoDisciplina,
+            String codigoPeriodo, String codigoTurma) {
+        return frequencias.stream()
+                .filter(f -> f.getMatriculaAluno().equalsIgnoreCase(matriculaAluno)
+                        && f.getCodigoDisciplina().equalsIgnoreCase(codigoDisciplina)
+                        && f.getCodigoPeriodo().equalsIgnoreCase(codigoPeriodo)
+                        && f.getCodigoTurma().equalsIgnoreCase(codigoTurma))
+                .collect(Collectors.toList());
+    }
+
     /** Atualiza um registro existente identificado pela chave unica composta. */
     public void atualizar(RegistroFrequencia atualizada) {
         for (int i = 0; i < frequencias.size(); i++) {

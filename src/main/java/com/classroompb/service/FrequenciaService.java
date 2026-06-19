@@ -102,6 +102,20 @@ public class FrequenciaService {
         return frequenciaRepository.listarPorTurmaEData(discNorm, periodoNorm, turmaNorm, dataAula);
     }
 
+    public double calcularPercentualFrequencia(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
+            String codigoTurma) {
+
+        List<RegistroFrequencia> registros = frequenciaRepository.listarPorAlunoETurma(matriculaAluno, codigoDisciplina,
+                codigoPeriodo, codigoTurma);
+
+        if (registros.isEmpty())
+            return 0.0;
+
+        long presentes = registros.stream().filter(r -> r.getStatus() == StatusFrequencia.PRESENTE).count();
+
+        return (presentes * 100.0) / registros.size();
+    }
+
     private void validarProfessor(Usuario professor) throws Exception {
         if (professor == null || professor.getTipo() != TipoUsuario.PROFESSOR) {
             throw new Exception("Erro: Apenas professores podem registrar frequencia.");
@@ -142,4 +156,5 @@ public class FrequenciaService {
             throw new Exception("Erro: Frequencia so pode ser registrada para alunos com matricula confirmada.");
         }
     }
+
 }

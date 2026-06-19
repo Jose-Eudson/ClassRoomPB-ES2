@@ -50,7 +50,7 @@ public class FrequenciaServiceTest {
 
     private Professor professor;
     private Professor outroProfessor;
-    private Aluno aluno;
+    private Aluno aluno, outroAluno;
     private Coordenador coordenador;
     private Turma turma;
     private MatriculaTurma matriculaConfirmada;
@@ -250,5 +250,92 @@ public class FrequenciaServiceTest {
         assertEquals(1, resultado.size());
         assertEquals(StatusFrequencia.PRESENTE, resultado.get(0).getStatus());
         verify(frequenciaRepository).listarPorTurmaEData(DISC, PER, TURMA, DATA_AULA);
+    }
+
+    @Nested
+    class CalculoPercentualFrequencia {
+
+        @Test
+        @DisplayName("Deve calcular 100 porcento de frequeência")
+        void deveCalcular100PorCentoDeFrequencia() throws Exception {
+            service.registrarPresenca(professor, aluno.getMatricula(), "ES2", "2026.1", "T01",
+                    LocalDate.of(2026, 3, 2));
+
+            service.registrarPresenca(professor, aluno.getMatricula(), "ES2", "2026.1", "T01",
+                    LocalDate.of(2026, 3, 9));
+
+            service.registrarPresenca(professor, aluno.getMatricula(), "ES2", "2026.1", "T01",
+                    LocalDate.of(2026, 3, 16));
+
+            service.registrarPresenca(professor, aluno.getMatricula(), "ES2", "2026.1", "T01",
+                    LocalDate.of(2026, 3, 23));
+
+            double percentual = service.calcularPercentualFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            assertEquals(100.0, percentual);
+
+        }
+    }
+
+    @Test
+    @DisplayName("Deve calcular 75 porcento de frequeência")
+    void deveCalcular75PorCentoDeFrequencia() throws Exception {
+
+        service.registrarPresenca(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 2));
+
+        service.registrarPresenca(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 9));
+
+        service.registrarPresenca(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 16));
+
+        service.registrarFalta(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 23));
+
+        double percentual = service.calcularPercentualFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+        assertEquals(75.0, percentual);
+    }
+
+    @Test
+    @DisplayName("Deve ignorar registros de outras turmas")
+    void deveIgnorarRegistrosDeOutrasTurmas() throws Exception {
+
+        // ES2
+        service.registrarPresenca(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 2));
+
+        // SO
+        service.registrarFalta(professor, aluno.getMatricula(), "SO", "2026.1", "T03", LocalDate.of(2026, 3, 2));
+
+        double percentual = service.calcularPercentualFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+        assertEquals(100.0, percentual);
+    }
+
+    @Test
+    @DisplayName("Deve ignorar registros de outros alunos")
+    void deveIgnorarRegistrosDeOutrosAlunos() throws Exception {
+
+        service.registrarPresenca(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 2));
+
+        service.registrarFalta(professor, outroAluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 2));
+
+        double percentual = service.calcularPercentualFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+        assertEquals(100.0, percentual);
+    }
+
+    @Test
+    @DisplayName("Deve recalcular percentual quando professor corrigir a frequência do aluno")
+    void deveRecalcularPercentualQuandoProfessorCorrigirFrequencia() throws Exception {
+
+        service.registrarFalta(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 2));
+
+        double percentual = service.calcularPercentualFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+        assertEquals(0.0, percentual);
+
+        service.registrarPresenca(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 2));
+
+        percentual = service.calcularPercentualFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+        assertEquals(100.0, percentual);
     }
 }
