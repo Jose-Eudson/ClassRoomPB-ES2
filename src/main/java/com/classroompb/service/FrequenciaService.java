@@ -108,8 +108,10 @@ public class FrequenciaService {
         List<RegistroFrequencia> registros = frequenciaRepository.listarPorAlunoETurma(matriculaAluno, codigoDisciplina,
                 codigoPeriodo, codigoTurma);
 
-        if (registros.isEmpty())
+
+        if (registros.isEmpty()) {
             return 0.0;
+        }
 
         long presentes = registros.stream().filter(r -> r.getStatus() == StatusFrequencia.PRESENTE).count();
 
@@ -155,6 +157,27 @@ public class FrequenciaService {
         if (matricula == null || matricula.getStatus() != StatusMatricula.CONFIRMADA) {
             throw new Exception("Erro: Frequencia so pode ser registrada para alunos com matricula confirmada.");
         }
+    }
+
+    /**
+     * RF29: Retorna todos os registros de frequencia de um aluno em uma determinada turma/disciplina.
+     */
+    public List<RegistroFrequencia> obterFrequenciaAluno(String matriculaAluno, String codigoDisciplina,
+            String codigoPeriodo, String codigoTurma) throws Exception {
+
+        validarCampoObrigatorio(matriculaAluno, "matricula do aluno");
+        validarCampoObrigatorio(codigoDisciplina, "codigo da disciplina");
+        validarCampoObrigatorio(codigoPeriodo, "codigo do periodo");
+        validarCampoObrigatorio(codigoTurma, "codigo da turma");
+
+        List<RegistroFrequencia> registros = frequenciaRepository.listarPorAlunoETurma(matriculaAluno.trim(),
+                codigoDisciplina.trim(), codigoPeriodo.trim(), codigoTurma.trim());
+
+        if (registros.isEmpty()) {
+            throw new Exception("Nenhum registro de frequência encontrado para os dados informados.");
+        }
+
+        return registros;
     }
 
 }
