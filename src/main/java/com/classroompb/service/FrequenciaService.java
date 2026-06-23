@@ -24,6 +24,8 @@ public class FrequenciaService {
     private final TurmaRepository turmaRepository;
     private final MatriculaTurmaRepository matriculaRepository;
 
+    private static final double FREQUENCIA_MINIMA = 75.0;
+
     public FrequenciaService(FrequenciaRepository frequenciaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository) {
         this.frequenciaRepository = frequenciaRepository;
@@ -102,12 +104,24 @@ public class FrequenciaService {
         return frequenciaRepository.listarPorTurmaEData(discNorm, periodoNorm, turmaNorm, dataAula);
     }
 
+    public String obterAlertaFrequencia(double percentual) {
+        if (percentual > FREQUENCIA_MINIMA && percentual <= 80.0) {
+            return "Aviso: sua frequência de faltas está próxima do limite permitido (" + FREQUENCIA_MINIMA + ").";
+        } else if (percentual == FREQUENCIA_MINIMA) {
+            return "Atenção: você atingiu o limite mínimo de frequência permitido (" + FREQUENCIA_MINIMA
+                    + "). Evite novas faltas.";
+        } else if (percentual < FREQUENCIA_MINIMA) {
+            return "Você está abaixo da frequência mínima exigida (" + FREQUENCIA_MINIMA
+                    + ") e ultrapassou o limite de faltas.";
+        }
+        return null;
+    }
+
     public double calcularPercentualFrequencia(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
             String codigoTurma) {
 
         List<RegistroFrequencia> registros = frequenciaRepository.listarPorAlunoETurma(matriculaAluno, codigoDisciplina,
                 codigoPeriodo, codigoTurma);
-
 
         if (registros.isEmpty()) {
             return 0.0;

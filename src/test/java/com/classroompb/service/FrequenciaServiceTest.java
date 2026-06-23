@@ -258,7 +258,7 @@ public class FrequenciaServiceTest {
     class CalculoPercentualFrequencia {
 
         @Test
-        @DisplayName("Deve calcular 100 porcento de frequeência")
+        @DisplayName("Deve calcular 100 porcento de frequência")
         void deveCalcular100PorCentoDeFrequencia() {
 
             List<RegistroFrequencia> registros = List.of(
@@ -369,4 +369,5 @@ public class FrequenciaServiceTest {
 
         verify(frequenciaRepository, times(2)).listarPorAluno(aluno.getMatricula());
     }
+
 }

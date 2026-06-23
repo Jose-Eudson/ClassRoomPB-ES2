@@ -12,16 +12,24 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.classroompb.model.Aluno;
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.Turma;
+import com.classroompb.model.Usuario;
 import com.classroompb.repository.DisciplinaRepository;
+import com.classroompb.repository.FrequenciaRepository;
+import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
 import com.classroompb.repository.UsuarioRepository;
+
+import com.classroompb.ui.AlunoController;
 
 /**
  * RF15 — Testes unitários: Aluno consulta turmas e disciplinas.
@@ -37,7 +45,8 @@ public class AlunoConsultaServiceTest {
     // -------------------------------------------------------------------------
     // Mocks e serviços
     // -------------------------------------------------------------------------
-
+    @Mock
+    private UsuarioService usuarioService;
     @Mock
     private DisciplinaRepository disciplinaRepository;
     @Mock
@@ -46,11 +55,15 @@ public class AlunoConsultaServiceTest {
     private PeriodoLetivoRepository periodoRepository;
     @Mock
     private UsuarioRepository usuarioRepository;
+    @Mock
+    private FrequenciaRepository frequenciaRepository;
+    @Mock
+    private MatriculaTurmaRepository matriculaRepository;
 
     private DisciplinaService disciplinaService;
     private TurmaService turmaService;
     private PeriodoLetivoService periodoLetivoService;
-
+    private FrequenciaService service;
     // -------------------------------------------------------------------------
     // Fixtures
     // -------------------------------------------------------------------------
@@ -66,12 +79,19 @@ public class AlunoConsultaServiceTest {
     private Turma turmaT02;
     private Turma turmaDisciplinaDiferente;
 
+    private Usuario aluno;
+    private AlunoController controller;
+
     @BeforeEach
     void setUp() {
         disciplinaService = new DisciplinaService(disciplinaRepository);
         turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoRepository, usuarioRepository);
         periodoLetivoService = new PeriodoLetivoService(periodoRepository);
+        service = new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository);
 
+        aluno = new Aluno("A0001", "Aluno", "aluno@test.com", "senha");
+
+        controller = new AlunoController(usuarioService, null, null, null, null, service);
         disciplinaCalculo = new Disciplina("MAT001", "Cálculo I", 60, 4, Collections.emptyList());
         disciplinaAlgebra = new Disciplina("MAT002", "Álgebra Linear", 60, 4, Collections.singletonList("MAT001"));
         disciplinaFisica = new Disciplina("FIS001", "Física I", 60, 4, Collections.emptyList());
@@ -83,6 +103,7 @@ public class AlunoConsultaServiceTest {
         turmaT01 = new Turma("T01", "MAT001", "2026.1", 40, "Seg/Qua 10h-12h", "Bloco A-101", "P0001");
         turmaT02 = new Turma("T02", "MAT001", "2026.1", 35, "Ter/Qui 14h-16h", "Bloco B-202", "P0002");
         turmaDisciplinaDiferente = new Turma("T01", "FIS001", "2026.1", 30, "Sex 08h-10h", "Lab Física", "P0003");
+
     }
 
     // =========================================================================
@@ -587,6 +608,113 @@ public class AlunoConsultaServiceTest {
             assertTrue(ex.getMessage().contains("COD_INVALIDO")
                     || ex.getMessage().toLowerCase().contains("não encontrada")
                     || ex.getMessage().toLowerCase().contains("nao encontrada"));
+        }
+    }
+
+    @Nested
+    @DisplayName("8. Exibe alerta sobre frequência de faltas")
+    class AlertaFrequencia {
+        @Test
+        @DisplayName("Deve consultar o percentual de frequência do aluno")
+        void deveConsultarPercentualDeFrequencia() throws Exception {
+            when(service.calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01"))
+                        .thenReturn(80.0);
+
+                double percentual = service.calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01");
+
+                assertEquals(80.0, percentual);
+
+                verify(service).calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01");
+        }
+
+        @Test
+        @DisplayName("Deve retornar percentual próximo do limite de faltas")
+        void deveRetornarPercentualProximoDoLimite() throws Exception {
+
+                when(service.calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01"))
+                        .thenReturn(75.0);
+
+                double percentual = service.calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01");
+
+                assertTrue(percentual >= 75.0 && percentual <= 80.0);
+
+                verify(service).calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01");
+        }
+
+        @Test
+        @DisplayName("Deve retornar percentual abaixo do limite permitido")
+        void deveRetornarPercentualAbaixoDoLimite() throws Exception {
+
+                when(service.calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01"))
+                        .thenReturn(70.0);
+
+                double percentual = service.calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01");
+
+                assertTrue(percentual < 75.0);
+
+                verify(service).calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01");
+        }
+
+        @Test
+        @DisplayName("Deve retornar percentual seguro")
+        void deveRetornarPercentualSeguro() throws Exception {
+
+                when(service.calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01"))
+                        .thenReturn(92.0);
+
+                double percentual = service.calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01");
+
+                assertTrue(percentual > 80.0);
+
+                verify(service).calcularPercentualFrequencia(
+                        "A0001",
+                        "ES2",
+                        "2026.1",
+                        "T01");
         }
     }
 }

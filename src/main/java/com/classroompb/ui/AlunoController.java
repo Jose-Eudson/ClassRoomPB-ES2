@@ -486,6 +486,11 @@ public class AlunoController {
             System.out.println("Total de aulas dadas: " + registros.size());
             System.out.println("Total de faltas: " + totalFaltas);
 
+            String alerta = freqService.obterAlertaFrequencia(percentual);
+
+            if (alerta != null) {
+                ConsoleUI.exibirMensagem(alerta, percentual < 75.0);
+            }
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }
