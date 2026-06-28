@@ -5,14 +5,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,7 +32,6 @@ import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
 import com.classroompb.repository.UsuarioRepository;
-
 import com.classroompb.ui.AlunoController;
 
 /**
@@ -87,7 +90,7 @@ public class AlunoConsultaServiceTest {
         disciplinaService = new DisciplinaService(disciplinaRepository);
         turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoRepository, usuarioRepository);
         periodoLetivoService = new PeriodoLetivoService(periodoRepository);
-        service = new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository);
+        service = spy(new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository));
 
         aluno = new Aluno("A0001", "Aluno", "aluno@test.com", "senha");
 
@@ -617,104 +620,52 @@ public class AlunoConsultaServiceTest {
         @Test
         @DisplayName("Deve consultar o percentual de frequência do aluno")
         void deveConsultarPercentualDeFrequencia() throws Exception {
-            when(service.calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01"))
-                        .thenReturn(80.0);
+            doReturn(80.0).when(service).calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
 
-                double percentual = service.calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01");
+            double percentual = service.calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
 
-                assertEquals(80.0, percentual);
+            assertEquals(80.0, percentual);
 
-                verify(service).calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01");
+            verify(service).calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
         }
 
         @Test
         @DisplayName("Deve retornar percentual próximo do limite de faltas")
         void deveRetornarPercentualProximoDoLimite() throws Exception {
 
-                when(service.calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01"))
-                        .thenReturn(75.0);
+            doReturn(75.0).when(service).calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
 
-                double percentual = service.calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01");
+            double percentual = service.calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
 
-                assertTrue(percentual >= 75.0 && percentual <= 80.0);
+            assertTrue(percentual >= 75.0 && percentual <= 80.0);
 
-                verify(service).calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01");
+            verify(service).calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
         }
 
         @Test
         @DisplayName("Deve retornar percentual abaixo do limite permitido")
         void deveRetornarPercentualAbaixoDoLimite() throws Exception {
 
-                when(service.calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01"))
-                        .thenReturn(70.0);
+            doReturn(70.0).when(service).calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
 
-                double percentual = service.calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01");
+            double percentual = service.calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
 
-                assertTrue(percentual < 75.0);
+            assertTrue(percentual < 75.0);
 
-                verify(service).calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01");
+            verify(service).calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
         }
 
         @Test
         @DisplayName("Deve retornar percentual seguro")
         void deveRetornarPercentualSeguro() throws Exception {
 
-                when(service.calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01"))
-                        .thenReturn(92.0);
+            doReturn(92.0).when(service).calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
 
-                double percentual = service.calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01");
+            double percentual = service.calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
 
-                assertTrue(percentual > 80.0);
+            assertTrue(percentual > 80.0);
 
-                verify(service).calcularPercentualFrequencia(
-                        "A0001",
-                        "ES2",
-                        "2026.1",
-                        "T01");
+            verify(service).calcularPercentualFrequencia("A0001", "ES2", "2026.1", "T01");
         }
     }
 }

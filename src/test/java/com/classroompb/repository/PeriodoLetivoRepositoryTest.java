@@ -5,7 +5,12 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -215,6 +220,23 @@ public class PeriodoLetivoRepositoryTest {
                     new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true)));
 
             dirReadOnly.setWritable(true);
+        }
+
+        @Test
+        @DisplayName("salvarDados deve tratar silenciosamente IOException quando o caminho aponta para um diretorio "
+                + "(forca a falha independentemente de permissoes de arquivo, ex: execucao como root)")
+        void salvarDadosComCaminhoApontandoParaDiretorioDeveSerTratadoSilenciosamente() {
+            // Usar o próprio diretório temporário como "arquivo" garante IOException ao
+            // tentar abrir um FileOutputStream nele, mesmo quando os testes rodam como root
+            // (onde setWritable(false) é ignorado e o teste de permissão acima não força a falha).
+            String caminhoInvalido = tempDir.toString();
+            PeriodoLetivoRepository repo = new PeriodoLetivoRepository(caminhoInvalido);
+
+            assertDoesNotThrow(() -> repo.salvar(
+                    new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true)));
+
+            // O estado em memória continua consistente mesmo sem persistir em disco
+            assertEquals(1, repo.listarTodos().size());
         }
     }
 }

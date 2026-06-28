@@ -754,4 +754,194 @@ public class MatriculaTurmaRepositoryTest {
             assertEquals(2, novaInstancia.listarPorAluno("A001").size());
         }
     }
+
+    // =========================================================================
+    // salvarDados — branch de IOException
+    // =========================================================================
+
+    @Nested
+    @DisplayName("salvarDados — branch de IOException")
+    class SalvarDadosIOException {
+
+        @Test
+        @DisplayName("salvar nao deve lancar excecao mesmo quando caminho de arquivo e invalido")
+        void salvarNaoDeveLancarExcecaoComCaminhoInvalido() {
+            // Força IOException em salvarDados ao usar subdiretório inexistente
+            MatriculaTurmaRepository repo = new MatriculaTurmaRepository(
+                    tempDir.resolve("subdir_inexistente").resolve("matriculas.json").toString());
+            MatriculaTurma m = matriculaA1_MAT_T01();
+            // Não deve propagar exceção; salvarDados captura silenciosamente a IOException
+            assertDoesNotThrow(() -> repo.salvar(m));
+        }
+
+        @Test
+        @DisplayName("atualizar nao deve lancar IOExcecao mesmo quando caminho de arquivo e invalido")
+        void atualizarNaoDeveLancarExcecaoDeIOComCaminhoInvalido() {
+            // Primeiro salva com repo válido
+            MatriculaTurma m = matriculaA1_MAT_T01();
+            repository.salvar(m);
+
+            // Cria repo apontando para caminho inválido mas com a matrícula já na memória
+            MatriculaTurmaRepository repoInvalido = new MatriculaTurmaRepository(
+                    tempDir.resolve("subdir_inexistente").resolve("matriculas.json").toString());
+            MatriculaTurma novaMatricula = matriculaA1_MAT_T01();
+            repoInvalido.salvar(novaMatricula); // Não lança
+
+            novaMatricula.setStatus(StatusMatricula.CONFIRMADA);
+            assertDoesNotThrow(() -> repoInvalido.atualizar(novaMatricula));
+        }
+    }
+
+    // =========================================================================
+    // listarListaEsperaPorTurmaOrdenada — branch nullsLast
+    // =========================================================================
+
+    @Nested
+    @DisplayName("listarListaEsperaPorTurmaOrdenada — nullsLast e casos de borda")
+    class ListaEsperaNullsLast {
+
+        @Test
+        @DisplayName("Deve colocar entradas com dataSolicitacao nula ao final da ordenacao")
+        void deveColocarDataNulaAoFinal() {
+            MatriculaTurma comData = matriculaA1_MAT_T01();
+            comData.setStatus(StatusMatricula.LISTA_ESPERA);
+            comData.setDataSolicitacao(java.time.LocalDateTime.of(2026, 3, 10, 9, 0));
+
+            MatriculaTurma semData = matriculaA2_MAT_T01();
+            semData.setStatus(StatusMatricula.LISTA_ESPERA);
+            semData.setDataSolicitacao(null); // Exercita o Comparator.nullsLast
+
+            repository.salvar(semData); // salvo antes para garantir ordem invertida sem sort
+            repository.salvar(comData);
+
+            List<MatriculaTurma> resultado = repository.listarListaEsperaPorTurmaOrdenada("MAT001", "2026.1", "T01");
+
+            assertEquals(2, resultado.size());
+            // Com data deve vir primeiro; sem data (null) deve ser o último
+            assertEquals("A001", resultado.get(0).getMatriculaAluno());
+            assertNull(resultado.get(1).getDataSolicitacao());
+        }
+
+        @Test
+        @DisplayName("Deve ordenar corretamente quando todas as datas sao nulas")
+        void deveOrdenarQuandoTodasAsDatasSaoNulas() {
+            MatriculaTurma m1 = matriculaA1_MAT_T01();
+            m1.setStatus(StatusMatricula.LISTA_ESPERA);
+            m1.setDataSolicitacao(null);
+
+            MatriculaTurma m2 = matriculaA2_MAT_T01();
+            m2.setStatus(StatusMatricula.LISTA_ESPERA);
+            m2.setDataSolicitacao(null);
+
+            repository.salvar(m1);
+            repository.salvar(m2);
+
+            List<MatriculaTurma> resultado = repository.listarListaEsperaPorTurmaOrdenada("MAT001", "2026.1", "T01");
+
+            assertEquals(2, resultado.size());
+            // Ambas com null — apenas verifica que não lança exceção e retorna as duas
+        }
+
+        @Test
+        @DisplayName("Deve retornar lista vazia quando turma nao tem alunos em espera")
+        void deveRetornarVaziaParaTurmaSemEspera() {
+            MatriculaTurma m = matriculaA1_MAT_T01();
+            m.setStatus(StatusMatricula.CONFIRMADA); // Não é LISTA_ESPERA
+
+            repository.salvar(m);
+
+            List<MatriculaTurma> resultado = repository.listarListaEsperaPorTurmaOrdenada("MAT001", "2026.1", "T01");
+
+            assertTrue(resultado.isEmpty());
+        }
+    }
+
+    // =========================================================================
+    // contarOcupadasPorTurma — branches adicionais
+    // =========================================================================
+
+    @Nested
+    @DisplayName("contarOcupadasPorTurma — status REJEITADA nao conta")
+    class ContarOcupadasAdicionais {
+
+        @Test
+        @DisplayName("Nao deve contar matricula REJEITADA como vaga ocupada")
+        void naoDeveContarRejeitada() {
+            MatriculaTurma m = matriculaA1_MAT_T01();
+            m.setStatus(StatusMatricula.REJEITADA);
+            repository.salvar(m);
+
+            assertEquals(0L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"));
+        }
+
+        @Test
+        @DisplayName("Deve contar PENDENTE e CONFIRMADA mas nao LISTA_ESPERA nem REJEITADA")
+        void deveContarApenasAtivasNaoEspera() {
+            MatriculaTurma confirmada = matriculaA1_MAT_T01();
+            confirmada.setStatus(StatusMatricula.CONFIRMADA);
+
+            MatriculaTurma pendente = matriculaA2_MAT_T01();
+            pendente.setStatus(StatusMatricula.PENDENTE);
+
+            MatriculaTurma espera = new MatriculaTurma("A003", "MAT001", "2026.1", "T01");
+            espera.setStatus(StatusMatricula.LISTA_ESPERA);
+
+            MatriculaTurma rejeitada = new MatriculaTurma("A004", "MAT001", "2026.1", "T01");
+            rejeitada.setStatus(StatusMatricula.REJEITADA);
+
+            MatriculaTurma cancelada = new MatriculaTurma("A005", "MAT001", "2026.1", "T01");
+            cancelada.setStatus(StatusMatricula.CANCELADA);
+
+            repository.salvar(confirmada);
+            repository.salvar(pendente);
+            repository.salvar(espera);
+            repository.salvar(rejeitada);
+            repository.salvar(cancelada);
+
+            assertEquals(2L, repository.contarOcupadasPorTurma("MAT001", "2026.1", "T01"),
+                    "Apenas CONFIRMADA e PENDENTE devem contar como vagas ocupadas");
+        }
+    }
+
+    // =========================================================================
+    // listarPorAlunoEStatus — status adicionais
+    // =========================================================================
+
+    @Nested
+    @DisplayName("listarPorAlunoEStatus — REJEITADA e LISTA_ESPERA")
+    class ListarPorAlunoEStatusAdicionais {
+
+        @Test
+        @DisplayName("Deve retornar matriculas REJEITADAS do aluno")
+        void deveRetornarRejeitadas() {
+            MatriculaTurma m = matriculaA1_MAT_T01();
+            m.setStatus(StatusMatricula.REJEITADA);
+            repository.salvar(m);
+
+            List<MatriculaTurma> resultado = repository.listarPorAlunoEStatus("A001", StatusMatricula.REJEITADA);
+
+            assertEquals(1, resultado.size());
+            assertEquals(StatusMatricula.REJEITADA, resultado.get(0).getStatus());
+        }
+
+        @Test
+        @DisplayName("Deve retornar vazia quando aluno nao tem REJEITADA")
+        void deveRetornarVaziaParaRejeitadaInexistente() {
+            repository.salvar(matriculaA1_MAT_T01()); // Status PENDENTE
+            assertTrue(repository.listarPorAlunoEStatus("A001", StatusMatricula.REJEITADA).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Deve retornar matriculas em LISTA_ESPERA do aluno")
+        void deveRetornarListaEspera() {
+            MatriculaTurma m = matriculaA1_FIS_T01();
+            m.setStatus(StatusMatricula.LISTA_ESPERA);
+            repository.salvar(m);
+
+            List<MatriculaTurma> resultado = repository.listarPorAlunoEStatus("A001", StatusMatricula.LISTA_ESPERA);
+
+            assertEquals(1, resultado.size());
+            assertEquals(StatusMatricula.LISTA_ESPERA, resultado.get(0).getStatus());
+        }
+    }
 }
