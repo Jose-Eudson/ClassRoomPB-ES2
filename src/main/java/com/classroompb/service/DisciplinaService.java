@@ -1,5 +1,6 @@
 package com.classroompb.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.classroompb.model.Disciplina;
@@ -48,19 +49,58 @@ public class DisciplinaService {
         }
 
         // RF07/RN04: valida que cada pré-requisito informado existe no sistema
-        if (preRequisitos != null) {
-            for (String codigoPreReq : preRequisitos) {
-                String codigoTrimmed = codigoPreReq.trim();
-                if (!codigoTrimmed.isEmpty() && repository.buscarPorCodigo(codigoTrimmed) == null) {
-                    throw new Exception("Erro: Pré-requisito '" + codigoTrimmed
-                            + "' não encontrado. Cadastre a disciplina antes de usá-la como pré-requisito.");
-                }
-            }
-        }
+        // (aceita tanto o código quanto o nome da disciplina) e normaliza para o código
+        List<String> preRequisitosNormalizados = resolverPreRequisitos(preRequisitos);
 
-        Disciplina disciplina = new Disciplina(codigo, nome, cargaHoraria, creditos, preRequisitos);
+        Disciplina disciplina = new Disciplina(codigo, nome, cargaHoraria, creditos, preRequisitosNormalizados);
 
         repository.salvar(disciplina);
+    }
+
+    /**
+     * Resolve a lista de pré-requisitos informados (pelo código OU pelo nome da disciplina) validando que cada um já
+     * existe cadastrado no sistema. Retorna a lista normalizada usando sempre o código da disciplina, para manter a
+     * consistência dos dados persistidos.
+     */
+    private List<String> resolverPreRequisitos(List<String> preRequisitos) throws Exception {
+
+        if (preRequisitos == null) {
+            return null;
+        }
+
+        List<String> normalizados = new ArrayList<>();
+
+        for (String entrada : preRequisitos) {
+
+            if (entrada == null) {
+                continue;
+            }
+
+            String valorTrimmed = entrada.trim();
+
+            if (valorTrimmed.isEmpty()) {
+                continue;
+            }
+
+            Disciplina encontrada = repository.buscarPorCodigo(valorTrimmed);
+
+            if (encontrada == null) {
+                final String valorBusca = valorTrimmed;
+                encontrada = repository.listarTodos().stream()
+                        .filter(d -> d.getNome() != null && d.getNome().equalsIgnoreCase(valorBusca)).findFirst()
+                        .orElse(null);
+            }
+
+            if (encontrada == null) {
+                throw new Exception("Erro: Pré-requisito '" + valorTrimmed
+                        + "' não encontrado. Cadastre a disciplina antes de usá-la como pré-requisito "
+                        + "(informe o código ou o nome exato da disciplina).");
+            }
+
+            normalizados.add(encontrada.getCodigo());
+        }
+
+        return normalizados;
     }
 
     public List<Disciplina> listarDisciplinas() {
@@ -103,23 +143,21 @@ public class DisciplinaService {
         }
 
         // RF07/RN04: valida que cada pré-requisito informado existe no sistema
+        // (aceita tanto o código quanto o nome da disciplina) e normaliza para o código
         if (novosPreRequisitos != null) {
             for (String codigoPreReq : novosPreRequisitos) {
-                String codigoTrimmed = codigoPreReq.trim();
                 // Um pré-requisito não pode ser a própria disciplina
-                if (codigoTrimmed.equalsIgnoreCase(codigo)) {
+                if (codigoPreReq.trim().equalsIgnoreCase(codigo)) {
                     throw new Exception("Erro: Uma disciplina não pode ser pré-requisito de si mesma.");
-                }
-                if (!codigoTrimmed.isEmpty() && repository.buscarPorCodigo(codigoTrimmed) == null) {
-                    throw new Exception("Erro: Pré-requisito '" + codigoTrimmed + "' não encontrado.");
                 }
             }
         }
+        List<String> novosPreRequisitosNormalizados = resolverPreRequisitos(novosPreRequisitos);
 
         existente.setNome(novoNome);
         existente.setCargaHoraria(novaCargaHoraria);
         existente.setCreditos(novosCreditos);
-        existente.setPreRequisitos(novosPreRequisitos);
+        existente.setPreRequisitos(novosPreRequisitosNormalizados);
 
         repository.atualizar(existente);
     }
