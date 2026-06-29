@@ -2,6 +2,7 @@ package com.classroompb.repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.classroompb.model.Historico;
 
@@ -15,6 +16,7 @@ public class HistoricoRepository {
 
     public List<Historico> buscarPorAluno(String matriculaAluno) {
 
-        return historicos.stream().filter(h -> h.getMatriculaAluno().equals(matriculaAluno)).toList();
+        return historicos.stream().filter(h -> h.getMatriculaAluno().equals(matriculaAluno))
+                .collect(Collectors.toList());
     }
 }

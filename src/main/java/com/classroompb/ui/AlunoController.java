@@ -3,6 +3,7 @@ package com.classroompb.ui;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.MatriculaTurma;
@@ -426,7 +427,7 @@ public class AlunoController {
         try {
             // Filtra apenas as matrículas com status CONFIRMADA do aluno
             matriculas = matriculaService.listarMinhasSolicitacoes(aluno).stream()
-                    .filter(m -> m.getStatus() == StatusMatricula.CONFIRMADA).toList();
+                    .filter(m -> m.getStatus() == StatusMatricula.CONFIRMADA).collect(Collectors.toList());
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
             return;

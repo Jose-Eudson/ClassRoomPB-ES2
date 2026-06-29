@@ -1,6 +1,7 @@
 package com.classroompb.service;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -644,6 +645,52 @@ public class FrequenciaServiceTest {
             Exception ex = assertThrows(Exception.class,
                     () -> service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA));
             assertTrue(ex.getMessage().contains("matricula confirmada"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Apoio ao menu do professor")
+    class ApoioMenuProfessor {
+
+        @Test
+        @DisplayName("Deve listar apenas turmas do professor logado")
+        void deveListarApenasTurmasDoProfessorLogado() throws Exception {
+            Turma turmaOutroProfessor = new Turma("T02", "MAT002", PER, 30, "Ter 08h-10h", "B-202",
+                    outroProfessor.getMatricula());
+            when(turmaRepository.listarTodos()).thenReturn(Arrays.asList(turma, turmaOutroProfessor));
+
+            List<Turma> resultado = service.listarTurmasDoProfessor(professor);
+
+            assertEquals(1, resultado.size());
+            assertEquals(TURMA, resultado.get(0).getCodigo());
+            assertEquals(professor.getMatricula(), resultado.get(0).getMatriculaProfessor());
+        }
+
+        @Test
+        @DisplayName("Deve listar apenas matriculas confirmadas da turma do professor")
+        void deveListarApenasMatriculasConfirmadasDaTurmaDoProfessor() throws Exception {
+            MatriculaTurma pendente = new MatriculaTurma(outroAluno.getMatricula(), DISC, PER, TURMA);
+            pendente.setStatus(StatusMatricula.PENDENTE);
+            when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
+            when(matriculaRepository.listarPorTurma(DISC, PER, TURMA))
+                    .thenReturn(Arrays.asList(matriculaConfirmada, pendente));
+
+            List<MatriculaTurma> resultado = service.listarMatriculasConfirmadasDaTurma(professor, DISC, PER, TURMA);
+
+            assertEquals(1, resultado.size());
+            assertEquals(aluno.getMatricula(), resultado.get(0).getMatriculaAluno());
+            assertEquals(StatusMatricula.CONFIRMADA, resultado.get(0).getStatus());
+        }
+
+        @Test
+        @DisplayName("Nao deve listar matriculas quando professor nao e responsavel pela turma")
+        void naoDeveListarMatriculasQuandoProfessorNaoResponsavel() {
+            when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
+
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.listarMatriculasConfirmadasDaTurma(outroProfessor, DISC, PER, TURMA));
+
+            assertTrue(ex.getMessage().contains("professor responsavel"));
         }
     }
 

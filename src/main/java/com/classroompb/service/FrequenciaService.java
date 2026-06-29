@@ -3,6 +3,7 @@ package com.classroompb.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.RegistroFrequencia;
@@ -102,6 +103,35 @@ public class FrequenciaService {
         validarProfessorResponsavel(professor, turma);
 
         return frequenciaRepository.listarPorTurmaEData(discNorm, periodoNorm, turmaNorm, dataAula);
+    }
+
+    /** Lista as turmas sob responsabilidade do professor informado. */
+    public List<Turma> listarTurmasDoProfessor(Usuario professor) throws Exception {
+        validarProfessor(professor);
+        String matriculaProfessor = professor.getMatricula();
+        if (matriculaProfessor == null || matriculaProfessor.trim().isEmpty()) {
+            throw new Exception("Erro: Matricula do professor nao pode ser vazia.");
+        }
+
+        return turmaRepository.listarTodos().stream()
+                .filter(t -> t.getMatriculaProfessor() != null
+                        && t.getMatriculaProfessor().trim().equalsIgnoreCase(matriculaProfessor.trim()))
+                .collect(Collectors.toList());
+    }
+
+    /** Lista as matriculas confirmadas de uma turma do professor. */
+    public List<MatriculaTurma> listarMatriculasConfirmadasDaTurma(Usuario professor, String codigoDisciplina,
+            String codigoPeriodo, String codigoTurma) throws Exception {
+        validarProfessor(professor);
+        String discNorm = validarCampoObrigatorio(codigoDisciplina, "codigo da disciplina");
+        String periodoNorm = validarCampoObrigatorio(codigoPeriodo, "codigo do periodo letivo");
+        String turmaNorm = validarCampoObrigatorio(codigoTurma, "codigo da turma");
+
+        Turma turma = buscarTurmaOuFalhar(discNorm, periodoNorm, turmaNorm);
+        validarProfessorResponsavel(professor, turma);
+
+        return matriculaRepository.listarPorTurma(discNorm, periodoNorm, turmaNorm).stream()
+                .filter(m -> m.getStatus() == StatusMatricula.CONFIRMADA).collect(Collectors.toList());
     }
 
     public String obterAlertaFrequencia(double percentual) {

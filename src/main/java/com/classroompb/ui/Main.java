@@ -7,6 +7,7 @@ import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.CursoRepository;
 import com.classroompb.repository.DisciplinaRepository;
+import com.classroompb.repository.FrequenciaRepository;
 import com.classroompb.repository.HistoricoRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.PeriodoLetivoRepository;
@@ -47,18 +48,19 @@ public class Main {
         TurmaRepository turmaRepository = new TurmaRepository();
         HistoricoRepository historicoRepository = new HistoricoRepository();
         MatriculaTurmaRepository matriculaRepository = new MatriculaTurmaRepository();
+        FrequenciaRepository frequenciaRepository = new FrequenciaRepository();
         service = new UsuarioService(repository);
         cursoService = new CursoService(cursoRepository);
         disciplinaService = new DisciplinaService(disciplinaRepository);
         periodoLetivoService = new PeriodoLetivoService(periodoLetivoRepository);
         turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoLetivoRepository);
-        freqService = new FrequenciaService(null, turmaRepository, matriculaRepository);
+        freqService = new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository);
         MatriculaTurmaService matriculaService = new MatriculaTurmaService(matriculaRepository, turmaRepository,
                 periodoLetivoRepository, disciplinaRepository, historicoRepository);
 
         alunoController = new AlunoController(service, disciplinaService, periodoLetivoService, turmaService,
                 matriculaService, freqService);
-        professorController = new ProfessorController(service);
+        professorController = new ProfessorController(service, freqService);
         coordenadorController = new CoordenadorController(service, disciplinaService, periodoLetivoService,
                 turmaService, matriculaService);
         adminController = new AdminController(service, cursoService);
