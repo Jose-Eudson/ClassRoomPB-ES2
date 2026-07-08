@@ -13,6 +13,7 @@ import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
 import com.classroompb.service.FrequenciaService;
+import com.classroompb.service.NotaService;
 import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.UsuarioService;
 
@@ -24,10 +25,12 @@ public class ProfessorController {
     @SuppressWarnings("unused")
     private final UsuarioService service;
     private final FrequenciaService frequenciaService;
+    private final NotaService notaService;
 
-    public ProfessorController(UsuarioService service, FrequenciaService frequenciaService) {
+    public ProfessorController(UsuarioService service, FrequenciaService frequenciaService, NotaService notaService) {
         this.service = service;
         this.frequenciaService = frequenciaService;
+        this.notaService = notaService;
     }
 
     /** Exibe o menu principal do professor e permanece em loop ate logout. */
@@ -54,6 +57,9 @@ public class ProfessorController {
                 break;
             case 1:
                 registrarFrequencia(usuario);
+                break;
+            case 2:
+                lancarNotas(usuario);
                 break;
             default:
                 ConsoleUI.exibirMensagem("Funcionalidade disponivel na proxima release.", false);
@@ -213,5 +219,62 @@ public class ProfessorController {
 
     private String valorOuTraco(String valor) {
         return valor == null || valor.trim().isEmpty() ? "-" : valor.trim();
+    }
+
+    private void lancarNotas(Usuario professor) {
+
+        try {
+
+            Turma turma = selecionarTurmaDoProfessor(professor);
+
+            if (turma == null) {
+                return;
+            }
+
+            List<MatriculaTurma> matriculas = frequenciaService.listarMatriculasConfirmadasDaTurma(professor,
+                    turma.getCodigoDisciplina(), turma.getCodigoPeriodo(), turma.getCodigo());
+
+            if (matriculas.isEmpty()) {
+
+                ConsoleUI.exibirMensagem("Nao ha alunos matriculados.", false);
+
+                return;
+            }
+
+            ConsoleUI.limparTela();
+            ConsoleUI.exibirCabecalho("LANCAR NOTAS");
+
+            for (MatriculaTurma matricula : matriculas) {
+
+                System.out.println();
+                System.out.println("Aluno: " + matricula.getMatriculaAluno());
+
+                double etapa1 = Double.parseDouble(ConsoleUI.lerEntrada("Etapa 1: "));
+
+                double etapa2 = Double.parseDouble(ConsoleUI.lerEntrada("Etapa 2: "));
+
+                notaService.lancarNotas(
+
+                        professor,
+
+                        matricula.getMatriculaAluno(),
+
+                        turma.getCodigoDisciplina(),
+
+                        turma.getCodigoPeriodo(),
+
+                        turma.getCodigo(),
+
+                        etapa1,
+
+                        etapa2);
+            }
+
+            ConsoleUI.exibirMensagem("Notas lancadas com sucesso!", false);
+
+        } catch (Exception e) {
+
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
     }
 }

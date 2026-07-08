@@ -505,4 +505,111 @@ class NotaServiceTest {
             verify(notaRepository).atualizar(nota);
         }
     }
+
+    @Nested
+    @DisplayName("Cálculo da média final")
+    class MediaFinal {
+        @Test
+        @DisplayName("Deve calcular média final corretamente")
+        void deveCalcularMediaFinal() throws Exception {
+
+            Nota nota = new Nota(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            nota.setEtapa1(8.0);
+            nota.setEtapa2(6.0);
+
+            when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
+
+            double media = service.calcularMediaFinal(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            assertEquals(7.0, media);
+        }
+
+        @Test
+        @DisplayName("Deve retornar aprovado quando média for maior ou igual a 7")
+        void deveRetornarAprovado() throws Exception {
+
+            Nota nota = new Nota(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            nota.setEtapa1(8.0);
+            nota.setEtapa2(7.0);
+
+            when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
+
+            String situacao = service.calcularSituacaoFinal(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            assertEquals("APROVADO", situacao);
+        }
+
+        @Test
+        @DisplayName("Deve retornar recuperação quando média estiver entre 4 e 6.9")
+        void deveRetornarRecuperacao() throws Exception {
+
+            Nota nota = new Nota(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            nota.setEtapa1(5.0);
+            nota.setEtapa2(6.0);
+
+            when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
+
+            String situacao = service.calcularSituacaoFinal(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            assertEquals("RECUPERACAO", situacao);
+        }
+
+        @Test
+        @DisplayName("Deve retornar reprovado quando média for menor que 4")
+        void deveRetornarReprovado() throws Exception {
+
+            Nota nota = new Nota(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            nota.setEtapa1(3.0);
+            nota.setEtapa2(2.0);
+
+            when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
+
+            String situacao = service.calcularSituacaoFinal(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            assertEquals("REPROVADO", situacao);
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando nota não existir")
+        void deveLancarExcecaoQuandoNotaNaoExistir() {
+
+            when(notaRepository.buscarPorChaveUnica(
+                    aluno.getMatricula(),
+                    "ES2",
+                    "2026.1",
+                    "T01"))
+                    .thenReturn(null);
+
+            Exception ex = assertThrows(
+                    Exception.class,
+                    () -> service.calcularMediaFinal(
+                            aluno.getMatricula(),
+                            "ES2",
+                            "2026.1",
+                            "T01"));
+
+            assertEquals("Erro: Notas não encontradas.", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando existir nota sem etapas preenchidas")
+        void deveLancarExcecaoQuandoNotasNaoForemLancadas() {
+
+            Nota nota = new Nota(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            nota.setEtapa1(8.0);
+            nota.setEtapa2(null);
+
+            when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
+
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.calcularMediaFinal(aluno.getMatricula(), "ES2", "2026.1", "T01"));
+
+            assertEquals("Erro: As duas notas devem estar lançadas.", ex.getMessage());
+        }
+    }
 }

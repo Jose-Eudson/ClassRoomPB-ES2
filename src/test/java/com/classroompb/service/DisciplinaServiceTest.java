@@ -27,6 +27,7 @@ import com.classroompb.repository.DisciplinaRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Testes unitarios de DisciplinaService")
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class DisciplinaServiceTest {
 
     @Mock

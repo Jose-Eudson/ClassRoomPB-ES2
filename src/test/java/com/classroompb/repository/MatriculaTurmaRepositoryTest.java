@@ -28,6 +28,7 @@ import com.classroompb.model.StatusMatricula;
  * contarConfirmadasPorTurma() - buscarPorChaveUnica() - atualizar() - case-insensitive - Persistência entre instâncias
  */
 @DisplayName("Testes de MatriculaTurmaRepository (RF16)")
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class MatriculaTurmaRepositoryTest {
 
     @TempDir
@@ -805,7 +806,7 @@ public class MatriculaTurmaRepositoryTest {
         void deveColocarDataNulaAoFinal() {
             MatriculaTurma comData = matriculaA1_MAT_T01();
             comData.setStatus(StatusMatricula.LISTA_ESPERA);
-            comData.setDataSolicitacao(java.time.LocalDateTime.of(2026, 3, 10, 9, 0));
+            comData.setDataSolicitacao(LocalDateTime.of(2026, 3, 10, 9, 0));
 
             MatriculaTurma semData = matriculaA2_MAT_T01();
             semData.setStatus(StatusMatricula.LISTA_ESPERA);

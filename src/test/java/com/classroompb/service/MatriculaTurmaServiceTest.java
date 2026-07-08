@@ -50,6 +50,7 @@ import com.classroompb.repository.TurmaRepository;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RF16/RF20/RF21 - Matrícula em turma")
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class MatriculaTurmaServiceTest {
 
     @Mock

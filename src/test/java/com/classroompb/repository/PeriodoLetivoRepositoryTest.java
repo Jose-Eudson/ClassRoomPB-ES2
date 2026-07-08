@@ -22,6 +22,7 @@ import org.junit.jupiter.api.io.TempDir;
 import com.classroompb.model.PeriodoLetivo;
 
 @DisplayName("Testes unitarios de PeriodoLetivoRepository")
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class PeriodoLetivoRepositoryTest {
 
     @TempDir

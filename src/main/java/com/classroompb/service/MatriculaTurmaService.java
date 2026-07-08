@@ -378,7 +378,7 @@ public class MatriculaTurmaService {
             throw new Exception("Erro: Apenas coordenadores podem listar solicitações de matrícula.");
         }
         return matriculaRepository.listarTodas().stream().filter(m -> m.getStatus() == StatusMatricula.PENDENTE)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     /**
@@ -418,7 +418,7 @@ public class MatriculaTurmaService {
             throw new Exception("Erro: Apenas coordenadores podem listar solicitações de matrícula.");
         }
         return matriculaRepository.listarTodas().stream().filter(m -> m.getStatus() == status)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     /**

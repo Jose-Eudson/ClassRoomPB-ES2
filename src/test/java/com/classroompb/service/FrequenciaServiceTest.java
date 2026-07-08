@@ -41,6 +41,7 @@ import com.classroompb.repository.TurmaRepository;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RF27 - Registro de frequencia")
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class FrequenciaServiceTest {
 
     @Mock

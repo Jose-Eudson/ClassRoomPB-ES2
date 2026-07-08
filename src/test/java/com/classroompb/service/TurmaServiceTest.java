@@ -47,6 +47,7 @@ import com.classroompb.repository.UsuarioRepository;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RF10 - Testes de TurmaService (oferta de turmas)")
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class TurmaServiceTest {
 
     @Mock

@@ -25,7 +25,6 @@ import com.classroompb.model.Aluno;
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.Turma;
-import com.classroompb.model.Usuario;
 import com.classroompb.repository.DisciplinaRepository;
 import com.classroompb.repository.FrequenciaRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
@@ -43,6 +42,7 @@ import com.classroompb.ui.AlunoController;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RF15 - Aluno: consulta de disciplinas e turmas")
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class AlunoConsultaServiceTest {
 
     // -------------------------------------------------------------------------
@@ -82,7 +82,9 @@ public class AlunoConsultaServiceTest {
     private Turma turmaT02;
     private Turma turmaDisciplinaDiferente;
 
-    private Usuario aluno;
+    @SuppressWarnings("unused")
+    private Aluno aluno;
+    @SuppressWarnings("unused")
     private AlunoController controller;
 
     @BeforeEach

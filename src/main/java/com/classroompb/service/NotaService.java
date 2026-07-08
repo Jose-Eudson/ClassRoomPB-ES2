@@ -82,6 +82,38 @@ public class NotaService {
         return notaRepository.buscarPorChaveUnica(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
     }
 
+    public double calcularMediaFinal(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
+            String codigoTurma) throws Exception {
+
+        Nota nota = notaRepository.buscarPorChaveUnica(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+
+        if (nota == null) {
+            throw new Exception("Erro: Notas não encontradas.");
+        }
+
+        if (nota.getEtapa1() == null || nota.getEtapa2() == null) {
+            throw new Exception("Erro: As duas notas devem estar lançadas.");
+        }
+
+        return (nota.getEtapa1() + nota.getEtapa2()) / 2.0;
+    }
+
+    public String calcularSituacaoFinal(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
+            String codigoTurma) throws Exception {
+
+        double media = calcularMediaFinal(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+
+        if (media >= 7.0) {
+            return "APROVADO";
+        }
+
+        if (media >= 4.0) {
+            return "RECUPERACAO";
+        }
+
+        return "REPROVADO";
+    }
+
     private void validarProfessor(Usuario professor) throws Exception {
 
         if (professor == null || professor.getTipo() != TipoUsuario.PROFESSOR) {

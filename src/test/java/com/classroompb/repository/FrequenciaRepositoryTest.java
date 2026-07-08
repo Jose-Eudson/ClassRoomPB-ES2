@@ -23,6 +23,7 @@ import com.classroompb.model.StatusFrequencia;
  * RF27: Testes do repositorio de frequencia.
  */
 @DisplayName("RF27 - FrequenciaRepository")
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class FrequenciaRepositoryTest {
 
     @TempDir
@@ -195,7 +196,7 @@ public class FrequenciaRepositoryTest {
 
     @Test
     @DisplayName("Deve iniciar lista nao nula quando arquivo de dados e invalido")
-    void deveIniciarListaNaoNulaComCaminhoInvalido(@TempDir java.nio.file.Path dir) {
+    void deveIniciarListaNaoNulaComCaminhoInvalido(@TempDir Path dir) {
         FrequenciaRepository repo = new FrequenciaRepository(dir.toString()); // diretório, não arquivo
         assertNotNull(repo.listarTodas());
     }
@@ -301,7 +302,7 @@ public class FrequenciaRepositoryTest {
 
         @Test
         @DisplayName("salvarDados deve lidar com falha silenciosamente (diretorio como caminho)")
-        void salvarDadosDeveLidarComFalhaSilenciosamente(@TempDir java.nio.file.Path dir) {
+        void salvarDadosDeveLidarComFalhaSilenciosamente(@TempDir Path dir) {
             // Exercita o catch de IOException em salvarDados (linhas 43-44)
             // Usar subdiretório inexistente força IOException ao salvar
             FrequenciaRepository repo = new FrequenciaRepository(
@@ -312,9 +313,9 @@ public class FrequenciaRepositoryTest {
 
         @Test
         @DisplayName("Construtor com arquivo JSON valido deve carregar os dados existentes")
-        void construtorComArquivoValidoDeveCarregarDados(@TempDir java.nio.file.Path dir) throws Exception {
+        void construtorComArquivoValidoDeveCarregarDados(@TempDir Path dir) throws Exception {
             // Primeiro cria um repositório e salva um registro no arquivo
-            java.nio.file.Path arquivo = dir.resolve("freq.json");
+            Path arquivo = dir.resolve("freq.json");
             FrequenciaRepository repo1 = new FrequenciaRepository(arquivo.toString());
             repo1.salvar(frequencia("A0001", StatusFrequencia.PRESENTE));
 
