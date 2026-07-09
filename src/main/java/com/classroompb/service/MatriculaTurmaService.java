@@ -480,6 +480,25 @@ public class MatriculaTurmaService {
         matriculaRepository.atualizar(solicitacao);
     }
 
+    public List<MatriculaTurma> listarTurmasDoAluno(Usuario aluno) throws Exception {
+        validarAluno(aluno);
+        String matriculaAluno = aluno.getMatricula();
+        if (matriculaAluno == null || matriculaAluno.trim().isEmpty()) {
+            throw new Exception("Erro: Matricula do aluno nao pode ser vazia.");
+        }
+
+        return matriculaRepository.listarTodas().stream()
+                .filter(t -> t.getMatriculaAluno() != null
+                        && t.getMatriculaAluno().trim().equalsIgnoreCase(matriculaAluno.trim()))
+                .collect(Collectors.toList());
+    }
+
+    private void validarAluno(Usuario aluno) throws Exception {
+        if (aluno == null || aluno.getTipo() != TipoUsuario.ALUNO) {
+            throw new Exception("Erro: Apenas alunos podem se matricular.");
+        }
+    }
+
     /**
      * Nega uma solicitação de matrícula.
      *

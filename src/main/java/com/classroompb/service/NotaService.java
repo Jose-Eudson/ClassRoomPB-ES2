@@ -76,10 +76,16 @@ public class NotaService {
         }
     }
 
-    public Nota consultarNotas(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
-            String codigoTurma) {
+    public Nota consultarNotas(String matriculaAluno, String codigoDisciplina, String codigoPeriodo, String codigoTurma)
+            throws Exception {
 
-        return notaRepository.buscarPorChaveUnica(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+        Nota nota = notaRepository.buscarPorChaveUnica(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+
+        if (nota == null) {
+            throw new Exception("Erro: nenhuma nota encontrada");
+        }
+
+        return nota;
     }
 
     public double calcularMediaFinal(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,

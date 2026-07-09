@@ -37,6 +37,7 @@ public class Main {
     private static TurmaService turmaService;
     private static FrequenciaService freqService;
     private static NotaService notaService;
+    private static MatriculaTurmaService matriculaService;
 
     private static AlunoController alunoController;
     private static ProfessorController professorController;
@@ -60,11 +61,11 @@ public class Main {
         turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoLetivoRepository);
         freqService = new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository);
         notaService = new NotaService(notaRepository, turmaRepository, matriculaRepository);
-        MatriculaTurmaService matriculaService = new MatriculaTurmaService(matriculaRepository, turmaRepository,
-                periodoLetivoRepository, disciplinaRepository, historicoRepository);
+        matriculaService = new MatriculaTurmaService(matriculaRepository, turmaRepository, periodoLetivoRepository,
+                disciplinaRepository, historicoRepository);
 
         alunoController = new AlunoController(service, disciplinaService, periodoLetivoService, turmaService,
-                matriculaService, freqService);
+                matriculaService, freqService, notaService);
         professorController = new ProfessorController(service, freqService, notaService);
         coordenadorController = new CoordenadorController(service, disciplinaService, periodoLetivoService,
                 turmaService, matriculaService);

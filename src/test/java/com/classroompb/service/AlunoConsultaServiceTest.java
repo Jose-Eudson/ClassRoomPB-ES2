@@ -28,6 +28,7 @@ import com.classroompb.model.Turma;
 import com.classroompb.repository.DisciplinaRepository;
 import com.classroompb.repository.FrequenciaRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
+import com.classroompb.repository.NotaRepository;
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
 import com.classroompb.repository.UsuarioRepository;
@@ -62,11 +63,14 @@ public class AlunoConsultaServiceTest {
     private FrequenciaRepository frequenciaRepository;
     @Mock
     private MatriculaTurmaRepository matriculaRepository;
+    @Mock
+    private NotaRepository notaRepository;
 
     private DisciplinaService disciplinaService;
     private TurmaService turmaService;
     private PeriodoLetivoService periodoLetivoService;
     private FrequenciaService service;
+    private NotaService notaService;
     // -------------------------------------------------------------------------
     // Fixtures
     // -------------------------------------------------------------------------
@@ -93,10 +97,10 @@ public class AlunoConsultaServiceTest {
         turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoRepository, usuarioRepository);
         periodoLetivoService = new PeriodoLetivoService(periodoRepository);
         service = spy(new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository));
-
+        notaService = new NotaService(notaRepository, turmaRepository, matriculaRepository);
         aluno = new Aluno("A0001", "Aluno", "aluno@test.com", "senha");
 
-        controller = new AlunoController(usuarioService, null, null, null, null, service);
+        controller = new AlunoController(usuarioService, null, null, null, null, service, notaService);
         disciplinaCalculo = new Disciplina("MAT001", "Cálculo I", 60, 4, Collections.emptyList());
         disciplinaAlgebra = new Disciplina("MAT002", "Álgebra Linear", 60, 4, Collections.singletonList("MAT001"));
         disciplinaFisica = new Disciplina("FIS001", "Física I", 60, 4, Collections.emptyList());

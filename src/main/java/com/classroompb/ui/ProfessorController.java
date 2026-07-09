@@ -268,6 +268,21 @@ public class ProfessorController {
                         etapa1,
 
                         etapa2);
+
+                double media = (etapa1 + etapa2) / 2.0;
+
+                String situacao;
+
+                if (media >= 7.0) {
+                    situacao = "APROVADO";
+                } else if (media >= 4.0) {
+                    situacao = "RECUPERAÇÃO";
+                } else {
+                    situacao = "REPROVADO POR NOTA";
+                }
+
+                System.out.printf("Média final: %.2f%n", media);
+                System.out.println("Situação: " + situacao);
             }
 
             ConsoleUI.exibirMensagem("Notas lancadas com sucesso!", false);

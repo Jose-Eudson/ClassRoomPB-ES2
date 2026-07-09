@@ -351,12 +351,11 @@ class NotaServiceTest {
     class ConsultaNotas {
 
         @Test
-        @DisplayName("Deve consultar notas existentes")
-        void deveConsultarNotasExistentes() {
+        @DisplayName("Deve retornar as notas do aluno")
+        void deveRetornarNotas() throws Exception {
 
             Nota nota = new Nota(aluno.getMatricula(), "ES2", "2026.1", "T01");
-
-            nota.setEtapa1(8.5);
+            nota.setEtapa1(8.0);
             nota.setEtapa2(9.0);
 
             when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
@@ -364,15 +363,15 @@ class NotaServiceTest {
             Nota resultado = service.consultarNotas(aluno.getMatricula(), "ES2", "2026.1", "T01");
 
             assertNotNull(resultado);
-            assertEquals(8.5, resultado.getEtapa1());
+            assertEquals(8.0, resultado.getEtapa1());
             assertEquals(9.0, resultado.getEtapa2());
 
             verify(notaRepository).buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01");
         }
 
         @Test
-        @DisplayName("Deve retornar null quando não houver notas")
-        void deveRetornarNullQuandoNaoExistirNota() {
+        @DisplayName("Deve lançar exceção quando não existir notas.")
+        void deveLancarExcecaoQuandoNaoExistirNota() {
 
             when(notaRepository.buscarPorChaveUnica(
                     aluno.getMatricula(),
@@ -381,19 +380,17 @@ class NotaServiceTest {
                     "T01"))
                     .thenReturn(null);
 
-            Nota resultado = service.consultarNotas(
-                    aluno.getMatricula(),
-                    "ES2",
-                    "2026.1",
-                    "T01");
+            Exception ex = assertThrows(
+                    Exception.class,
+                    () -> service.consultarNotas(
+                            aluno.getMatricula(),
+                            "ES2",
+                            "2026.1",
+                            "T01"));
 
-            assertNull(resultado);
-
-            verify(notaRepository).buscarPorChaveUnica(
-                    aluno.getMatricula(),
-                    "ES2",
-                    "2026.1",
-                    "T01");
+            assertEquals(
+                    "Erro: nenhuma nota encontrada",
+                    ex.getMessage());
         }
     }
 

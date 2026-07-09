@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.MatriculaTurma;
+import com.classroompb.model.Nota;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.RegistroFrequencia;
 import com.classroompb.model.TipoUsuario;
@@ -15,6 +16,7 @@ import com.classroompb.model.Usuario;
 import com.classroompb.service.DisciplinaService;
 import com.classroompb.service.FrequenciaService;
 import com.classroompb.service.MatriculaTurmaService;
+import com.classroompb.service.NotaService;
 import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.PeriodoLetivoService;
 import com.classroompb.service.TurmaService;
@@ -33,25 +35,27 @@ public class AlunoController {
     private final TurmaService turmaService;
     private final MatriculaTurmaService matriculaService;
     private final FrequenciaService freqService;
+    private final NotaService notaService;
 
     public AlunoController(UsuarioService service) {
-        this(service, null, null, null, null, null);
+        this(service, null, null, null, null, null, null);
     }
 
     public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
             PeriodoLetivoService periodoLetivoService, TurmaService turmaService) {
-        this(service, disciplinaService, periodoLetivoService, turmaService, null, null);
+        this(service, disciplinaService, periodoLetivoService, turmaService, null, null, null);
     }
 
     public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
             PeriodoLetivoService periodoLetivoService, TurmaService turmaService,
-            MatriculaTurmaService matriculaService, FrequenciaService freqService) {
+            MatriculaTurmaService matriculaService, FrequenciaService freqService, NotaService notaService) {
         this.service = service;
         this.disciplinaService = disciplinaService;
         this.periodoLetivoService = periodoLetivoService;
         this.turmaService = turmaService;
         this.matriculaService = matriculaService;
         this.freqService = freqService;
+        this.notaService = notaService;
     }
 
     /** Exibe o menu principal do aluno e permanece em loop até logout. */
@@ -66,7 +70,7 @@ public class AlunoController {
         while (true) {
             List<String> opcoes = Arrays.asList("Consultar disciplinas e turmas", "Solicitar matrícula em turma",
                     "Cancelar matrícula", "Minhas solicitações de matrícula", "Consultar frequência por disciplina",
-                    "Logout");
+                    "Consultar notas", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU ALUNO", opcoes);
 
             if (escolha == -1 || escolha == opcoes.size() - 1) {
@@ -88,6 +92,9 @@ public class AlunoController {
                 break;
             case 4:
                 consultarFrequenciaPorDisciplina(usuario);
+                break;
+            case 5:
+                consultarNotas(usuario);
                 break;
             default:
                 ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
@@ -131,6 +138,71 @@ public class AlunoController {
                 break;
             }
         }
+    }
+
+    private void consultarNotas(Usuario aluno) {
+
+        try {
+
+            MatriculaTurma matricula = selecionarTurmaDoAluno(aluno);
+
+            if (matriculaService == null) {
+                return;
+            }
+
+            Nota nota = notaService.consultarNotas(aluno.getMatricula(), matricula.getCodigoDisciplina(),
+                    matricula.getCodigoPeriodo(), matricula.getCodigoTurma());
+
+            ConsoleUI.limparTela();
+            ConsoleUI.exibirCabecalho("CONSULTA DE NOTAS");
+
+            System.out.println("Disciplina: " + matricula.getCodigoDisciplina());
+            System.out.println();
+
+            System.out.println("Etapa 1: " + nota.getEtapa1());
+            System.out.println("Etapa 2: " + nota.getEtapa2());
+
+            double media = (nota.getEtapa1() + nota.getEtapa2()) / 2.0;
+
+            System.out.printf("Média: %.2f%n", media);
+
+            if (media >= 7.0) {
+                System.out.println("Situação: APROVADO");
+            } else if (media >= 4.0) {
+                System.out.println("Situação: RECUPERAÇÃO");
+            } else {
+                System.out.println("Situação: REPROVADO");
+            }
+
+            ConsoleUI.aguardarEnter();
+
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private MatriculaTurma selecionarTurmaDoAluno(Usuario aluno) throws Exception {
+
+        List<MatriculaTurma> matriculas = matriculaService.listarTurmasDoAluno(aluno);
+
+        if (matriculas.isEmpty()) {
+            ConsoleUI.exibirMensagem("Voce nao possui matriculas confirmadas.", false);
+            return null;
+        }
+
+        List<String> opcoes = matriculas.stream()
+                .map(m -> m.getCodigoDisciplina() + " | " + m.getCodigoPeriodo() + " | " + m.getCodigoTurma())
+                .collect(Collectors.toList());
+
+        opcoes.add("Cancelar");
+
+        int escolha = ConsoleUI.exibirMenuInterativo("SELECIONAR TURMA", opcoes);
+
+        if (escolha == -1 || escolha == opcoes.size() - 1) {
+            return null;
+        }
+
+        return matriculas.get(escolha);
     }
 
     /** Lista todas as disciplinas cadastradas no sistema em formato de tabela. */
