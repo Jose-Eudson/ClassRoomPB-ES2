@@ -11,6 +11,28 @@ public class HistoricoRepository {
 
     public void salvar(Historico historico) {
 
+        if (historico == null) {
+            return;
+        }
+
+        historicos.add(historico);
+    }
+
+    public void atualizar(Historico historico) {
+
+        if (historico == null) {
+            return;
+        }
+
+        for (int i = 0; i < historicos.size(); i++) {
+            Historico atual = historicos.get(i);
+            if (atual.getMatriculaAluno().equalsIgnoreCase(historico.getMatriculaAluno())
+                    && atual.getCodigoDisciplina().equalsIgnoreCase(historico.getCodigoDisciplina())) {
+                historicos.set(i, historico);
+                return;
+            }
+        }
+
         historicos.add(historico);
     }
 

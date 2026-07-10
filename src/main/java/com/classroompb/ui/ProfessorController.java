@@ -61,6 +61,9 @@ public class ProfessorController {
             case 2:
                 lancarNotas(usuario);
                 break;
+            case 4:
+                alterarNotas(usuario);
+                break;
             default:
                 ConsoleUI.exibirMensagem("Funcionalidade disponivel na proxima release.", false);
                 break;
@@ -270,16 +273,11 @@ public class ProfessorController {
                         etapa2);
 
                 double media = (etapa1 + etapa2) / 2.0;
-
-                String situacao;
-
-                if (media >= 7.0) {
-                    situacao = "APROVADO";
-                } else if (media >= 4.0) {
-                    situacao = "RECUPERAÇÃO";
-                } else {
-                    situacao = "REPROVADO POR NOTA";
-                }
+                double percentualFrequencia = frequenciaService.calcularPercentualFrequencia(
+                        matricula.getMatriculaAluno(), turma.getCodigoDisciplina(), turma.getCodigoPeriodo(),
+                        turma.getCodigo());
+                String situacao = notaService.calcularSituacaoFinal(matricula.getMatriculaAluno(),
+                        turma.getCodigoDisciplina(), turma.getCodigoPeriodo(), turma.getCodigo(), percentualFrequencia);
 
                 System.out.printf("Média final: %.2f%n", media);
                 System.out.println("Situação: " + situacao);
@@ -289,6 +287,56 @@ public class ProfessorController {
 
         } catch (Exception e) {
 
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void alterarNotas(Usuario professor) {
+
+        try {
+
+            Turma turma = selecionarTurmaDoProfessor(professor);
+
+            if (turma == null) {
+                return;
+            }
+
+            List<MatriculaTurma> matriculas = frequenciaService.listarMatriculasConfirmadasDaTurma(professor,
+                    turma.getCodigoDisciplina(), turma.getCodigoPeriodo(), turma.getCodigo());
+
+            if (matriculas.isEmpty()) {
+                ConsoleUI.exibirMensagem("Nao ha alunos matriculados.", false);
+                return;
+            }
+
+            ConsoleUI.limparTela();
+            ConsoleUI.exibirCabecalho("ALTERAR NOTAS");
+
+            for (MatriculaTurma matricula : matriculas) {
+
+                System.out.println();
+                System.out.println("Aluno: " + matricula.getMatriculaAluno());
+
+                double etapa1 = Double.parseDouble(ConsoleUI.lerEntrada("Nova Etapa 1: "));
+                double etapa2 = Double.parseDouble(ConsoleUI.lerEntrada("Nova Etapa 2: "));
+
+                notaService.alterarNotas(professor, matricula.getMatriculaAluno(), turma.getCodigoDisciplina(),
+                        turma.getCodigoPeriodo(), turma.getCodigo(), etapa1, etapa2);
+
+                double media = (etapa1 + etapa2) / 2.0;
+                double percentualFrequencia = frequenciaService.calcularPercentualFrequencia(
+                        matricula.getMatriculaAluno(), turma.getCodigoDisciplina(), turma.getCodigoPeriodo(),
+                        turma.getCodigo());
+                String situacao = notaService.calcularSituacaoFinal(matricula.getMatriculaAluno(),
+                        turma.getCodigoDisciplina(), turma.getCodigoPeriodo(), turma.getCodigo(), percentualFrequencia);
+
+                System.out.printf("Média final: %.2f%n", media);
+                System.out.println("Situação: " + situacao);
+            }
+
+            ConsoleUI.exibirMensagem("Notas alteradas com sucesso!", false);
+
+        } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }
     }

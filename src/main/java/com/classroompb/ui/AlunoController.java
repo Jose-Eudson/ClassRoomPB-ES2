@@ -6,22 +6,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.classroompb.model.Disciplina;
+import com.classroompb.model.Historico;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.Nota;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.RegistroFrequencia;
+import com.classroompb.model.StatusMatricula;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
 import com.classroompb.service.DisciplinaService;
 import com.classroompb.service.FrequenciaService;
+import com.classroompb.service.HistoricoService;
 import com.classroompb.service.MatriculaTurmaService;
 import com.classroompb.service.NotaService;
 import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.PeriodoLetivoService;
 import com.classroompb.service.TurmaService;
 import com.classroompb.service.UsuarioService;
-import com.classroompb.model.StatusMatricula;
 
 /**
  * Controlador da interface do Aluno. Responsável pelo menu e todas as ações disponíveis para esse perfil.
@@ -36,19 +38,28 @@ public class AlunoController {
     private final MatriculaTurmaService matriculaService;
     private final FrequenciaService freqService;
     private final NotaService notaService;
+    private final HistoricoService historicoService;
 
     public AlunoController(UsuarioService service) {
-        this(service, null, null, null, null, null, null);
+        this(service, null, null, null, null, null, null, null);
     }
 
     public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
             PeriodoLetivoService periodoLetivoService, TurmaService turmaService) {
-        this(service, disciplinaService, periodoLetivoService, turmaService, null, null, null);
+        this(service, disciplinaService, periodoLetivoService, turmaService, null, null, null, null);
     }
 
     public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
             PeriodoLetivoService periodoLetivoService, TurmaService turmaService,
             MatriculaTurmaService matriculaService, FrequenciaService freqService, NotaService notaService) {
+        this(service, disciplinaService, periodoLetivoService, turmaService, matriculaService, freqService, notaService,
+                null);
+    }
+
+    public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
+            PeriodoLetivoService periodoLetivoService, TurmaService turmaService,
+            MatriculaTurmaService matriculaService, FrequenciaService freqService, NotaService notaService,
+            HistoricoService historicoService) {
         this.service = service;
         this.disciplinaService = disciplinaService;
         this.periodoLetivoService = periodoLetivoService;
@@ -56,6 +67,7 @@ public class AlunoController {
         this.matriculaService = matriculaService;
         this.freqService = freqService;
         this.notaService = notaService;
+        this.historicoService = historicoService;
     }
 
     /** Exibe o menu principal do aluno e permanece em loop até logout. */
@@ -70,7 +82,7 @@ public class AlunoController {
         while (true) {
             List<String> opcoes = Arrays.asList("Consultar disciplinas e turmas", "Solicitar matrícula em turma",
                     "Cancelar matrícula", "Minhas solicitações de matrícula", "Consultar frequência por disciplina",
-                    "Consultar notas", "Logout");
+                    "Consultar notas", "Consultar histórico de disciplinas", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU ALUNO", opcoes);
 
             if (escolha == -1 || escolha == opcoes.size() - 1) {
@@ -95,6 +107,9 @@ public class AlunoController {
                 break;
             case 5:
                 consultarNotas(usuario);
+                break;
+            case 6:
+                consultarHistorico(usuario);
                 break;
             default:
                 ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
@@ -163,19 +178,45 @@ public class AlunoController {
             System.out.println("Etapa 2: " + nota.getEtapa2());
 
             double media = (nota.getEtapa1() + nota.getEtapa2()) / 2.0;
+            double percentualFrequencia = freqService.calcularPercentualFrequencia(aluno.getMatricula(),
+                    matricula.getCodigoDisciplina(), matricula.getCodigoPeriodo(), matricula.getCodigoTurma());
 
             System.out.printf("Média: %.2f%n", media);
-
-            if (media >= 7.0) {
-                System.out.println("Situação: APROVADO");
-            } else if (media >= 4.0) {
-                System.out.println("Situação: RECUPERAÇÃO");
-            } else {
-                System.out.println("Situação: REPROVADO");
-            }
+            System.out.println("Situação: "
+                    + notaService.calcularSituacaoFinal(aluno.getMatricula(), matricula.getCodigoDisciplina(),
+                            matricula.getCodigoPeriodo(), matricula.getCodigoTurma(), percentualFrequencia));
 
             ConsoleUI.aguardarEnter();
 
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void consultarHistorico(Usuario aluno) {
+        try {
+            if (historicoService == null) {
+                ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
+                return;
+            }
+
+            List<Historico> historico = historicoService.listarHistoricoDoAluno(aluno.getMatricula());
+
+            ConsoleUI.limparTela();
+            ConsoleUI.exibirCabecalho("HISTÓRICO DE DISCIPLINAS");
+
+            if (historico.isEmpty()) {
+                ConsoleUI.exibirMensagem("Nenhuma disciplina concluída registrada ainda.", false);
+                return;
+            }
+
+            System.out.println("Disciplinas cursadas:");
+            for (Historico item : historico) {
+                System.out.printf("- %s | Nota final: %.2f | Situação: %s%n", item.getCodigoDisciplina(),
+                        item.getNotaFinal(), item.isAprovado() ? "Aprovado" : "Reprovado");
+            }
+
+            ConsoleUI.aguardarEnter();
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }

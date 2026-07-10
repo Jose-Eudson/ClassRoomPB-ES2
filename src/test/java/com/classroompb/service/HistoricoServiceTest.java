@@ -1,6 +1,7 @@
 package com.classroompb.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -69,5 +71,42 @@ class HistoricoServiceTest {
                 );
 
         assertFalse(resultado);
+    }
+
+    @Test
+    @DisplayName("Deve registrar historico quando disciplina ainda nao existir")
+    void deveRegistrarHistoricoQuandoDisciplinaAindaNaoExistir() {
+
+        when(repository.buscarPorAluno("2023001")).thenReturn(List.of());
+
+        service.registrarHistorico("2023001", "ES1", 8.5, true);
+
+        ArgumentCaptor<Historico> captor = ArgumentCaptor.forClass(Historico.class);
+        verify(repository).salvar(captor.capture());
+
+        Historico salvo = captor.getValue();
+        assertEquals("2023001", salvo.getMatriculaAluno());
+        assertEquals("ES1", salvo.getCodigoDisciplina());
+        assertEquals(8.5, salvo.getNotaFinal());
+        assertTrue(salvo.isAprovado());
+    }
+
+    @Test
+    @DisplayName("Deve atualizar historico existente da disciplina")
+    void deveAtualizarHistoricoExistenteDaDisciplina() {
+
+        Historico historico = new Historico("2023001", "ES1", 6.0, false);
+
+        when(repository.buscarPorAluno("2023001")).thenReturn(List.of(historico));
+
+        service.registrarHistorico("2023001", "ES1", 7.5, true);
+
+        ArgumentCaptor<Historico> captor = ArgumentCaptor.forClass(Historico.class);
+        verify(repository).atualizar(captor.capture());
+
+        Historico atualizado = captor.getValue();
+        assertEquals(7.5, atualizado.getNotaFinal());
+        assertTrue(atualizado.isAprovado());
+        assertEquals("ES1", atualizado.getCodigoDisciplina());
     }
 }

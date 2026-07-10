@@ -185,6 +185,56 @@ class NotaServiceTest {
     }
 
     @Nested
+    @DisplayName("Alteração de notas")
+    class AlteracaoNotas {
+
+        @Test
+        @DisplayName("Deve alterar notas existentes")
+        void deveAlterarNotasExistentes() throws Exception {
+
+            Nota nota = new Nota("A0001", "ES2", "2026.1", "T01");
+
+            when(turmaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString())).thenReturn(turma);
+
+            when(matriculaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
+                    .thenReturn(matricula);
+
+            when(notaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
+                    .thenReturn(nota);
+
+            service.alterarNotas(professor, "A0001", "ES2", "2026.1", "T01", 7.5, 8.0);
+
+            ArgumentCaptor<Nota> captor = ArgumentCaptor.forClass(Nota.class);
+
+            verify(notaRepository).atualizar(captor.capture());
+
+            assertEquals(7.5, captor.getValue().getEtapa1());
+            assertEquals(8.0, captor.getValue().getEtapa2());
+
+            verify(notaRepository, never()).salvar(any());
+        }
+
+        @Test
+        @DisplayName("Não deve alterar notas quando ainda não existirem")
+        void naoDeveAlterarNotasQuandoNaoExistirem() {
+
+            when(turmaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString())).thenReturn(turma);
+
+            when(matriculaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
+                    .thenReturn(matricula);
+
+            when(notaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString())).thenReturn(null);
+
+            Exception ex = assertThrows(Exception.class,
+                    () -> service.alterarNotas(professor, "A0001", "ES2", "2026.1", "T01", 6.0, 7.0));
+
+            assertEquals("Erro: Nenhuma nota lançada para este aluno.", ex.getMessage());
+            verify(notaRepository, never()).atualizar(any());
+            verify(notaRepository, never()).salvar(any());
+        }
+    }
+
+    @Nested
     @DisplayName("Validação do Professor")
     class ValidacaoProfessor {
 
@@ -555,8 +605,8 @@ class NotaServiceTest {
         }
 
         @Test
-        @DisplayName("Deve retornar reprovado quando média for menor que 4")
-        void deveRetornarReprovado() throws Exception {
+        @DisplayName("Deve retornar reprovado por nota quando média for menor que 4")
+        void deveRetornarReprovadoPorNota() throws Exception {
 
             Nota nota = new Nota(aluno.getMatricula(), "ES2", "2026.1", "T01");
 
@@ -567,7 +617,23 @@ class NotaServiceTest {
 
             String situacao = service.calcularSituacaoFinal(aluno.getMatricula(), "ES2", "2026.1", "T01");
 
-            assertEquals("REPROVADO", situacao);
+            assertEquals("REPROVADO POR NOTA", situacao);
+        }
+
+        @Test
+        @DisplayName("Deve retornar reprovado por falta quando frequência estiver abaixo de 75")
+        void deveRetornarReprovadoPorFaltaQuandoFrequenciaForBaixa() throws Exception {
+
+            Nota nota = new Nota(aluno.getMatricula(), "ES2", "2026.1", "T01");
+
+            nota.setEtapa1(8.0);
+            nota.setEtapa2(7.0);
+
+            when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
+
+            String situacao = service.calcularSituacaoFinal(aluno.getMatricula(), "ES2", "2026.1", "T01", 74.0);
+
+            assertEquals("REPROVADO POR FALTA", situacao);
         }
 
         @Test
