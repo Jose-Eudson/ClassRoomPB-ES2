@@ -480,6 +480,42 @@ public class MatriculaTurmaService {
         matriculaRepository.atualizar(solicitacao);
     }
 
+    // =========================================================================
+    // RF40 — Relatório de alunos matriculados por turma
+    // =========================================================================
+
+    /**
+     * RF40: Lista os alunos com matrícula CONFIRMADA em uma turma específica.
+     *
+     * @param coordenador
+     *            usuário coordenador
+     * @param codigoDisciplina
+     *            código da disciplina
+     * @param codigoPeriodo
+     *            código do período letivo
+     * @param codigoTurma
+     *            código da turma
+     *
+     * @return lista de matrículas confirmadas na turma
+     *
+     * @throws Exception
+     *             se o usuário não for coordenador ou a turma não existir
+     */
+    public List<MatriculaTurma> listarAlunosMatriculadosPorTurma(Usuario coordenador, String codigoDisciplina,
+            String codigoPeriodo, String codigoTurma) throws Exception {
+        validarCoordenador(coordenador);
+
+        String[] normatizados = validarCamposTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+        String discNorm = normatizados[0];
+        String periodoNorm = normatizados[1];
+        String turmaNorm = normatizados[2];
+
+        buscarTurmaOuFalhar(discNorm, periodoNorm, turmaNorm);
+
+        return matriculaRepository.listarPorTurma(discNorm, periodoNorm, turmaNorm).stream()
+                .filter(m -> m.getStatus() == StatusMatricula.CONFIRMADA).collect(Collectors.toList());
+    }
+
     public List<MatriculaTurma> listarTurmasDoAluno(Usuario aluno) throws Exception {
         validarAluno(aluno);
         String matriculaAluno = aluno.getMatricula();

@@ -47,7 +47,7 @@ public class CoordenadorController {
 
         while (true) {
             List<String> opcoes = Arrays.asList("Gerenciar disciplinas", "Gerenciar período letivo", "Gerenciar turmas",
-                    "Gerenciar solicitações de matrícula", "Logout");
+                    "Gerenciar solicitações de matrícula", "Relatórios", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU COORDENADOR", opcoes);
 
             if (escolha == -1 || escolha == opcoes.size() - 1) {
@@ -66,6 +66,9 @@ public class CoordenadorController {
                 break;
             case 3:
                 gerenciarSolicitacoesMatricula(usuario);
+                break;
+            case 4:
+                exibirMenuRelatorios(usuario);
                 break;
             default:
                 ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
@@ -726,6 +729,61 @@ public class CoordenadorController {
                     m.getDataSolicitacao().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) });
         }
         ConsoleUI.exibirTabela(colunas, linhas);
+    }
+
+    // -------------------------------------------------------------------------
+    // Relatórios (RF40–RF43)
+    // -------------------------------------------------------------------------
+
+    private void exibirMenuRelatorios(Usuario usuario) {
+        while (true) {
+            List<String> opcoes = Arrays.asList("RF40 - Alunos matriculados por turma", "Voltar");
+            int escolha = ConsoleUI.exibirMenuInterativo("RELATÓRIOS", opcoes);
+
+            if (escolha == 1 || escolha == -1) {
+                break;
+            }
+
+            switch (escolha) {
+            case 0:
+                relatorioAlunosMatriculados(usuario);
+                break;
+            }
+        }
+    }
+
+    private void relatorioAlunosMatriculados(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("RF40 - ALUNOS MATRICULADOS POR TURMA");
+        try {
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ").trim();
+            String codigoTurma = ConsoleUI.lerEntrada("Código da turma (ex: T01): ").trim();
+
+            List<com.classroompb.model.MatriculaTurma> alunos = matriculaService
+                    .listarAlunosMatriculadosPorTurma(usuario, codigoDisciplina, codigoPeriodo, codigoTurma);
+
+            if (alunos.isEmpty()) {
+                ConsoleUI.exibirMensagem("Nenhum aluno matriculado nesta turma.", false);
+                return;
+            }
+
+            String[] colunas = { "#", "Matrícula do Aluno", "Disciplina", "Período", "Turma", "Data de Matrícula" };
+            List<String[]> linhas = new ArrayList<>();
+            java.time.format.DateTimeFormatter fmtRel = java.time.format.DateTimeFormatter
+                    .ofPattern("dd/MM/yyyy HH:mm");
+            for (int i = 0; i < alunos.size(); i++) {
+                com.classroompb.model.MatriculaTurma m = alunos.get(i);
+                linhas.add(new String[] { String.valueOf(i + 1), m.getMatriculaAluno(), m.getCodigoDisciplina(),
+                        m.getCodigoPeriodo(), m.getCodigoTurma(), m.getDataSolicitacao().format(fmtRel) });
+            }
+
+            ConsoleUI.exibirTabela(colunas, linhas);
+            System.out.println("\nTotal de alunos matriculados: " + alunos.size());
+            ConsoleUI.exibirMensagem("Fim do relatório.", false);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
     }
 
     private void processarSolicitacaoPendente(Usuario usuario, List<com.classroompb.model.MatriculaTurma> pendentes) {
