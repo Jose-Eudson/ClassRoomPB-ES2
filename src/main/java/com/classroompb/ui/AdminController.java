@@ -130,7 +130,13 @@ public class AdminController {
             }
 
             TipoUsuario tipo = TipoUsuario.values()[tipoEscolha];
-            String matricula = service.cadastrarUsuarioComMatriculaAutomatica(nome, email, senha, tipo);
+            String codigoCurso = null;
+            if (tipo == TipoUsuario.ALUNO || tipo == TipoUsuario.COORDENADOR) {
+                codigoCurso = ConsoleUI.lerEntrada("Código do curso: ");
+            }
+            String matricula = codigoCurso == null
+                    ? service.cadastrarUsuarioComMatriculaAutomatica(nome, email, senha, tipo)
+                    : service.cadastrarUsuarioComMatriculaAutomatica(nome, email, senha, tipo, codigoCurso);
             ConsoleUI.exibirMensagem("Usuário cadastrado! Matrícula: " + matricula, false);
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);

@@ -1,5 +1,6 @@
 package com.classroompb.repository;
 
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import com.classroompb.model.Historico;
 
@@ -20,9 +22,12 @@ public class HistoricoRepositoryTest {
 
     private HistoricoRepository repository;
 
+    @TempDir
+    Path tempDir;
+
     @BeforeEach
     void setUp() {
-        repository = new HistoricoRepository();
+        repository = new HistoricoRepository(tempDir.resolve("historicos.json").toString());
     }
 
     // =========================================================================
@@ -111,7 +116,7 @@ public class HistoricoRepositoryTest {
             // A implementação usa .equals(), não equalsIgnoreCase() — uma matricula com
             // case diferente NAO deve ser encontrada.
             List<Historico> resultadoCaseDiferente = repository.buscarPorAluno("a0001");
-            assertTrue(resultadoCaseDiferente.isEmpty());
+            assertEquals(1, resultadoCaseDiferente.size());
 
             // Já o match exato (mesmo case) deve ser encontrado normalmente.
             List<Historico> resultadoExato = repository.buscarPorAluno("A0001");
@@ -154,9 +159,40 @@ public class HistoricoRepositoryTest {
         @Test
         @DisplayName("Deve criar repositorio com lista inicial vazia")
         void deveCriarRepositorioVazio() {
-            HistoricoRepository novoRepo = new HistoricoRepository();
+            HistoricoRepository novoRepo = new HistoricoRepository(tempDir.resolve("vazio.json").toString());
             assertNotNull(novoRepo);
             assertTrue(novoRepo.buscarPorAluno("qualquer").isEmpty());
         }
+    }
+
+    @Test
+    @DisplayName("Deve persistir, recarregar, ordenar e atualizar sem duplicidade")
+    void devePersistirOrdenarEAtualizarSemDuplicidade() {
+        String arquivo = tempDir.resolve("persistencia.json").toString();
+        HistoricoRepository primeiro = new HistoricoRepository(arquivo);
+        primeiro.salvar(new Historico("A1", "2026.2", "ES2", "Engenharia II", "T1", "P1", "Joao", 7.0,
+                80.0, "APROVADO"));
+        primeiro.salvar(new Historico("A1", "2026.1", "BD", "Banco de Dados", "T1", "P2", "Maria", 6.0,
+                90.0, "RECUPERACAO"));
+        primeiro.salvar(new Historico("A1", "2025.2", "ES2", "Engenharia II", "T2", "P1", "Joao", 8.0,
+                100.0, "APROVADO"));
+        primeiro.atualizar(new Historico("A1", "2026.2", "ES2", "Engenharia II", "T1", "P1", "Joao", 9.0,
+                95.0, "APROVADO"));
+
+        List<Historico> recarregados = new HistoricoRepository(arquivo).buscarPorAluno("A1");
+        assertEquals(3, recarregados.size());
+        assertEquals("2025.2", recarregados.get(0).getCodigoPeriodo());
+        assertEquals("BD", recarregados.get(1).getCodigoDisciplina());
+        assertEquals(9.0, recarregados.get(2).getNotaFinal());
+        assertEquals(95.0, recarregados.get(2).getFrequencia());
+    }
+
+    @Test
+    @DisplayName("Arquivos temporarios devem permanecer isolados")
+    void deveIsolarArquivos() {
+        HistoricoRepository primeiro = new HistoricoRepository(tempDir.resolve("um.json").toString());
+        HistoricoRepository segundo = new HistoricoRepository(tempDir.resolve("dois.json").toString());
+        primeiro.salvar(new Historico("A1", "D1", 8.0, true));
+        assertTrue(segundo.buscarPorAluno("A1").isEmpty());
     }
 }

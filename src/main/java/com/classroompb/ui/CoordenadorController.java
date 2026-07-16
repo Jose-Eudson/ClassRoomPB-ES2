@@ -5,10 +5,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.classroompb.model.Disciplina;
+import com.classroompb.model.Historico;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
 import com.classroompb.service.DisciplinaService;
+import com.classroompb.service.HistoricoService;
 import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.PeriodoLetivoService;
 import com.classroompb.service.TurmaService;
@@ -25,15 +27,23 @@ public class CoordenadorController {
     private final PeriodoLetivoService periodoService;
     private final TurmaService turmaService;
     private final com.classroompb.service.MatriculaTurmaService matriculaService;
+    private final HistoricoService historicoService;
 
     public CoordenadorController(UsuarioService service, DisciplinaService disciplinaService,
             PeriodoLetivoService periodoService, TurmaService turmaService,
             com.classroompb.service.MatriculaTurmaService matriculaService) {
+        this(service, disciplinaService, periodoService, turmaService, matriculaService, null);
+    }
+
+    public CoordenadorController(UsuarioService service, DisciplinaService disciplinaService,
+            PeriodoLetivoService periodoService, TurmaService turmaService,
+            com.classroompb.service.MatriculaTurmaService matriculaService, HistoricoService historicoService) {
         this.service = service;
         this.disciplinaService = disciplinaService;
         this.periodoService = periodoService;
         this.turmaService = turmaService;
         this.matriculaService = matriculaService;
+        this.historicoService = historicoService;
     }
 
     /** Exibe o menu principal do coordenador e permanece em loop até logout. */
@@ -737,10 +747,11 @@ public class CoordenadorController {
 
     private void exibirMenuRelatorios(Usuario usuario) {
         while (true) {
-            List<String> opcoes = Arrays.asList("RF40 - Alunos matriculados por turma", "Voltar");
+            List<String> opcoes = Arrays.asList("RF40 - Alunos matriculados por turma",
+                    "Consultar histórico acadêmico de aluno", "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("RELATÓRIOS", opcoes);
 
-            if (escolha == 1 || escolha == -1) {
+            if (escolha == 2 || escolha == -1) {
                 break;
             }
 
@@ -748,7 +759,40 @@ public class CoordenadorController {
             case 0:
                 relatorioAlunosMatriculados(usuario);
                 break;
+            case 1:
+                consultarHistoricoAluno(usuario);
+                break;
             }
+        }
+    }
+
+    private void consultarHistoricoAluno(Usuario coordenador) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("HISTÓRICO ACADÊMICO DE ALUNO");
+        try {
+            if (historicoService == null) {
+                ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
+                return;
+            }
+            String matricula = ConsoleUI.lerEntrada("Matrícula do aluno: ");
+            List<Historico> historicos = historicoService.consultarHistoricoAlunoPeloCoordenador(coordenador,
+                    matricula);
+            if (historicos.isEmpty()) {
+                ConsoleUI.exibirMensagem("O aluno ainda não possui histórico acadêmico.", false);
+                return;
+            }
+
+            String[] colunas = { "Período", "Disciplina", "Professor", "Nota final", "Frequência", "Situação" };
+            List<String[]> linhas = new ArrayList<>();
+            for (Historico item : historicos) {
+                linhas.add(new String[] { item.getCodigoPeriodo(), item.getNomeDisciplina(), item.getNomeProfessor(),
+                        String.format("%.1f", item.getNotaFinal()), String.format("%.1f%%", item.getFrequencia()),
+                        item.getSituacao() });
+            }
+            ConsoleUI.exibirTabela(colunas, linhas);
+            ConsoleUI.aguardarEnter();
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
         }
     }
 

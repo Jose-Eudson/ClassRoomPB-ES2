@@ -1,15 +1,19 @@
 package com.classroompb.service;
 
+import com.classroompb.model.Disciplina;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.Nota;
 import com.classroompb.model.StatusMatricula;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
+import com.classroompb.repository.DisciplinaRepository;
+import com.classroompb.repository.FrequenciaRepository;
 import com.classroompb.repository.HistoricoRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.NotaRepository;
 import com.classroompb.repository.TurmaRepository;
+import com.classroompb.repository.UsuarioRepository;
 
 public class NotaService {
 
@@ -17,6 +21,9 @@ public class NotaService {
     private final TurmaRepository turmaRepository;
     private final MatriculaTurmaRepository matriculaRepository;
     private final HistoricoService historicoService;
+    private final FrequenciaRepository frequenciaRepository;
+    private final DisciplinaRepository disciplinaRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public NotaService(NotaRepository notaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository) {
@@ -27,11 +34,22 @@ public class NotaService {
     public NotaService(NotaRepository notaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository, HistoricoRepository historicoRepository) {
 
+        this(notaRepository, turmaRepository, matriculaRepository, historicoRepository, null, null, null);
+    }
+
+    public NotaService(NotaRepository notaRepository, TurmaRepository turmaRepository,
+            MatriculaTurmaRepository matriculaRepository, HistoricoRepository historicoRepository,
+            FrequenciaRepository frequenciaRepository, DisciplinaRepository disciplinaRepository,
+            UsuarioRepository usuarioRepository) {
+
         this.notaRepository = notaRepository;
         this.turmaRepository = turmaRepository;
         this.matriculaRepository = matriculaRepository;
         this.historicoService = new HistoricoService(
                 historicoRepository != null ? historicoRepository : new HistoricoRepository());
+        this.frequenciaRepository = frequenciaRepository;
+        this.disciplinaRepository = disciplinaRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     public void lancarNotas(Usuario professor, String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
@@ -86,10 +104,7 @@ public class NotaService {
         }
 
         if (nota.getEtapa1() != null && nota.getEtapa2() != null) {
-            double media = (nota.getEtapa1() + nota.getEtapa2()) / 2.0;
-            String situacao = media >= 7.0 ? "APROVADO" : media >= 4.0 ? "RECUPERACAO" : "REPROVADO POR NOTA";
-            historicoService.registrarHistorico(matriculaAluno, codigoDisciplina, media,
-                    "APROVADO".equalsIgnoreCase(situacao));
+            sincronizarHistorico(nota, turma);
         }
     }
 
@@ -133,10 +148,7 @@ public class NotaService {
         nota.setEtapa2(etapa2);
         notaRepository.atualizar(nota);
 
-        double media = (nota.getEtapa1() + nota.getEtapa2()) / 2.0;
-        String situacao = media >= 7.0 ? "APROVADO" : media >= 4.0 ? "RECUPERACAO" : "REPROVADO POR NOTA";
-        historicoService.registrarHistorico(matriculaAluno, codigoDisciplina, media,
-                "APROVADO".equalsIgnoreCase(situacao));
+        sincronizarHistorico(nota, turma);
     }
 
     public Nota consultarNotas(String matriculaAluno, String codigoDisciplina, String codigoPeriodo, String codigoTurma)
@@ -178,6 +190,10 @@ public class NotaService {
 
         double media = calcularMediaFinal(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
 
+        return calcularSituacao(media, percentualFrequencia);
+    }
+
+    public static String calcularSituacao(double media, double percentualFrequencia) {
         if (!Double.isNaN(percentualFrequencia) && percentualFrequencia < 75.0) {
             return "REPROVADO POR FALTA";
         }
@@ -191,6 +207,39 @@ public class NotaService {
         }
 
         return "REPROVADO POR NOTA";
+    }
+
+    private void sincronizarHistorico(Nota nota, Turma turma) {
+        String matriculaAluno = nota.getMatriculaAluno();
+        String codigoDisciplina = nota.getCodigoDisciplina();
+        String codigoPeriodo = nota.getCodigoPeriodo();
+        String codigoTurma = nota.getCodigoTurma();
+        double media = (nota.getEtapa1() + nota.getEtapa2()) / 2.0;
+        if (disciplinaRepository == null || usuarioRepository == null || frequenciaRepository == null) {
+            String situacao = calcularSituacao(media, Double.NaN);
+            historicoService.registrarHistorico(matriculaAluno, codigoDisciplina, media,
+                    "APROVADO".equalsIgnoreCase(situacao));
+            return;
+        }
+
+        double frequencia = calcularFrequencia(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+        String situacao = calcularSituacao(media, frequencia);
+        Disciplina disciplina = disciplinaRepository.buscarPorCodigo(codigoDisciplina);
+        Usuario professor = usuarioRepository.buscarPorMatricula(turma.getMatriculaProfessor()).orElse(null);
+        historicoService.registrarHistoricoCompleto(matriculaAluno, codigoPeriodo, codigoDisciplina, codigoTurma,
+                turma, disciplina, professor, media, frequencia, situacao);
+    }
+
+    private double calcularFrequencia(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
+            String codigoTurma) {
+        java.util.List<com.classroompb.model.RegistroFrequencia> registros = frequenciaRepository
+                .listarPorAlunoETurma(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
+        if (registros.isEmpty()) {
+            return 0.0;
+        }
+        long presentes = registros.stream()
+                .filter(r -> r.getStatus() == com.classroompb.model.StatusFrequencia.PRESENTE).count();
+        return presentes * 100.0 / registros.size();
     }
 
     private void validarProfessor(Usuario professor) throws Exception {

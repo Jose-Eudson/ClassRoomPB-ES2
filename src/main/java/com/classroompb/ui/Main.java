@@ -55,14 +55,16 @@ public class Main {
         MatriculaTurmaRepository matriculaRepository = new MatriculaTurmaRepository();
         FrequenciaRepository frequenciaRepository = new FrequenciaRepository();
         NotaRepository notaRepository = new NotaRepository();
-        service = new UsuarioService(repository);
+        service = new UsuarioService(repository, cursoRepository);
         cursoService = new CursoService(cursoRepository);
         disciplinaService = new DisciplinaService(disciplinaRepository);
         periodoLetivoService = new PeriodoLetivoService(periodoLetivoRepository);
         turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoLetivoRepository);
-        freqService = new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository);
-        notaService = new NotaService(notaRepository, turmaRepository, matriculaRepository);
-        HistoricoService historicoService = new HistoricoService(historicoRepository);
+        freqService = new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository,
+                historicoRepository, notaRepository, disciplinaRepository, repository);
+        notaService = new NotaService(notaRepository, turmaRepository, matriculaRepository, historicoRepository,
+                frequenciaRepository, disciplinaRepository, repository);
+        HistoricoService historicoService = new HistoricoService(historicoRepository, repository);
         matriculaService = new MatriculaTurmaService(matriculaRepository, turmaRepository, periodoLetivoRepository,
                 disciplinaRepository, historicoRepository);
 
@@ -70,7 +72,7 @@ public class Main {
                 matriculaService, freqService, notaService, historicoService);
         professorController = new ProfessorController(service, freqService, notaService);
         coordenadorController = new CoordenadorController(service, disciplinaService, periodoLetivoService,
-                turmaService, matriculaService);
+                turmaService, matriculaService, historicoService);
         adminController = new AdminController(service, cursoService);
 
         while (true) {
@@ -122,8 +124,10 @@ public class Main {
             String nome = ConsoleUI.lerEntrada("Nome: ");
             String email = ConsoleUI.lerEntrada("E-mail: ");
             String senha = ConsoleUI.lerSenha("Senha: ");
+            String codigoCurso = ConsoleUI.lerEntrada("Código do curso: ");
 
-            String matricula = service.cadastrarUsuarioComMatriculaAutomatica(nome, email, senha, TipoUsuario.ALUNO);
+            String matricula = service.cadastrarUsuarioComMatriculaAutomatica(nome, email, senha, TipoUsuario.ALUNO,
+                    codigoCurso);
             ConsoleUI.exibirMensagem("Cadastro realizado! Sua matricula: " + matricula, false);
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);

@@ -200,7 +200,7 @@ public class AlunoController {
                 return;
             }
 
-            List<Historico> historico = historicoService.listarHistoricoDoAluno(aluno.getMatricula());
+            List<Historico> historico = historicoService.consultarHistoricoAluno(aluno);
 
             ConsoleUI.limparTela();
             ConsoleUI.exibirCabecalho("HISTÓRICO DE DISCIPLINAS");
@@ -210,11 +210,14 @@ public class AlunoController {
                 return;
             }
 
-            System.out.println("Disciplinas cursadas:");
+            String[] colunas = { "Período", "Disciplina", "Professor", "Nota final", "Frequência", "Situação" };
+            List<String[]> linhas = new ArrayList<>();
             for (Historico item : historico) {
-                System.out.printf("- %s | Nota final: %.2f | Situação: %s%n", item.getCodigoDisciplina(),
-                        item.getNotaFinal(), item.isAprovado() ? "Aprovado" : "Reprovado");
+                linhas.add(new String[] { item.getCodigoPeriodo(), item.getNomeDisciplina(), item.getNomeProfessor(),
+                        String.format("%.1f", item.getNotaFinal()), String.format("%.1f%%", item.getFrequencia()),
+                        item.getSituacao() });
             }
+            ConsoleUI.exibirTabela(colunas, linhas);
 
             ConsoleUI.aguardarEnter();
         } catch (Exception e) {

@@ -10,6 +10,7 @@ import com.classroompb.model.Professor;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.UsuarioRepository;
+import com.classroompb.repository.CursoRepository;
 import com.classroompb.util.MatriculaGenerator;
 
 /**
@@ -19,10 +20,16 @@ import com.classroompb.util.MatriculaGenerator;
 
 public class UsuarioService {
     private UsuarioRepository repository;
+    private CursoRepository cursoRepository;
 
     /** Injeta o repositório via construtor, facilitando o uso de mocks nos testes. */
     public UsuarioService(UsuarioRepository repository) {
+        this(repository, null);
+    }
+
+    public UsuarioService(UsuarioRepository repository, CursoRepository cursoRepository) {
         this.repository = repository;
+        this.cursoRepository = cursoRepository;
     }
 
     /**
@@ -64,6 +71,24 @@ public class UsuarioService {
 
         String matricula = MatriculaGenerator.gerarMatricula(tipo, repository.listarTodos());
         Usuario novoUsuario = criarUsuario(matricula, nome, email, senha, tipo);
+        repository.salvar(novoUsuario);
+        System.out.println("Usuário cadastrado com sucesso: " + nome + " (Matrícula: " + matricula + ")");
+        return matricula;
+    }
+
+    public String cadastrarUsuarioComMatriculaAutomatica(String nome, String email, String senha, TipoUsuario tipo,
+            String codigoCurso) throws Exception {
+        if (tipo != TipoUsuario.ALUNO && tipo != TipoUsuario.COORDENADOR) {
+            return cadastrarUsuarioComMatriculaAutomatica(nome, email, senha, tipo);
+        }
+        String curso = validarCurso(codigoCurso);
+        validarCamposObrigatoriosSeMatricula(nome, email, senha);
+        if (repository.existePorEmail(email)) {
+            throw new CadastroDuplicadoException(CadastroDuplicadoException.Campo.EMAIL, email);
+        }
+
+        String matricula = MatriculaGenerator.gerarMatricula(tipo, repository.listarTodos());
+        Usuario novoUsuario = criarUsuario(matricula, nome, email, senha, tipo, curso);
         repository.salvar(novoUsuario);
         System.out.println("Usuário cadastrado com sucesso: " + nome + " (Matrícula: " + matricula + ")");
         return matricula;
@@ -118,6 +143,7 @@ public class UsuarioService {
         }
 
         Usuario usuarioAtualizado = criarUsuario(novaMatricula, novoNome, novoEmail, novaSenha, novoTipo);
+        copiarCurso(usuarioAntigo, usuarioAtualizado);
 
         if (tipoMudou) {
             repository.salvar(usuarioAtualizado);
@@ -238,6 +264,36 @@ public class UsuarioService {
             return new Administrador(matricula, nome, email, senha);
         default:
             throw new Exception("Erro: Tipo de usuário inválido.");
+        }
+    }
+
+    private Usuario criarUsuario(String matricula, String nome, String email, String senha, TipoUsuario tipo,
+            String codigoCurso) throws Exception {
+        if (tipo == TipoUsuario.ALUNO) {
+            return new Aluno(matricula, nome, email, senha, codigoCurso);
+        }
+        if (tipo == TipoUsuario.COORDENADOR) {
+            return new Coordenador(matricula, nome, email, senha, codigoCurso);
+        }
+        return criarUsuario(matricula, nome, email, senha, tipo);
+    }
+
+    private String validarCurso(String codigoCurso) throws Exception {
+        if (codigoCurso == null || codigoCurso.trim().isEmpty()) {
+            throw new Exception("Erro: Código do curso não pode ser vazio.");
+        }
+        String codigo = codigoCurso.trim();
+        if (cursoRepository == null || !cursoRepository.existePorCodigo(codigo)) {
+            throw new Exception("Erro: Curso não encontrado.");
+        }
+        return codigo;
+    }
+
+    private void copiarCurso(Usuario origem, Usuario destino) {
+        if (origem instanceof Aluno && destino instanceof Aluno) {
+            ((Aluno) destino).setCodigoCurso(((Aluno) origem).getCodigoCurso());
+        } else if (origem instanceof Coordenador && destino instanceof Coordenador) {
+            ((Coordenador) destino).setCodigoCurso(((Coordenador) origem).getCodigoCurso());
         }
     }
 

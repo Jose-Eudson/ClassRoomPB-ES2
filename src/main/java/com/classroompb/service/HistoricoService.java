@@ -2,16 +2,28 @@ package com.classroompb.service;
 
 import java.util.List;
 
+import com.classroompb.model.Aluno;
+import com.classroompb.model.Coordenador;
+import com.classroompb.model.Disciplina;
 import com.classroompb.model.Historico;
+import com.classroompb.model.TipoUsuario;
+import com.classroompb.model.Turma;
+import com.classroompb.model.Usuario;
 import com.classroompb.repository.HistoricoRepository;
+import com.classroompb.repository.UsuarioRepository;
 
 public class HistoricoService {
 
     private final HistoricoRepository repository;
+    private final UsuarioRepository usuarioRepository;
 
     public HistoricoService(HistoricoRepository repository) {
+        this(repository, null);
+    }
 
+    public HistoricoService(HistoricoRepository repository, UsuarioRepository usuarioRepository) {
         this.repository = repository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     public boolean alunoFoiAprovado(String matriculaAluno, String codigoDisciplina) {
@@ -25,6 +37,38 @@ public class HistoricoService {
     public List<Historico> listarHistoricoDoAluno(String matriculaAluno) {
 
         String matricula = validarCampoObrigatorio(matriculaAluno, "matrícula do aluno");
+        return repository.buscarPorAluno(matricula);
+    }
+
+    public List<Historico> consultarHistoricoAluno(Usuario solicitante) throws Exception {
+        if (solicitante == null || solicitante.getTipo() != TipoUsuario.ALUNO) {
+            throw new Exception("Erro: Apenas alunos podem consultar o próprio histórico.");
+        }
+        return repository.buscarPorAluno(solicitante.getMatricula());
+    }
+
+    public List<Historico> consultarHistoricoAlunoPeloCoordenador(Usuario solicitante, String matriculaAluno)
+            throws Exception {
+        if (solicitante == null || solicitante.getTipo() != TipoUsuario.COORDENADOR
+                || !(solicitante instanceof Coordenador)) {
+            throw new Exception("Erro: Apenas coordenadores podem consultar históricos de alunos.");
+        }
+        if (usuarioRepository == null) {
+            throw new Exception("Erro: Consulta de usuário indisponível.");
+        }
+
+        String matricula = validarCampoObrigatorio(matriculaAluno, "matrícula do aluno");
+        Usuario usuario = usuarioRepository.buscarPorMatricula(matricula)
+                .orElseThrow(() -> new Exception("Erro: Aluno não encontrado."));
+        if (!(usuario instanceof Aluno) || usuario.getTipo() != TipoUsuario.ALUNO) {
+            throw new Exception("Erro: Aluno não encontrado.");
+        }
+
+        String cursoCoordenador = ((Coordenador) solicitante).getCodigoCurso();
+        String cursoAluno = ((Aluno) usuario).getCodigoCurso();
+        if (cursoCoordenador == null || cursoAluno == null || !cursoCoordenador.equalsIgnoreCase(cursoAluno)) {
+            throw new Exception("Erro: Acesso negado. O aluno pertence a outro curso.");
+        }
         return repository.buscarPorAluno(matricula);
     }
 
@@ -46,6 +90,23 @@ public class HistoricoService {
         }
 
         repository.salvar(new Historico(matricula, disciplina, notaFinal, aprovado));
+    }
+
+    public void registrarHistorico(Historico historico) {
+        if (historico == null) {
+            throw new IllegalArgumentException("Erro: histórico não pode ser nulo.");
+        }
+        repository.atualizar(historico);
+    }
+
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    public void registrarHistoricoCompleto(String matriculaAluno, String codigoPeriodo, String codigoDisciplina,
+            String codigoTurma, Turma turma, Disciplina disciplina, Usuario professor, double notaFinal,
+            double frequencia, String situacao) {
+        String nomeDisciplina = disciplina == null ? codigoDisciplina : disciplina.getNome();
+        String nomeProfessor = professor == null ? turma.getMatriculaProfessor() : professor.getNome();
+        registrarHistorico(new Historico(matriculaAluno, codigoPeriodo, codigoDisciplina, nomeDisciplina, codigoTurma,
+                turma.getMatriculaProfessor(), nomeProfessor, notaFinal, frequencia, situacao));
     }
 
     private String validarCampoObrigatorio(String valor, String campo) {
