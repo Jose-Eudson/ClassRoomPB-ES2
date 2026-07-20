@@ -80,6 +80,20 @@ public class HistoricoServiceRF42Test {
         }
 
         @Test
+        @DisplayName("Nao deve considerar aluno em recuperacao como reprovado")
+        void naoDeveConsiderarRecuperacaoComoReprovacao() throws Exception {
+            historicoRepository.atualizar(new Historico("A001", "2026.1", "MAT001", "Matematica", "T01",
+                    "P001", "Prof X", 5.0, 90.0, "RECUPERACAO"));
+            historicoRepository.atualizar(new Historico("A002", "2026.1", "MAT001", "Matematica", "T01",
+                    "P001", "Prof X", 3.0, 90.0, "REPROVADO POR NOTA"));
+
+            List<Historico> resultado = service.listarReprovadosPorDisciplina(coordenador, "MAT001");
+
+            assertEquals(1, resultado.size());
+            assertEquals("A002", resultado.get(0).getMatriculaAluno());
+        }
+
+        @Test
         @DisplayName("Deve retornar lista vazia para disciplina sem histórico")
         void deveRetornarVaziaParaDisciplinaSemHistorico() throws Exception {
             List<Historico> resultado = service.listarReprovadosPorDisciplina(coordenador, "XXX999");

@@ -56,6 +56,10 @@ public class PeriodoLetivoService {
             throw new Exception("Erro: Periodo nao encontrado.");
         }
 
+        if (periodo.isEncerrado()) {
+            throw new Exception("Erro: Período encerrado não pode ser reativado.");
+        }
+
         /*
          * Regra: apenas um periodo pode ficar ativo
          */
@@ -82,6 +86,7 @@ public class PeriodoLetivoService {
         }
 
         periodo.setAtivo(false);
+        periodo.setEncerrado(true);
 
         repository.atualizarDados();
     }

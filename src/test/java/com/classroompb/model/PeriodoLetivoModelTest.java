@@ -24,6 +24,7 @@ public class PeriodoLetivoModelTest {
         assertEquals(LocalDate.of(2026, 8, 10), periodo.getDataInicio());
         assertEquals(LocalDate.of(2026, 12, 20), periodo.getDataFim());
         assertTrue(periodo.isAtivo());
+        assertFalse(periodo.isEncerrado());
     }
 
     @Test
@@ -38,6 +39,7 @@ public class PeriodoLetivoModelTest {
         periodo.setDataInicio(LocalDate.of(2027, 2, 1));
         periodo.setDataFim(LocalDate.of(2027, 6, 30));
         periodo.setAtivo(false);
+        periodo.setEncerrado(true);
 
         assertEquals("2027.1", periodo.getCodigo());
         assertEquals(2027, periodo.getAno());
@@ -45,6 +47,7 @@ public class PeriodoLetivoModelTest {
         assertEquals(LocalDate.of(2027, 2, 1), periodo.getDataInicio());
         assertEquals(LocalDate.of(2027, 6, 30), periodo.getDataFim());
         assertFalse(periodo.isAtivo());
+        assertTrue(periodo.isEncerrado());
     }
 
     @Test
@@ -69,6 +72,18 @@ public class PeriodoLetivoModelTest {
                 LocalDate.of(2025, 12, 20), false);
 
         String esperado = "[PERIODO LETIVO] 2025.2 - 2025.2 | 2025-08-10 ate 2025-12-20 | INATIVO";
+
+        assertEquals(esperado, periodo.toString());
+    }
+
+    @Test
+    @DisplayName("Deve retornar toString correto para periodo encerrado")
+    void deveRetornarToStringParaPeriodoEncerrado() {
+        PeriodoLetivo periodo = new PeriodoLetivo("2025.2", 2025, 2, LocalDate.of(2025, 8, 10),
+                LocalDate.of(2025, 12, 20), false);
+        periodo.setEncerrado(true);
+
+        String esperado = "[PERIODO LETIVO] 2025.2 - 2025.2 | 2025-08-10 ate 2025-12-20 | ENCERRADO";
 
         assertEquals(esperado, periodo.toString());
     }

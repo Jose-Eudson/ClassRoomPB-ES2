@@ -8,6 +8,7 @@ import com.classroompb.model.Aluno;
 import com.classroompb.model.Coordenador;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.Nota;
+import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.Professor;
 import com.classroompb.model.StatusMatricula;
 import com.classroompb.model.TipoUsuario;
@@ -15,6 +16,7 @@ import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.NotaRepository;
+import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +41,9 @@ class NotaServiceTest {
 
     @Mock
     private MatriculaTurmaRepository matriculaRepository;
+
+    @Mock
+    private PeriodoLetivoRepository periodoRepository;
 
     private NotaService service;
 
@@ -187,6 +192,62 @@ class NotaServiceTest {
     @Nested
     @DisplayName("Alteração de notas")
     class AlteracaoNotas {
+
+        @Test
+        @DisplayName("RF35 - Deve alterar notas antes do encerramento do periodo")
+        void deveAlterarNotasAntesDoEncerramento() throws Exception {
+            PeriodoLetivo periodo = new PeriodoLetivo();
+            periodo.setCodigo("2026.1");
+            periodo.setEncerrado(false);
+            Nota nota = new Nota("A0001", "ES2", "2026.1", "T01");
+            NotaService serviceComPeriodo = new NotaService(notaRepository, turmaRepository, matriculaRepository,
+                    null, null, null, null, periodoRepository);
+
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodo);
+            when(turmaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString())).thenReturn(turma);
+            when(matriculaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
+                    .thenReturn(matricula);
+            when(notaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
+                    .thenReturn(nota);
+
+            serviceComPeriodo.alterarNotas(professor, "A0001", "ES2", "2026.1", "T01", 7.5, 8.0);
+
+            verify(notaRepository).atualizar(nota);
+        }
+
+        @Test
+        @DisplayName("RF35 - Nao deve alterar notas depois do encerramento do periodo")
+        void naoDeveAlterarNotasDepoisDoEncerramento() {
+            PeriodoLetivo periodo = new PeriodoLetivo();
+            periodo.setCodigo("2026.1");
+            periodo.setEncerrado(true);
+            NotaService serviceComPeriodo = new NotaService(notaRepository, turmaRepository, matriculaRepository,
+                    null, null, null, null, periodoRepository);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodo);
+
+            Exception erro = assertThrows(Exception.class,
+                    () -> serviceComPeriodo.alterarNotas(professor, "A0001", "ES2", "2026.1", "T01", 7.5, 8.0));
+
+            assertTrue(erro.getMessage().contains("encerrado"));
+            verify(notaRepository, never()).atualizar(any());
+        }
+
+        @Test
+        @DisplayName("RF35 - Nao deve lancar notas depois do encerramento do periodo")
+        void naoDeveLancarNotasDepoisDoEncerramento() {
+            PeriodoLetivo periodo = new PeriodoLetivo();
+            periodo.setCodigo("2026.1");
+            periodo.setEncerrado(true);
+            NotaService serviceComPeriodo = new NotaService(notaRepository, turmaRepository, matriculaRepository,
+                    null, null, null, null, periodoRepository);
+            when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodo);
+
+            assertThrows(Exception.class,
+                    () -> serviceComPeriodo.lancarNotas(professor, "A0001", "ES2", "2026.1", "T01", 7.5, 8.0));
+
+            verify(notaRepository, never()).salvar(any());
+            verify(notaRepository, never()).atualizar(any());
+        }
 
         @Test
         @DisplayName("Deve alterar notas existentes")
