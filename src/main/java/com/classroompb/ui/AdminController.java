@@ -34,7 +34,7 @@ public class AdminController {
         }
 
         while (true) {
-            List<String> opcoes = Arrays.asList("Gerenciar usuários", "Gerenciar cursos", "Logout");
+            List<String> opcoes = Arrays.asList("Gerenciar usuários", "Gerenciar cursos", "Relatórios", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU ADMINISTRADOR", opcoes);
 
             if (escolha == -1 || escolha == opcoes.size() - 1) {
@@ -48,8 +48,53 @@ public class AdminController {
             case 1:
                 gerenciarCursos(usuario);
                 break;
+            case 2:
+                exibirMenuRelatorios();
+                break;
+            default:
+                break;
             }
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Submenu de relatórios (RF43)
+    // -------------------------------------------------------------------------
+
+    private void exibirMenuRelatorios() {
+        while (true) {
+            List<String> opcoes = Arrays.asList("RF43 - Usuários cadastrados", "Voltar");
+            int escolha = ConsoleUI.exibirMenuInterativo("RELATÓRIOS", opcoes);
+
+            if (escolha == 1 || escolha == -1) {
+                break;
+            }
+
+            if (escolha == 0) {
+                relatorioUsuariosCadastrados();
+            }
+        }
+    }
+
+    private void relatorioUsuariosCadastrados() {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("RF43 - RELATÓRIO DE USUÁRIOS CADASTRADOS");
+        List<Usuario> usuarios = service.obterTodosUsuarios();
+
+        if (usuarios.isEmpty()) {
+            ConsoleUI.exibirMensagem("Nenhum usuário cadastrado.", true);
+            return;
+        }
+
+        String[] colunas = { "Matrícula", "Nome", "E-mail", "Cargo" };
+        List<String[]> linhas = new ArrayList<>();
+        for (Usuario u : usuarios) {
+            linhas.add(new String[] { u.getMatricula(), u.getNome(), u.getEmail(), u.getTipo().toString() });
+        }
+
+        ConsoleUI.exibirTabela(colunas, linhas);
+        System.out.println("\nTotal de usuários: " + usuarios.size());
+        ConsoleUI.exibirMensagem("Fim do relatório.", false);
     }
 
     // -------------------------------------------------------------------------
