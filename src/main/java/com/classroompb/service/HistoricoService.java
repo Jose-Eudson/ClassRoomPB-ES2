@@ -1,6 +1,7 @@
 package com.classroompb.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.classroompb.model.Aluno;
 import com.classroompb.model.Coordenador;
@@ -70,6 +71,17 @@ public class HistoricoService {
             throw new Exception("Erro: Acesso negado. O aluno pertence a outro curso.");
         }
         return repository.buscarPorAluno(matricula);
+    }
+
+    public List<Historico> listarReprovadosPorDisciplina(Usuario coordenador, String codigoDisciplina)
+            throws Exception {
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem gerar este relatório.");
+        }
+        String codigo = validarCampoObrigatorio(codigoDisciplina, "código da disciplina");
+        return repository.listarTodos().stream()
+                .filter(h -> h.getCodigoDisciplina().equalsIgnoreCase(codigo) && !h.isAprovado())
+                .collect(Collectors.toList());
     }
 
     public void registrarHistorico(String matriculaAluno, String codigoDisciplina, double notaFinal, boolean aprovado) {
