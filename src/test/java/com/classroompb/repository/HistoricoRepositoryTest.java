@@ -170,14 +170,14 @@ public class HistoricoRepositoryTest {
     void devePersistirOrdenarEAtualizarSemDuplicidade() {
         String arquivo = tempDir.resolve("persistencia.json").toString();
         HistoricoRepository primeiro = new HistoricoRepository(arquivo);
-        primeiro.salvar(new Historico("A1", "2026.2", "ES2", "Engenharia II", "T1", "P1", "Joao", 7.0,
-                80.0, "APROVADO"));
-        primeiro.salvar(new Historico("A1", "2026.1", "BD", "Banco de Dados", "T1", "P2", "Maria", 6.0,
-                90.0, "RECUPERACAO"));
-        primeiro.salvar(new Historico("A1", "2025.2", "ES2", "Engenharia II", "T2", "P1", "Joao", 8.0,
-                100.0, "APROVADO"));
-        primeiro.atualizar(new Historico("A1", "2026.2", "ES2", "Engenharia II", "T1", "P1", "Joao", 9.0,
-                95.0, "APROVADO"));
+        primeiro.salvar(
+                new Historico("A1", "2026.2", "ES2", "Engenharia II", "T1", "P1", "Joao", 7.0, 80.0, "APROVADO"));
+        primeiro.salvar(
+                new Historico("A1", "2026.1", "BD", "Banco de Dados", "T1", "P2", "Maria", 6.0, 90.0, "RECUPERACAO"));
+        primeiro.salvar(
+                new Historico("A1", "2025.2", "ES2", "Engenharia II", "T2", "P1", "Joao", 8.0, 100.0, "APROVADO"));
+        primeiro.atualizar(
+                new Historico("A1", "2026.2", "ES2", "Engenharia II", "T1", "P1", "Joao", 9.0, 95.0, "APROVADO"));
 
         List<Historico> recarregados = new HistoricoRepository(arquivo).buscarPorAluno("A1");
         assertEquals(3, recarregados.size());

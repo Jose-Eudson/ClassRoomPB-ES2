@@ -226,8 +226,8 @@ public class NotaService {
         String situacao = calcularSituacao(media, frequencia);
         Disciplina disciplina = disciplinaRepository.buscarPorCodigo(codigoDisciplina);
         Usuario professor = usuarioRepository.buscarPorMatricula(turma.getMatriculaProfessor()).orElse(null);
-        historicoService.registrarHistoricoCompleto(matriculaAluno, codigoPeriodo, codigoDisciplina, codigoTurma,
-                turma, disciplina, professor, media, frequencia, situacao);
+        historicoService.registrarHistoricoCompleto(matriculaAluno, codigoPeriodo, codigoDisciplina, codigoTurma, turma,
+                disciplina, professor, media, frequencia, situacao);
     }
 
     private double calcularFrequencia(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,

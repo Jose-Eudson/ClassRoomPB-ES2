@@ -64,7 +64,7 @@ class HistoricoConsultaServiceTest {
     }
 
     private Historico registro(String matricula) {
-        return new Historico(matricula, "2026.1", "ES2", "Engenharia II", "T1", "P1", "Professor", 8.5,
-                90.0, "APROVADO");
+        return new Historico(matricula, "2026.1", "ES2", "Engenharia II", "T1", "P1", "Professor", 8.5, 90.0,
+                "APROVADO");
     }
 }

@@ -57,7 +57,7 @@ public class CoordenadorController {
 
         while (true) {
             List<String> opcoes = Arrays.asList("Gerenciar disciplinas", "Gerenciar período letivo", "Gerenciar turmas",
-                    "Gerenciar solicitações de matrícula", "Relatórios", "Logout");
+                    "Gerenciar solicitações de matrícula", "Relatórios", "Consultar histórico do aluno", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU COORDENADOR", opcoes);
 
             if (escolha == -1 || escolha == opcoes.size() - 1) {
@@ -79,6 +79,9 @@ public class CoordenadorController {
                 break;
             case 4:
                 exibirMenuRelatorios(usuario);
+                break;
+            case 5:
+                consultarHistoricoAluno(usuario);
                 break;
             default:
                 ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
@@ -798,7 +801,7 @@ public class CoordenadorController {
 
     private void relatorioAlunosMatriculados(Usuario usuario) {
         ConsoleUI.limparTela();
-        ConsoleUI.exibirCabecalho("RF40 - ALUNOS MATRICULADOS POR TURMA");
+        ConsoleUI.exibirCabecalho("ALUNOS MATRICULADOS POR TURMA");
         try {
             String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
             String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ").trim();
