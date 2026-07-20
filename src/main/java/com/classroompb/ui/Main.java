@@ -63,8 +63,9 @@ public class Main {
         freqService = new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository,
                 historicoRepository, notaRepository, disciplinaRepository, repository);
         notaService = new NotaService(notaRepository, turmaRepository, matriculaRepository, historicoRepository,
-                frequenciaRepository, disciplinaRepository, repository);
-        HistoricoService historicoService = new HistoricoService(historicoRepository, repository);
+                frequenciaRepository, disciplinaRepository, repository, periodoLetivoRepository);
+        HistoricoService historicoService = new HistoricoService(historicoRepository, repository,
+                periodoLetivoRepository);
         matriculaService = new MatriculaTurmaService(matriculaRepository, turmaRepository, periodoLetivoRepository,
                 disciplinaRepository, historicoRepository);
 

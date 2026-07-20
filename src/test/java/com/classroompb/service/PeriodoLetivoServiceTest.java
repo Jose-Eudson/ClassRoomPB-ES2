@@ -156,7 +156,19 @@ public class PeriodoLetivoServiceTest {
             when(repository.buscarPorCodigo("2026.2")).thenReturn(periodo);
             service.encerrarPeriodo(coordenador, "2026.2");
             assertFalse(periodo.isAtivo());
+            assertTrue(periodo.isEncerrado());
             verify(repository).atualizarDados();
+        }
+
+        @Test
+        @DisplayName("Nao deve reativar periodo encerrado")
+        void naoDeveReativarPeriodoEncerrado() {
+            PeriodoLetivo periodo = new PeriodoLetivo();
+            periodo.setEncerrado(true);
+            when(repository.buscarPorCodigo("2026.2")).thenReturn(periodo);
+
+            assertThrows(Exception.class, () -> service.ativarPeriodo(coordenador, "2026.2"));
+            verify(repository, never()).atualizarDados();
         }
 
         @Test

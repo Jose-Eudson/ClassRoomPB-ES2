@@ -1,29 +1,39 @@
 package com.classroompb.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.classroompb.model.Aluno;
 import com.classroompb.model.Coordenador;
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.Historico;
+import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.HistoricoRepository;
+import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.UsuarioRepository;
 
 public class HistoricoService {
 
     private final HistoricoRepository repository;
     private final UsuarioRepository usuarioRepository;
+    private final PeriodoLetivoRepository periodoRepository;
 
     public HistoricoService(HistoricoRepository repository) {
-        this(repository, null);
+        this(repository, null, null);
     }
 
     public HistoricoService(HistoricoRepository repository, UsuarioRepository usuarioRepository) {
+        this(repository, usuarioRepository, null);
+    }
+
+    public HistoricoService(HistoricoRepository repository, UsuarioRepository usuarioRepository,
+            PeriodoLetivoRepository periodoRepository) {
         this.repository = repository;
         this.usuarioRepository = usuarioRepository;
+        this.periodoRepository = periodoRepository;
     }
 
     public boolean alunoFoiAprovado(String matriculaAluno, String codigoDisciplina) {
@@ -37,14 +47,14 @@ public class HistoricoService {
     public List<Historico> listarHistoricoDoAluno(String matriculaAluno) {
 
         String matricula = validarCampoObrigatorio(matriculaAluno, "matrícula do aluno");
-        return repository.buscarPorAluno(matricula);
+        return filtrarDisciplinasConcluidas(repository.buscarPorAluno(matricula));
     }
 
     public List<Historico> consultarHistoricoAluno(Usuario solicitante) throws Exception {
         if (solicitante == null || solicitante.getTipo() != TipoUsuario.ALUNO) {
             throw new Exception("Erro: Apenas alunos podem consultar o próprio histórico.");
         }
-        return repository.buscarPorAluno(solicitante.getMatricula());
+        return filtrarDisciplinasConcluidas(repository.buscarPorAluno(solicitante.getMatricula()));
     }
 
     public List<Historico> consultarHistoricoAlunoPeloCoordenador(Usuario solicitante, String matriculaAluno)
@@ -69,7 +79,21 @@ public class HistoricoService {
         if (cursoCoordenador == null || cursoAluno == null || !cursoCoordenador.equalsIgnoreCase(cursoAluno)) {
             throw new Exception("Erro: Acesso negado. O aluno pertence a outro curso.");
         }
-        return repository.buscarPorAluno(matricula);
+        return filtrarDisciplinasConcluidas(repository.buscarPorAluno(matricula));
+    }
+
+    public List<Historico> listarReprovadosPorDisciplina(Usuario coordenador, String codigoDisciplina)
+            throws Exception {
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem gerar este relatório.");
+        }
+        String codigo = validarCampoObrigatorio(codigoDisciplina, "código da disciplina");
+        return repository.listarTodos().stream()
+                .filter(this::periodoEncerrado)
+                .filter(h -> h.getCodigoDisciplina().equalsIgnoreCase(codigo))
+                .filter(h -> h.getSituacao() != null
+                        && h.getSituacao().trim().toUpperCase().startsWith("REPROVADO"))
+                .collect(Collectors.toList());
     }
 
     public void registrarHistorico(String matriculaAluno, String codigoDisciplina, double notaFinal, boolean aprovado) {
@@ -116,5 +140,20 @@ public class HistoricoService {
         }
 
         return valor.trim();
+    }
+
+    private List<Historico> filtrarDisciplinasConcluidas(List<Historico> historicos) {
+        return historicos.stream().filter(this::periodoEncerrado).collect(Collectors.toList());
+    }
+
+    private boolean periodoEncerrado(Historico historico) {
+        if (periodoRepository == null) {
+            return true;
+        }
+        if (historico == null || historico.getCodigoPeriodo() == null) {
+            return false;
+        }
+        PeriodoLetivo periodo = periodoRepository.buscarPorCodigo(historico.getCodigoPeriodo());
+        return periodo != null && periodo.isEncerrado();
     }
 }

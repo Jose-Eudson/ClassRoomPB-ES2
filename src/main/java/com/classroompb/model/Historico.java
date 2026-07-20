@@ -134,6 +134,7 @@ public class Historico implements Serializable {
 
     public void setAprovado(boolean aprovado) {
         this.aprovado = aprovado;
+        this.situacao = aprovado ? "APROVADO" : "REPROVADO POR NOTA";
     }
 
     @JsonIgnore

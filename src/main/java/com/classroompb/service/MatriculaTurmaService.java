@@ -516,6 +516,18 @@ public class MatriculaTurmaService {
                 .filter(m -> m.getStatus() == StatusMatricula.CONFIRMADA).collect(Collectors.toList());
     }
 
+    // =========================================================================
+    // RF41 — Relatório de ocupação de vagas por período
+    // =========================================================================
+
+    public List<Turma> listarTurmasComOcupacaoPorPeriodo(Usuario coordenador, String codigoPeriodo) throws Exception {
+        validarCoordenador(coordenador);
+        if (codigoPeriodo == null || codigoPeriodo.trim().isEmpty()) {
+            throw new Exception("Erro: Código do período letivo não pode ser vazio.");
+        }
+        return turmaRepository.listarPorPeriodo(codigoPeriodo.trim());
+    }
+
     public List<MatriculaTurma> listarTurmasDoAluno(Usuario aluno) throws Exception {
         validarAluno(aluno);
         String matriculaAluno = aluno.getMatricula();

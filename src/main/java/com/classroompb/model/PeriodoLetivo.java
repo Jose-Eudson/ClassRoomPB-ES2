@@ -16,6 +16,7 @@ public class PeriodoLetivo implements Serializable {
     private LocalDate dataInicio;
     private LocalDate dataFim;
     private boolean ativo;
+    private boolean encerrado;
 
     public PeriodoLetivo() {
     }
@@ -28,6 +29,7 @@ public class PeriodoLetivo implements Serializable {
         this.dataInicio = dataInicio;
         this.dataFim = dataFim;
         this.ativo = ativo;
+        this.encerrado = false;
     }
 
     public String getCodigo() {
@@ -78,10 +80,18 @@ public class PeriodoLetivo implements Serializable {
         this.ativo = ativo;
     }
 
+    public boolean isEncerrado() {
+        return encerrado;
+    }
+
+    public void setEncerrado(boolean encerrado) {
+        this.encerrado = encerrado;
+    }
+
     @Override
     public String toString() {
 
-        String status = ativo ? "ATIVO" : "INATIVO";
+        String status = encerrado ? "ENCERRADO" : ativo ? "ATIVO" : "INATIVO";
 
         return String.format("[PERIODO LETIVO] %s - %d.%d | %s ate %s | %s", codigo, ano, semestre, dataInicio, dataFim,
                 status);

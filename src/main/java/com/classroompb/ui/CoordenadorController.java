@@ -751,10 +751,11 @@ public class CoordenadorController {
     private void exibirMenuRelatorios(Usuario usuario) {
         while (true) {
             List<String> opcoes = Arrays.asList("RF40 - Alunos matriculados por turma",
+                    "RF41 - Ocupação de vagas por período", "RF42 - Reprovados por disciplina",
                     "Consultar histórico acadêmico de aluno", "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("RELATÓRIOS", opcoes);
 
-            if (escolha == 2 || escolha == -1) {
+            if (escolha == 4 || escolha == -1) {
                 break;
             }
 
@@ -763,9 +764,78 @@ public class CoordenadorController {
                 relatorioAlunosMatriculados(usuario);
                 break;
             case 1:
+                relatorioOcupacaoVagas(usuario);
+                break;
+            case 2:
+                relatorioReprovadosPorDisciplina(usuario);
+                break;
+            case 3:
                 consultarHistoricoAluno(usuario);
                 break;
+            default:
+                break;
             }
+        }
+    }
+
+    private void relatorioOcupacaoVagas(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("RF41 - OCUPAÇÃO DE VAGAS POR PERÍODO");
+        try {
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ").trim();
+            List<Turma> turmas = matriculaService.listarTurmasComOcupacaoPorPeriodo(usuario, codigoPeriodo);
+
+            if (turmas.isEmpty()) {
+                ConsoleUI.exibirMensagem("Nenhuma turma ofertada neste período.", false);
+                return;
+            }
+
+            String[] colunas = { "Turma", "Disciplina", "Total Vagas", "Ocupadas", "Disponíveis" };
+            List<String[]> linhas = new ArrayList<>();
+            for (Turma t : turmas) {
+                long disponiveis = matriculaService.vagasDisponiveis(t);
+                long ocupadas = t.getVagas() - disponiveis;
+                linhas.add(new String[] { t.getCodigo(), t.getCodigoDisciplina(), String.valueOf(t.getVagas()),
+                        String.valueOf(ocupadas), String.valueOf(disponiveis) });
+            }
+
+            ConsoleUI.exibirTabela(colunas, linhas);
+            System.out.println("\nTotal de turmas: " + turmas.size());
+            ConsoleUI.exibirMensagem("Fim do relatório.", false);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void relatorioReprovadosPorDisciplina(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("RF42 - REPROVADOS POR DISCIPLINA");
+        try {
+            if (historicoService == null) {
+                ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
+                return;
+            }
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
+            List<Historico> reprovados = historicoService.listarReprovadosPorDisciplina(usuario, codigoDisciplina);
+
+            if (reprovados.isEmpty()) {
+                ConsoleUI.exibirMensagem("Nenhum aluno reprovado nesta disciplina.", false);
+                return;
+            }
+
+            String[] colunas = { "Aluno", "Período", "Nota Final", "Frequência", "Situação" };
+            List<String[]> linhas = new ArrayList<>();
+            for (Historico h : reprovados) {
+                linhas.add(new String[] { h.getMatriculaAluno(), h.getCodigoPeriodo(),
+                        String.format("%.1f", h.getNotaFinal()), String.format("%.1f%%", h.getFrequencia()),
+                        h.getSituacao() });
+            }
+
+            ConsoleUI.exibirTabela(colunas, linhas);
+            System.out.println("\nTotal de reprovados: " + reprovados.size());
+            ConsoleUI.exibirMensagem("Fim do relatório.", false);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
         }
     }
 

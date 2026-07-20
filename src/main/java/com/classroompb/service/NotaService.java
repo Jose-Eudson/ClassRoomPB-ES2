@@ -3,6 +3,7 @@ package com.classroompb.service;
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.Nota;
+import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.StatusMatricula;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
@@ -12,6 +13,7 @@ import com.classroompb.repository.FrequenciaRepository;
 import com.classroompb.repository.HistoricoRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.NotaRepository;
+import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
 import com.classroompb.repository.UsuarioRepository;
 
@@ -24,6 +26,7 @@ public class NotaService {
     private final FrequenciaRepository frequenciaRepository;
     private final DisciplinaRepository disciplinaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PeriodoLetivoRepository periodoRepository;
 
     public NotaService(NotaRepository notaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository) {
@@ -34,13 +37,23 @@ public class NotaService {
     public NotaService(NotaRepository notaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository, HistoricoRepository historicoRepository) {
 
-        this(notaRepository, turmaRepository, matriculaRepository, historicoRepository, null, null, null);
+        this(notaRepository, turmaRepository, matriculaRepository, historicoRepository, null, null, null, null);
     }
 
     public NotaService(NotaRepository notaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository, HistoricoRepository historicoRepository,
             FrequenciaRepository frequenciaRepository, DisciplinaRepository disciplinaRepository,
             UsuarioRepository usuarioRepository) {
+
+        this(notaRepository, turmaRepository, matriculaRepository, historicoRepository, frequenciaRepository,
+                disciplinaRepository, usuarioRepository, null);
+    }
+
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    public NotaService(NotaRepository notaRepository, TurmaRepository turmaRepository,
+            MatriculaTurmaRepository matriculaRepository, HistoricoRepository historicoRepository,
+            FrequenciaRepository frequenciaRepository, DisciplinaRepository disciplinaRepository,
+            UsuarioRepository usuarioRepository, PeriodoLetivoRepository periodoRepository) {
 
         this.notaRepository = notaRepository;
         this.turmaRepository = turmaRepository;
@@ -50,6 +63,7 @@ public class NotaService {
         this.frequenciaRepository = frequenciaRepository;
         this.disciplinaRepository = disciplinaRepository;
         this.usuarioRepository = usuarioRepository;
+        this.periodoRepository = periodoRepository;
     }
 
     public void lancarNotas(Usuario professor, String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
@@ -61,6 +75,8 @@ public class NotaService {
         codigoDisciplina = validarCampoObrigatorio(codigoDisciplina, "código da disciplina");
         codigoPeriodo = validarCampoObrigatorio(codigoPeriodo, "código do período");
         codigoTurma = validarCampoObrigatorio(codigoTurma, "código da turma");
+
+        validarPeriodoNaoEncerrado(codigoPeriodo);
 
         validarNota(etapa1, "Etapa 1");
         validarNota(etapa2, "Etapa 2");
@@ -117,6 +133,8 @@ public class NotaService {
         codigoDisciplina = validarCampoObrigatorio(codigoDisciplina, "código da disciplina");
         codigoPeriodo = validarCampoObrigatorio(codigoPeriodo, "código do período");
         codigoTurma = validarCampoObrigatorio(codigoTurma, "código da turma");
+
+        validarPeriodoNaoEncerrado(codigoPeriodo);
 
         validarNota(etapa1, "Etapa 1");
         validarNota(etapa2, "Etapa 2");
@@ -270,6 +288,20 @@ public class NotaService {
         if (nota < 0 || nota > 10) {
 
             throw new Exception(etapa + " deve estar entre 0 e 10.");
+        }
+    }
+
+    private void validarPeriodoNaoEncerrado(String codigoPeriodo) throws Exception {
+        if (periodoRepository == null) {
+            return;
+        }
+
+        PeriodoLetivo periodo = periodoRepository.buscarPorCodigo(codigoPeriodo);
+        if (periodo == null) {
+            throw new Exception("Erro: Período letivo não encontrado.");
+        }
+        if (periodo.isEncerrado()) {
+            throw new Exception("Erro: O período letivo está encerrado. Não é permitido lançar ou alterar notas.");
         }
     }
 }

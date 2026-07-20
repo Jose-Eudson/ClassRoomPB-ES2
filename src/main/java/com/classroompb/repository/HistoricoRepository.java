@@ -68,6 +68,10 @@ public class HistoricoRepository {
         salvarDados();
     }
 
+    public List<Historico> listarTodos() {
+        return new ArrayList<>(historicos);
+    }
+
     public List<Historico> buscarPorAluno(String matriculaAluno) {
 
         if (matriculaAluno == null) {
