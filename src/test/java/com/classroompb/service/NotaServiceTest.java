@@ -200,8 +200,8 @@ class NotaServiceTest {
             periodo.setCodigo("2026.1");
             periodo.setEncerrado(false);
             Nota nota = new Nota("A0001", "ES2", "2026.1", "T01");
-            NotaService serviceComPeriodo = new NotaService(notaRepository, turmaRepository, matriculaRepository,
-                    null, null, null, null, periodoRepository);
+            NotaService serviceComPeriodo = new NotaService(notaRepository, turmaRepository, matriculaRepository, null,
+                    null, null, null, periodoRepository);
 
             when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodo);
             when(turmaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString())).thenReturn(turma);
@@ -221,8 +221,8 @@ class NotaServiceTest {
             PeriodoLetivo periodo = new PeriodoLetivo();
             periodo.setCodigo("2026.1");
             periodo.setEncerrado(true);
-            NotaService serviceComPeriodo = new NotaService(notaRepository, turmaRepository, matriculaRepository,
-                    null, null, null, null, periodoRepository);
+            NotaService serviceComPeriodo = new NotaService(notaRepository, turmaRepository, matriculaRepository, null,
+                    null, null, null, periodoRepository);
             when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodo);
 
             Exception erro = assertThrows(Exception.class,
@@ -238,8 +238,8 @@ class NotaServiceTest {
             PeriodoLetivo periodo = new PeriodoLetivo();
             periodo.setCodigo("2026.1");
             periodo.setEncerrado(true);
-            NotaService serviceComPeriodo = new NotaService(notaRepository, turmaRepository, matriculaRepository,
-                    null, null, null, null, periodoRepository);
+            NotaService serviceComPeriodo = new NotaService(notaRepository, turmaRepository, matriculaRepository, null,
+                    null, null, null, periodoRepository);
             when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodo);
 
             assertThrows(Exception.class,

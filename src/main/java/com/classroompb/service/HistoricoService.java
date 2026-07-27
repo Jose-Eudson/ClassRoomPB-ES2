@@ -88,11 +88,9 @@ public class HistoricoService {
             throw new Exception("Erro: Apenas coordenadores podem gerar este relatório.");
         }
         String codigo = validarCampoObrigatorio(codigoDisciplina, "código da disciplina");
-        return repository.listarTodos().stream()
-                .filter(this::periodoEncerrado)
+        return repository.listarTodos().stream().filter(this::periodoEncerrado)
                 .filter(h -> h.getCodigoDisciplina().equalsIgnoreCase(codigo))
-                .filter(h -> h.getSituacao() != null
-                        && h.getSituacao().trim().toUpperCase().startsWith("REPROVADO"))
+                .filter(h -> h.getSituacao() != null && h.getSituacao().trim().toUpperCase().startsWith("REPROVADO"))
                 .collect(Collectors.toList());
     }
 

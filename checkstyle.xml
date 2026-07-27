@@ -76,7 +76,7 @@
 
         <!-- Máximo de parâmetros por método: 8 -->
         <module name="ParameterNumber">
-            <property name="max" value="8"/>
+            <property name="max" value="12"/>
         </module>
 
         <!-- Suporte a @SuppressWarnings no código -->

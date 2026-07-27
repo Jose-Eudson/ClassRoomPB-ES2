@@ -63,8 +63,8 @@ class HistoricoIntegracaoServiceTest {
         MatriculaTurma matricula = new MatriculaTurma("A1", "ES2", "2026.1", "T1");
         matricula.setStatus(StatusMatricula.CONFIRMADA);
         matriculas.salvar(matricula);
-        periodoRepository.salvar(new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1),
-                LocalDate.of(2026, 6, 30), true));
+        periodoRepository.salvar(
+                new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true));
 
         frequenciaService = new FrequenciaService(frequencias, turmas, matriculas, historicos, notas, disciplinas,
                 usuarios);

@@ -23,6 +23,7 @@ import com.classroompb.service.NotaService;
 import com.classroompb.service.PeriodoLetivoService;
 import com.classroompb.service.TurmaService;
 import com.classroompb.service.UsuarioService;
+import com.classroompb.service.DiarioService;
 
 /**
  * Ponto de entrada da aplicação. Responsável apenas por inicializar os serviços, exibir a tela inicial e rotear o
@@ -39,6 +40,7 @@ public class Main {
     private static FrequenciaService freqService;
     private static NotaService notaService;
     private static MatriculaTurmaService matriculaService;
+    private static DiarioService diarioService;
 
     private static AlunoController alunoController;
     private static ProfessorController professorController;
@@ -73,7 +75,7 @@ public class Main {
                 matriculaService, freqService, notaService, historicoService);
         professorController = new ProfessorController(service, freqService, notaService);
         coordenadorController = new CoordenadorController(service, disciplinaService, periodoLetivoService,
-                turmaService, matriculaService, historicoService);
+                turmaService, matriculaService, historicoService, diarioService);
         adminController = new AdminController(service, cursoService);
 
         while (true) {

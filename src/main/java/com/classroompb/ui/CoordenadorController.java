@@ -13,8 +13,10 @@ import com.classroompb.service.DisciplinaService;
 import com.classroompb.service.HistoricoService;
 import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.PeriodoLetivoService;
+import com.classroompb.service.MatriculaTurmaService;
 import com.classroompb.service.TurmaService;
 import com.classroompb.service.UsuarioService;
+import com.classroompb.service.DiarioService;
 
 /**
  * Controlador da interface do Coordenador.
@@ -26,24 +28,26 @@ public class CoordenadorController {
     private final DisciplinaService disciplinaService;
     private final PeriodoLetivoService periodoService;
     private final TurmaService turmaService;
-    private final com.classroompb.service.MatriculaTurmaService matriculaService;
+    private final MatriculaTurmaService matriculaService;
     private final HistoricoService historicoService;
+    private final DiarioService diarioService;
 
     public CoordenadorController(UsuarioService service, DisciplinaService disciplinaService,
-            PeriodoLetivoService periodoService, TurmaService turmaService,
-            com.classroompb.service.MatriculaTurmaService matriculaService) {
-        this(service, disciplinaService, periodoService, turmaService, matriculaService, null);
+            PeriodoLetivoService periodoService, TurmaService turmaService, MatriculaTurmaService matriculaService,
+            DiarioService diarioService) {
+        this(service, disciplinaService, periodoService, turmaService, matriculaService, null, diarioService);
     }
 
     public CoordenadorController(UsuarioService service, DisciplinaService disciplinaService,
-            PeriodoLetivoService periodoService, TurmaService turmaService,
-            com.classroompb.service.MatriculaTurmaService matriculaService, HistoricoService historicoService) {
+            PeriodoLetivoService periodoService, TurmaService turmaService, MatriculaTurmaService matriculaService,
+            HistoricoService historicoService, DiarioService diarioService) {
         this.service = service;
         this.disciplinaService = disciplinaService;
         this.periodoService = periodoService;
         this.turmaService = turmaService;
         this.matriculaService = matriculaService;
         this.historicoService = historicoService;
+        this.diarioService = diarioService;
     }
 
     /** Exibe o menu principal do coordenador e permanece em loop até logout. */
@@ -57,7 +61,8 @@ public class CoordenadorController {
 
         while (true) {
             List<String> opcoes = Arrays.asList("Gerenciar disciplinas", "Gerenciar período letivo", "Gerenciar turmas",
-                    "Gerenciar solicitações de matrícula", "Relatórios", "Consultar histórico do aluno", "Logout");
+                    "Gerenciar solicitações de matrícula", "Relatórios", "Consultar histórico do aluno",
+                    "Cadastrar diário", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU COORDENADOR", opcoes);
 
             if (escolha == -1 || escolha == opcoes.size() - 1) {
@@ -82,6 +87,9 @@ public class CoordenadorController {
                 break;
             case 5:
                 consultarHistoricoAluno(usuario);
+                break;
+            case 6:
+                cadastrarDiario(usuario);
                 break;
             default:
                 ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
@@ -936,6 +944,25 @@ public class CoordenadorController {
 
         } catch (NumberFormatException e) {
             ConsoleUI.exibirMensagem("Erro: Digite um número válido.", true);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void cadastrarDiario(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("CADASTRAR DIÁRIO DE TURMA");
+        try {
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ").trim();
+            String codigoTurma = ConsoleUI.lerEntrada("Código da turma (ex: T01): ").trim();
+
+            // Valida se a turma realmente existe
+            turmaService.buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+
+            diarioService.cadastrarDiario(codigoTurma, codigoTurma, codigoDisciplina, codigoPeriodo, codigoTurma,
+                    codigoDisciplina, codigoPeriodo, codigoTurma, 0);
+            ConsoleUI.exibirMensagem("Diário cadastrado com sucesso!", false);
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }
