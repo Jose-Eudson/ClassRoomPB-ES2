@@ -47,11 +47,12 @@ public class DiarioService {
             throw new Exception("Erro: turma inexistente.");
         }
 
+        if (matriculaProfessor == null || matriculaProfessor.isBlank()) {
+            throw new Exception("Erro: professor responsável obrigatório.");
+        }
+
         Usuario professor = usuarioRepository.buscarPorMatricula(matriculaProfessor).orElseThrow(
                 () -> new Exception("Erro: Professor com matrícula '" + matriculaProfessor + "' não encontrado."));
-        if (professor.getTipo() != TipoUsuario.PROFESSOR) {
-            throw new Exception("Erro: O usuário '" + matriculaProfessor + "' não é um professor.");
-        }
 
         if (professor.getTipo() != TipoUsuario.PROFESSOR) {
 
@@ -90,7 +91,7 @@ public class DiarioService {
         return diarioRepository.listarTodos();
     }
 
-    public List<Diario> listarPorTurma(String codigoTurma) {
+    public List<Diario> buscarPorTurma(String codigoTurma) {
 
         return diarioRepository.buscarPorTurma(codigoTurma);
     }
@@ -98,5 +99,11 @@ public class DiarioService {
     public List<Diario> listarPorProfessor(String matriculaProfessor) {
 
         return diarioRepository.buscarPorProfessor(matriculaProfessor);
+    }
+
+    public boolean turmaPossuiDiario(String codigoTurma) {
+
+        return !diarioRepository.listarTodos().stream().filter(d -> d.getCodigoTurma().equals(codigoTurma)).toList()
+                .isEmpty();
     }
 }

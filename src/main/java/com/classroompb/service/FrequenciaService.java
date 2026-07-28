@@ -31,6 +31,7 @@ public class FrequenciaService {
     private final TurmaRepository turmaRepository;
     private final MatriculaTurmaRepository matriculaRepository;
     private final HistoricoService historicoService;
+    private final DiarioService diarioService;
     private final NotaRepository notaRepository;
     private final DisciplinaRepository disciplinaRepository;
     private final UsuarioRepository usuarioRepository;
@@ -39,13 +40,13 @@ public class FrequenciaService {
 
     public FrequenciaService(FrequenciaRepository frequenciaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository) {
-        this(frequenciaRepository, turmaRepository, matriculaRepository, null, null, null, null);
+        this(frequenciaRepository, turmaRepository, matriculaRepository, null, null, null, null, null);
     }
 
     public FrequenciaService(FrequenciaRepository frequenciaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository, HistoricoRepository historicoRepository,
             NotaRepository notaRepository, DisciplinaRepository disciplinaRepository,
-            UsuarioRepository usuarioRepository) {
+            UsuarioRepository usuarioRepository, DiarioService diarioService) {
         this.frequenciaRepository = frequenciaRepository;
         this.turmaRepository = turmaRepository;
         this.matriculaRepository = matriculaRepository;
@@ -53,6 +54,7 @@ public class FrequenciaService {
         this.notaRepository = notaRepository;
         this.disciplinaRepository = disciplinaRepository;
         this.usuarioRepository = usuarioRepository;
+        this.diarioService = diarioService;
     }
 
     /**
@@ -74,6 +76,7 @@ public class FrequenciaService {
         }
 
         Turma turma = buscarTurmaOuFalhar(discNorm, periodoNorm, turmaNorm);
+
         validarProfessorResponsavel(professor, turma);
         validarMatriculaConfirmada(alunoNorm, discNorm, periodoNorm, turmaNorm);
 

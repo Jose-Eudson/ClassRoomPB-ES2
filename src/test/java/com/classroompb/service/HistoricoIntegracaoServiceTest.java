@@ -20,6 +20,7 @@ import com.classroompb.model.Professor;
 import com.classroompb.model.StatusFrequencia;
 import com.classroompb.model.StatusMatricula;
 import com.classroompb.model.Turma;
+import com.classroompb.repository.DiarioRepository;
 import com.classroompb.repository.DisciplinaRepository;
 import com.classroompb.repository.FrequenciaRepository;
 import com.classroompb.repository.HistoricoRepository;
@@ -37,6 +38,7 @@ class HistoricoIntegracaoServiceTest {
     private NotaService notaService;
     private FrequenciaService frequenciaService;
     private HistoricoService consultaService;
+    private DiarioService diarioService;
     private Professor professor;
     private Aluno aluno;
     private PeriodoLetivoRepository periodoRepository;
@@ -48,6 +50,7 @@ class HistoricoIntegracaoServiceTest {
         NotaRepository notas = new NotaRepository(tempDir.resolve("notas.json").toString());
         FrequenciaRepository frequencias = new FrequenciaRepository(tempDir.resolve("frequencias.json").toString());
         TurmaRepository turmas = new TurmaRepository(tempDir.resolve("turmas.json").toString());
+        DiarioRepository diarios = new DiarioRepository(tempDir.resolve("diarios.json").toString());
         MatriculaTurmaRepository matriculas = new MatriculaTurmaRepository(
                 tempDir.resolve("matriculas.json").toString());
         DisciplinaRepository disciplinas = new DisciplinaRepository(tempDir.resolve("disciplinas.json").toString());
@@ -65,9 +68,9 @@ class HistoricoIntegracaoServiceTest {
         matriculas.salvar(matricula);
         periodoRepository.salvar(
                 new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true));
-
+        diarioService = new DiarioService(diarios, turmas, usuarios);
         frequenciaService = new FrequenciaService(frequencias, turmas, matriculas, historicos, notas, disciplinas,
-                usuarios);
+                usuarios, diarioService);
         notaService = new NotaService(notas, turmas, matriculas, historicos, frequencias, disciplinas, usuarios,
                 periodoRepository);
         consultaService = new HistoricoService(historicos, usuarios, periodoRepository);

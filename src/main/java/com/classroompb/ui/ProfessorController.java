@@ -16,6 +16,7 @@ import com.classroompb.service.FrequenciaService;
 import com.classroompb.service.NotaService;
 import com.classroompb.service.PerfilAcessoService;
 import com.classroompb.service.UsuarioService;
+import com.classroompb.service.DiarioService;
 
 /**
  * Controlador da interface do Professor. Responsavel pelo menu e pelas acoes disponiveis para esse perfil.
@@ -26,11 +27,14 @@ public class ProfessorController {
     private final UsuarioService service;
     private final FrequenciaService frequenciaService;
     private final NotaService notaService;
+    private final DiarioService diarioService;
 
-    public ProfessorController(UsuarioService service, FrequenciaService frequenciaService, NotaService notaService) {
+    public ProfessorController(UsuarioService service, FrequenciaService frequenciaService, NotaService notaService,
+            DiarioService diarioService) {
         this.service = service;
         this.frequenciaService = frequenciaService;
         this.notaService = notaService;
+        this.diarioService = diarioService;
     }
 
     /** Exibe o menu principal do professor e permanece em loop ate logout. */
@@ -99,6 +103,11 @@ public class ProfessorController {
             Turma turma = selecionarTurmaDoProfessor(professor);
             if (turma == null) {
                 return;
+            }
+
+            // RN15 - A turma deve possuir pelo menos um diário
+            if (!diarioService.turmaPossuiDiario(turma.getCodigo())) {
+                throw new Exception("Erro: a turma deve possuir pelo menos um diário cadastrado.");
             }
 
             LocalDate dataAula = lerDataAula();

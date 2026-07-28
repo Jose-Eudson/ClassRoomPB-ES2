@@ -950,19 +950,35 @@ public class CoordenadorController {
     }
 
     private void cadastrarDiario(Usuario usuario) {
+
         ConsoleUI.limparTela();
         ConsoleUI.exibirCabecalho("CADASTRAR DIÁRIO DE TURMA");
-        try {
-            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
-            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ").trim();
-            String codigoTurma = ConsoleUI.lerEntrada("Código da turma (ex: T01): ").trim();
 
-            // Valida se a turma realmente existe
+        try {
+
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período: ").trim();
+            String codigoTurma = ConsoleUI.lerEntrada("Código da turma: ").trim();
+
             turmaService.buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
 
-            diarioService.cadastrarDiario(codigoTurma, codigoTurma, codigoDisciplina, codigoPeriodo, codigoTurma,
-                    codigoDisciplina, codigoPeriodo, codigoTurma, 0);
+            String codigoDiario = ConsoleUI.lerEntrada("Código do diário: ").trim();
+
+            String descricao = ConsoleUI.lerEntrada("Descrição: ").trim();
+
+            String matriculaProfessor = ConsoleUI.lerEntrada("Matrícula do professor: ").trim();
+
+            String horario = ConsoleUI.lerEntrada("Horário: ").trim();
+
+            String sala = ConsoleUI.lerEntrada("Sala: ").trim();
+
+            int cargaHoraria = Integer.parseInt(ConsoleUI.lerEntrada("Carga horária: "));
+
+            diarioService.cadastrarDiario(codigoDiario, codigoTurma, codigoDisciplina, codigoPeriodo, descricao,
+                    matriculaProfessor, horario, sala, cargaHoraria);
+
             ConsoleUI.exibirMensagem("Diário cadastrado com sucesso!", false);
+
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }

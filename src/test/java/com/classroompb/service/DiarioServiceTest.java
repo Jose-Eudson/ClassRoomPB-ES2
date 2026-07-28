@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -292,7 +293,7 @@ public class DiarioServiceTest {
         List<Diario> diarios = Arrays.asList(criarDiario("D001"), criarDiario("D002"));
         when(diarioRepository.buscarPorTurma("T001")).thenReturn(diarios);
 
-        List<Diario> resultado = service.listarPorTurma("T001");
+        List<Diario> resultado = service.buscarPorTurma("T001");
 
         assertEquals(diarios, resultado);
     }
@@ -306,6 +307,77 @@ public class DiarioServiceTest {
         List<Diario> resultado = service.listarPorProfessor("P001");
 
         assertEquals(diarios, resultado);
+    }
+
+    @Test
+    @DisplayName("Deve permitir cadastrar vários diários para a mesma turma")
+    void devePermitirVariosDiariosParaMesmaTurma() throws Exception {
+
+        Turma turma = mock(Turma.class);
+        Usuario professor = mock(Usuario.class);
+
+        when(turmaRepository.buscarPorChaveUnica("RDSC", "2026.1", "T01")).thenReturn(turma);
+
+        when(usuarioRepository.buscarPorMatricula("P0001")).thenReturn(Optional.of(professor));
+
+        when(professor.getTipo()).thenReturn(TipoUsuario.PROFESSOR);
+
+        when(diarioRepository.buscarPorCodigo("D01")).thenReturn(null);
+
+        when(diarioRepository.buscarPorCodigo("D02")).thenReturn(null);
+
+        service.cadastrarDiario("D01", "T01", "RDSC", "2026.1", "Diário A", "P0001", "Seg 08h", "Lab 01", 60);
+
+        service.cadastrarDiario("D02", "T01", "RDSC", "2026.1", "Diário B", "P0001", "Qua 10h", "Lab 02", 60);
+
+        verify(diarioRepository, times(2)).salvar(any(Diario.class));
+    }
+
+    @Test
+    @DisplayName("Deve listar todos os diários de uma turma")
+    void deveListarDiariosDaTurma() {
+
+        Diario d1 = mock(Diario.class);
+        Diario d2 = mock(Diario.class);
+
+        when(diarioRepository.buscarPorTurma("T01")).thenReturn(List.of(d1, d2));
+
+        List<Diario> diarios = service.buscarPorTurma("T01");
+
+        assertEquals(2, diarios.size());
+    }
+
+    @Test
+    @DisplayName("Professor pode ser responsável por vários diários")
+    void deveListarDiariosDoProfessor() {
+
+        Diario d1 = mock(Diario.class);
+        Diario d2 = mock(Diario.class);
+        Diario d3 = mock(Diario.class);
+
+        when(diarioRepository.buscarPorProfessor("P0001")).thenReturn(List.of(d1, d2, d3));
+
+        List<Diario> diarios = service.listarPorProfessor("P0001");
+
+        assertEquals(3, diarios.size());
+    }
+
+    @Test
+    @DisplayName("Não deve permitir cadastrar diário sem professor responsável")
+    void naoDevePermitirDiarioSemProfessor() {
+
+        Turma turma = mock(Turma.class);
+
+        when(diarioRepository.buscarPorCodigo("D01")).thenReturn(null);
+
+        when(turmaRepository.buscarPorChaveUnica("RDSC", "2026.1", "T01")).thenReturn(turma);
+
+        Exception ex = assertThrows(Exception.class,
+                () -> service.cadastrarDiario("D01", "T01", "RDSC", "2026.1", "Diário", "", "Seg 08h", "Sala 01", 60));
+
+        assertEquals("Erro: professor responsável obrigatório.", ex.getMessage());
+
+        verify(diarioRepository, never()).salvar(any());
     }
 
     private Diario criarDiario(String codigo) {
