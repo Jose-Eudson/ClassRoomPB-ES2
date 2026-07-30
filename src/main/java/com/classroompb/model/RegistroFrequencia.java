@@ -20,6 +20,7 @@ public class RegistroFrequencia implements Serializable {
     private String codigoDisciplina;
     private String codigoPeriodo;
     private String codigoTurma;
+    private String codigoAula;
     private LocalDate dataAula;
     private StatusFrequencia status;
     private String matriculaProfessor;
@@ -31,11 +32,12 @@ public class RegistroFrequencia implements Serializable {
 
     /** Cria um registro de frequencia para uma aula. */
     public RegistroFrequencia(String matriculaAluno, String codigoDisciplina, String codigoPeriodo, String codigoTurma,
-            LocalDate dataAula, StatusFrequencia status, String matriculaProfessor) {
+            String codigoAula, LocalDate dataAula, StatusFrequencia status, String matriculaProfessor) {
         this.matriculaAluno = matriculaAluno;
         this.codigoDisciplina = codigoDisciplina;
         this.codigoPeriodo = codigoPeriodo;
         this.codigoTurma = codigoTurma;
+        this.codigoAula = codigoAula;
         this.dataAula = dataAula;
         this.status = status;
         this.matriculaProfessor = matriculaProfessor;
@@ -68,6 +70,14 @@ public class RegistroFrequencia implements Serializable {
 
     public String getCodigoTurma() {
         return codigoTurma;
+    }
+
+    public String getCodigoAula() {
+        return codigoAula;
+    }
+
+    public void setCodigoAula(String codigoAula) {
+        this.codigoAula = codigoAula;
     }
 
     public void setCodigoTurma(String codigoTurma) {
@@ -111,12 +121,13 @@ public class RegistroFrequencia implements Serializable {
      */
     @JsonIgnore
     public String getChaveUnica() {
-        return matriculaAluno + "_" + codigoDisciplina + "_" + codigoPeriodo + "_" + codigoTurma + "_" + dataAula;
+        return matriculaAluno + "_" + codigoDisciplina + "_" + codigoPeriodo + "_" + codigoTurma + "_" + dataAula + "_"
+                + codigoAula;
     }
 
     @Override
     public String toString() {
         return String.format("[FREQUENCIA] Aluno: %s | Turma: %s | Disciplina: %s | Periodo: %s | Aula: %s | %s",
-                matriculaAluno, codigoTurma, codigoDisciplina, codigoPeriodo, dataAula, status);
+                matriculaAluno, codigoTurma, codigoDisciplina, codigoPeriodo, codigoAula + "@" + dataAula, status);
     }
 }

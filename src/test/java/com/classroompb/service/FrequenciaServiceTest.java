@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mock;
+
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,13 +26,18 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.classroompb.model.Aluno;
+import com.classroompb.model.Aula;
 import com.classroompb.model.Coordenador;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.Professor;
 import com.classroompb.model.RegistroFrequencia;
 import com.classroompb.model.StatusFrequencia;
 import com.classroompb.model.StatusMatricula;
+import com.classroompb.model.Diario;
+import com.classroompb.model.SituacaoDiario;
 import com.classroompb.model.Turma;
+import com.classroompb.repository.AulaRepository;
+import com.classroompb.repository.DiarioRepository;
 import com.classroompb.repository.FrequenciaRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.TurmaRepository;
@@ -53,6 +59,12 @@ public class FrequenciaServiceTest {
     @Mock
     private MatriculaTurmaRepository matriculaRepository;
 
+    @Mock
+    private AulaRepository aulaRepository;
+
+    @Mock
+    private DiarioRepository diarioRepository;
+
     private FrequenciaService service;
 
     private Professor professor;
@@ -65,6 +77,7 @@ public class FrequenciaServiceTest {
     private static final String DISC = "MAT001";
     private static final String PER = "2026.1";
     private static final String TURMA = "T01";
+    private static final String COD_AULA = "A01";
     private static final LocalDate DATA_AULA = LocalDate.of(2026, 4, 10);
 
     @BeforeEach
@@ -86,7 +99,7 @@ public class FrequenciaServiceTest {
         when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
         when(matriculaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA))
                 .thenReturn(matriculaConfirmada);
-        when(frequenciaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA))
+        when(frequenciaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA, COD_AULA))
                 .thenReturn(null);
     }
 
@@ -100,7 +113,7 @@ public class FrequenciaServiceTest {
             mockCenarioValido();
 
             RegistroFrequencia resultado = service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, TURMA,
-                    DATA_AULA);
+                    COD_AULA, DATA_AULA);
 
             ArgumentCaptor<RegistroFrequencia> captor = ArgumentCaptor.forClass(RegistroFrequencia.class);
             verify(frequenciaRepository).salvar(captor.capture());
@@ -119,7 +132,7 @@ public class FrequenciaServiceTest {
             mockCenarioValido();
 
             RegistroFrequencia resultado = service.registrarFalta(professor, aluno.getMatricula(), DISC, PER, TURMA,
-                    DATA_AULA);
+                    COD_AULA, DATA_AULA);
 
             ArgumentCaptor<RegistroFrequencia> captor = ArgumentCaptor.forClass(RegistroFrequencia.class);
             verify(frequenciaRepository).salvar(captor.capture());
@@ -133,8 +146,8 @@ public class FrequenciaServiceTest {
         void deveNormalizarEspacos() throws Exception {
             mockCenarioValido();
 
-            service.registrarFrequencia(professor, "  A0001  ", "  MAT001  ", "  2026.1  ", "  T01  ", DATA_AULA,
-                    StatusFrequencia.PRESENTE);
+            service.registrarFrequencia(professor, "  A0001  ", "  MAT001  ", "  2026.1  ", "  T01  ", COD_AULA,
+                    DATA_AULA, StatusFrequencia.PRESENTE);
 
             ArgumentCaptor<RegistroFrequencia> captor = ArgumentCaptor.forClass(RegistroFrequencia.class);
             verify(frequenciaRepository).salvar(captor.capture());
@@ -148,17 +161,17 @@ public class FrequenciaServiceTest {
         @Test
         @DisplayName("Deve atualizar registro existente ao corrigir presenca/falta")
         void deveAtualizarRegistroExistente() throws Exception {
-            RegistroFrequencia existente = new RegistroFrequencia(aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA,
-                    StatusFrequencia.FALTA, professor.getMatricula());
+            RegistroFrequencia existente = new RegistroFrequencia(aluno.getMatricula(), DISC, PER, TURMA, COD_AULA,
+                    DATA_AULA, StatusFrequencia.FALTA, professor.getMatricula());
 
             when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
             when(matriculaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA))
                     .thenReturn(matriculaConfirmada);
-            when(frequenciaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA))
+            when(frequenciaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA, COD_AULA))
                     .thenReturn(existente);
 
             RegistroFrequencia resultado = service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, TURMA,
-                    DATA_AULA);
+                    COD_AULA, DATA_AULA);
 
             assertEquals(StatusFrequencia.PRESENTE, resultado.getStatus());
             verify(frequenciaRepository).atualizar(existente);
@@ -173,8 +186,8 @@ public class FrequenciaServiceTest {
         @Test
         @DisplayName("Nao deve permitir usuario que nao seja professor")
         void naoDevePermitirNaoProfessor() {
-            Exception ex = assertThrows(Exception.class,
-                    () -> service.registrarPresenca(coordenador, aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA));
+            Exception ex = assertThrows(Exception.class, () -> service.registrarPresenca(coordenador,
+                    aluno.getMatricula(), DISC, PER, TURMA, COD_AULA, DATA_AULA));
 
             assertTrue(ex.getMessage().contains("Apenas professores"));
             verify(frequenciaRepository, never()).salvar(any());
@@ -186,7 +199,7 @@ public class FrequenciaServiceTest {
             when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
 
             Exception ex = assertThrows(Exception.class,
-                    () -> service.registrarPresenca(outroProfessor, aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA));
+                    () -> service.registrarPresenca(outroProfessor, aluno.getMatricula(), DISC, PER, TURMA, COD_AULA, DATA_AULA));
 
             assertTrue(ex.getMessage().contains("professor responsavel"));
             verify(matriculaRepository, never()).buscarPorChaveUnica(any(), any(), any(), any());
@@ -199,7 +212,7 @@ public class FrequenciaServiceTest {
             when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(null);
 
             Exception ex = assertThrows(Exception.class,
-                    () -> service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA));
+                    () -> service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, TURMA, COD_AULA, DATA_AULA));
 
             assertTrue(ex.getMessage().contains("nao encontrada"));
             verify(frequenciaRepository, never()).salvar(any());
@@ -215,8 +228,8 @@ public class FrequenciaServiceTest {
             when(matriculaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA))
                     .thenReturn(listaEspera);
 
-            Exception ex = assertThrows(Exception.class,
-                    () -> service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA));
+            Exception ex = assertThrows(Exception.class, () -> service.registrarPresenca(professor,
+                    aluno.getMatricula(), DISC, PER, TURMA, COD_AULA, DATA_AULA));
 
             assertTrue(ex.getMessage().contains("matricula confirmada"));
             verify(frequenciaRepository, never()).salvar(any());
@@ -226,7 +239,7 @@ public class FrequenciaServiceTest {
         @DisplayName("Nao deve registrar frequencia quando data da aula e nula")
         void naoDeveRegistrarDataNula() {
             Exception ex = assertThrows(Exception.class,
-                    () -> service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, TURMA, null));
+                    () -> service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, TURMA, COD_AULA, null));
 
             assertTrue(ex.getMessage().contains("Data da aula"));
             verify(turmaRepository, never()).buscarPorChaveUnica(any(), any(), any());
@@ -236,7 +249,7 @@ public class FrequenciaServiceTest {
         @DisplayName("Nao deve registrar frequencia quando status e nulo")
         void naoDeveRegistrarStatusNulo() {
             Exception ex = assertThrows(Exception.class, () -> service.registrarFrequencia(professor,
-                    aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA, null));
+                    aluno.getMatricula(), DISC, PER, TURMA, COD_AULA, DATA_AULA, null));
 
             assertTrue(ex.getMessage().contains("Status"));
             verify(turmaRepository, never()).buscarPorChaveUnica(any(), any(), any());
@@ -246,8 +259,8 @@ public class FrequenciaServiceTest {
     @Test
     @DisplayName("Professor responsavel deve listar frequencia registrada da aula")
     void deveListarFrequenciaDaAula() throws Exception {
-        RegistroFrequencia registro = new RegistroFrequencia(aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA,
-                StatusFrequencia.PRESENTE, professor.getMatricula());
+        RegistroFrequencia registro = new RegistroFrequencia(aluno.getMatricula(), DISC, PER, TURMA, COD_AULA,
+                DATA_AULA, StatusFrequencia.PRESENTE, professor.getMatricula());
 
         when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
         when(frequenciaRepository.listarPorTurmaEData(DISC, PER, TURMA, DATA_AULA))
@@ -269,10 +282,10 @@ public class FrequenciaServiceTest {
 
             List<RegistroFrequencia> registros = List.of(
 
-                    new RegistroFrequencia("A0001", "ES2", "2026.1", "T01", LocalDate.now(), StatusFrequencia.PRESENTE,
-                            "P0001"),
+                    new RegistroFrequencia("A0001", "ES2", "2026.1", "T01", COD_AULA, LocalDate.now(),
+                            StatusFrequencia.PRESENTE, "P0001"),
 
-                    new RegistroFrequencia("A0001", "ES2", "2026.1", "T01", LocalDate.now().plusDays(1),
+                    new RegistroFrequencia("A0001", "ES2", "2026.1", "T01", COD_AULA, LocalDate.now().plusDays(1),
                             StatusFrequencia.PRESENTE, "P0001"));
 
             when(frequenciaRepository.listarPorAlunoETurma("A0001", "ES2", "2026.1", "T01")).thenReturn(registros);
@@ -290,17 +303,17 @@ public class FrequenciaServiceTest {
     void deveCalcular75PorCentoDeFrequencia() {
 
         List<RegistroFrequencia> registros = List.of(
-                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 2),
+                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", COD_AULA, LocalDate.of(2026, 3, 2),
                         StatusFrequencia.PRESENTE, professor.getMatricula()),
 
-                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 9),
+                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", COD_AULA, LocalDate.of(2026, 3, 9),
                         StatusFrequencia.PRESENTE, professor.getMatricula()),
 
-                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 16),
-                        StatusFrequencia.PRESENTE, professor.getMatricula()),
+                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", COD_AULA,
+                        LocalDate.of(2026, 3, 16), StatusFrequencia.PRESENTE, professor.getMatricula()),
 
-                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 23),
-                        StatusFrequencia.FALTA, professor.getMatricula()));
+                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", COD_AULA,
+                        LocalDate.of(2026, 3, 23), StatusFrequencia.FALTA, professor.getMatricula()));
 
         when(frequenciaRepository.listarPorAlunoETurma(aluno.getMatricula(), "ES2", "2026.1", "T01"))
                 .thenReturn(registros);
@@ -318,10 +331,10 @@ public class FrequenciaServiceTest {
 
         List<RegistroFrequencia> registros = List.of(
 
-                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 2),
+                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", COD_AULA, LocalDate.of(2026, 3, 2),
                         StatusFrequencia.PRESENTE, professor.getMatricula()),
 
-                new RegistroFrequencia(aluno.getMatricula(), "SO", "2026.1", "T03", LocalDate.of(2026, 3, 2),
+                new RegistroFrequencia(aluno.getMatricula(), "SO", "2026.1", "T03", COD_AULA, LocalDate.of(2026, 3, 2),
                         StatusFrequencia.FALTA, professor.getMatricula()));
 
         when(frequenciaRepository.listarPorAlunoETurma(aluno.getMatricula(), "ES2", "2026.1", "T01"))
@@ -340,11 +353,11 @@ public class FrequenciaServiceTest {
 
         List<RegistroFrequencia> registros = List.of(
 
-                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 2),
+                new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01", COD_AULA, LocalDate.of(2026, 3, 2),
                         StatusFrequencia.PRESENTE, professor.getMatricula()),
 
-                new RegistroFrequencia(outroAluno.getMatricula(), "ES2", "2026.1", "T01", LocalDate.of(2026, 3, 2),
-                        StatusFrequencia.FALTA, professor.getMatricula()));
+                new RegistroFrequencia(outroAluno.getMatricula(), "ES2", "2026.1", "T01", COD_AULA,
+                        LocalDate.of(2026, 3, 2), StatusFrequencia.FALTA, professor.getMatricula()));
 
         when(frequenciaRepository.listarPorAlunoETurma(aluno.getMatricula(), "ES2", "2026.1", "T01"))
                 .thenReturn(List.of(registros.get(0)));
@@ -361,10 +374,10 @@ public class FrequenciaServiceTest {
     void deveRecalcularPercentualQuandoProfessorCorrigirFrequencia() {
 
         List<RegistroFrequencia> antes = List.of(new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01",
-                LocalDate.of(2026, 3, 2), StatusFrequencia.FALTA, professor.getMatricula()));
+                COD_AULA, LocalDate.of(2026, 3, 2), StatusFrequencia.FALTA, professor.getMatricula()));
 
         List<RegistroFrequencia> depois = List.of(new RegistroFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01",
-                LocalDate.of(2026, 3, 2), StatusFrequencia.PRESENTE, professor.getMatricula()));
+                COD_AULA, LocalDate.of(2026, 3, 2), StatusFrequencia.PRESENTE, professor.getMatricula()));
 
         when(frequenciaRepository.listarPorAlunoETurma(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(antes)
                 .thenReturn(depois);
@@ -443,7 +456,7 @@ public class FrequenciaServiceTest {
         @DisplayName("Deve retornar lista de registros quando aluno possui frequencia")
         void deveRetornarRegistros() throws Exception {
             List<RegistroFrequencia> registros = List.of(new RegistroFrequencia(aluno.getMatricula(), DISC, PER, TURMA,
-                    DATA_AULA, StatusFrequencia.PRESENTE, professor.getMatricula()));
+                    COD_AULA, DATA_AULA, StatusFrequencia.PRESENTE, professor.getMatricula()));
             when(frequenciaRepository.listarPorAlunoETurma(aluno.getMatricula(), DISC, PER, TURMA))
                     .thenReturn(registros);
 
@@ -499,7 +512,7 @@ public class FrequenciaServiceTest {
         @DisplayName("Deve fazer trim nos parametros antes de consultar o repositorio")
         void deveFazerTrimNosParametros() throws Exception {
             List<RegistroFrequencia> registros = List.of(new RegistroFrequencia(aluno.getMatricula(), DISC, PER, TURMA,
-                    DATA_AULA, StatusFrequencia.FALTA, professor.getMatricula()));
+                    COD_AULA, DATA_AULA, StatusFrequencia.FALTA, professor.getMatricula()));
             when(frequenciaRepository.listarPorAlunoETurma(aluno.getMatricula(), DISC, PER, TURMA))
                     .thenReturn(registros);
 
@@ -609,31 +622,31 @@ public class FrequenciaServiceTest {
         @DisplayName("Deve lancar excecao quando matricula do aluno e nula no registro")
         void deveLancarExcecaoMatriculaAlunaNula() {
             Exception ex = assertThrows(Exception.class,
-                    () -> service.registrarPresenca(professor, null, DISC, PER, TURMA, DATA_AULA));
+                    () -> service.registrarPresenca(professor, null, DISC, PER, TURMA, COD_AULA, DATA_AULA));
             assertTrue(ex.getMessage().contains("nao pode ser vazio"));
         }
 
         @Test
         @DisplayName("Deve lancar excecao quando codigo da disciplina e vazio no registro")
         void deveLancarExcecaoDiscipVaziaNoRegistro() {
-            Exception ex = assertThrows(Exception.class,
-                    () -> service.registrarPresenca(professor, aluno.getMatricula(), "   ", PER, TURMA, DATA_AULA));
+            Exception ex = assertThrows(Exception.class, () -> service.registrarPresenca(professor,
+                    aluno.getMatricula(), "   ", PER, TURMA, COD_AULA, DATA_AULA));
             assertTrue(ex.getMessage().contains("nao pode ser vazio"));
         }
 
         @Test
         @DisplayName("Deve lancar excecao quando codigo do periodo e nulo no registro")
         void deveLancarExcecaoPeriodoNuloNoRegistro() {
-            Exception ex = assertThrows(Exception.class,
-                    () -> service.registrarPresenca(professor, aluno.getMatricula(), DISC, null, TURMA, DATA_AULA));
+            Exception ex = assertThrows(Exception.class, () -> service.registrarPresenca(professor,
+                    aluno.getMatricula(), DISC, null, TURMA, COD_AULA, DATA_AULA));
             assertTrue(ex.getMessage().contains("nao pode ser vazio"));
         }
 
         @Test
         @DisplayName("Deve lancar excecao quando codigo da turma e vazio no registro")
         void deveLancarExcecaoTurmaVaziaNoRegistro() {
-            Exception ex = assertThrows(Exception.class,
-                    () -> service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, "", DATA_AULA));
+            Exception ex = assertThrows(Exception.class, () -> service.registrarPresenca(professor,
+                    aluno.getMatricula(), DISC, PER, "", COD_AULA, DATA_AULA));
             assertTrue(ex.getMessage().contains("nao pode ser vazio"));
         }
 
@@ -644,7 +657,7 @@ public class FrequenciaServiceTest {
             when(matriculaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA)).thenReturn(null);
 
             Exception ex = assertThrows(Exception.class,
-                    () -> service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA));
+                    () -> service.registrarPresenca(professor, aluno.getMatricula(), DISC, PER, TURMA, COD_AULA, DATA_AULA));
             assertTrue(ex.getMessage().contains("matricula confirmada"));
         }
     }
@@ -695,4 +708,47 @@ public class FrequenciaServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("Registrar frequencia por aula")
+    class FrequenciaAula {
+
+        private void inicializarServicoComAulaEDiario() {
+            service = new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository, aulaRepository,
+                    diarioRepository);
+        }
+
+        @Test
+        @DisplayName("Deve registrar frequência por aula")
+        void deveRegistrarFrequenciaPorAula() throws Exception {
+            inicializarServicoComAulaEDiario();
+            mockCenarioValido();
+
+            Aula aula = new Aula(COD_AULA, "D01", DATA_AULA, "Conteudo", 1);
+            Diario diario = new Diario("D01", TURMA, "Engenharia de Software", professor.getMatricula(), "08:00",
+                    "Sala 1", 60, SituacaoDiario.ATIVO);
+
+            when(aulaRepository.buscarPorCodigo(COD_AULA)).thenReturn(aula);
+            when(diarioRepository.buscarPorCodigo("D01")).thenReturn(diario);
+            when(frequenciaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA, COD_AULA))
+                    .thenReturn(null);
+
+            service.registrarFrequencia(professor, aluno.getMatricula(), DISC, PER, TURMA, COD_AULA, DATA_AULA,
+                    StatusFrequencia.PRESENTE);
+
+            verify(frequenciaRepository).salvar(any(RegistroFrequencia.class));
+        }
+
+        @Test
+        @DisplayName("Não deve registrar frequência em aula inexistente")
+        void naoDeveRegistrarEmAulaInexistente() {
+            inicializarServicoComAulaEDiario();
+
+            when(aulaRepository.buscarPorCodigo(COD_AULA)).thenReturn(null);
+
+            Exception ex = assertThrows(Exception.class, () -> service.registrarFrequencia(professor,
+                    aluno.getMatricula(), DISC, PER, TURMA, COD_AULA, DATA_AULA, StatusFrequencia.PRESENTE));
+
+            assertEquals("Erro: Aula inexistente.", ex.getMessage());
+        }
+    }
 }

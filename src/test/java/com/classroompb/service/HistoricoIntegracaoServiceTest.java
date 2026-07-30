@@ -12,14 +12,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.classroompb.model.Aluno;
+import com.classroompb.model.Aula;
+import com.classroompb.model.Diario;
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.Historico;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.Professor;
+import com.classroompb.model.SituacaoDiario;
 import com.classroompb.model.StatusFrequencia;
 import com.classroompb.model.StatusMatricula;
 import com.classroompb.model.Turma;
+import com.classroompb.repository.AulaRepository;
 import com.classroompb.repository.DiarioRepository;
 import com.classroompb.repository.DisciplinaRepository;
 import com.classroompb.repository.FrequenciaRepository;
@@ -38,10 +42,11 @@ class HistoricoIntegracaoServiceTest {
     private NotaService notaService;
     private FrequenciaService frequenciaService;
     private HistoricoService consultaService;
-    private DiarioService diarioService;
+    // private DiarioService diarioService;
     private Professor professor;
     private Aluno aluno;
     private PeriodoLetivoRepository periodoRepository;
+    private AulaRepository aulaRepository;
 
     @BeforeEach
     void setUp() {
@@ -55,6 +60,7 @@ class HistoricoIntegracaoServiceTest {
                 tempDir.resolve("matriculas.json").toString());
         DisciplinaRepository disciplinas = new DisciplinaRepository(tempDir.resolve("disciplinas.json").toString());
         UsuarioRepository usuarios = new UsuarioRepository(tempDir.resolve("usuarios.json").toString());
+        aulaRepository = new AulaRepository(tempDir.resolve("aulas.json").toString());
         periodoRepository = new PeriodoLetivoRepository(tempDir.resolve("periodos.json").toString());
 
         professor = new Professor("P1", "Joao da Silva", "p@teste.com", "123");
@@ -68,9 +74,11 @@ class HistoricoIntegracaoServiceTest {
         matriculas.salvar(matricula);
         periodoRepository.salvar(
                 new PeriodoLetivo("2026.1", 2026, 1, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 6, 30), true));
-        diarioService = new DiarioService(diarios, turmas, usuarios);
+        diarios.salvar(
+                new Diario("D1", "T1", "Engenharia de Software II", "P1", "08:00", "Sala 1", 60, SituacaoDiario.ATIVO));
+        aulaRepository.salvar(new Aula("A01", "D1", LocalDate.of(2026, 3, 1), "Conteudo", 1));
         frequenciaService = new FrequenciaService(frequencias, turmas, matriculas, historicos, notas, disciplinas,
-                usuarios, diarioService);
+                usuarios, aulaRepository, diarios);
         notaService = new NotaService(notas, turmas, matriculas, historicos, frequencias, disciplinas, usuarios,
                 periodoRepository);
         consultaService = new HistoricoService(historicos, usuarios, periodoRepository);
@@ -78,7 +86,7 @@ class HistoricoIntegracaoServiceTest {
 
     @Test
     void notasEFrequenciaDevemCriarEAtualizarMesmoRegistroCompartilhado() throws Exception {
-        frequenciaService.registrarFrequencia(professor, "A1", "ES2", "2026.1", "T1", LocalDate.of(2026, 3, 1),
+        frequenciaService.registrarFrequencia(professor, "A1", "ES2", "2026.1", "T1", "A01", LocalDate.of(2026, 3, 1),
                 StatusFrequencia.PRESENTE);
         notaService.lancarNotas(professor, "A1", "ES2", "2026.1", "T1", 8.0, 9.0);
 
@@ -91,7 +99,7 @@ class HistoricoIntegracaoServiceTest {
         assertEquals("Joao da Silva", historico.getNomeProfessor());
 
         notaService.alterarNotas(professor, "A1", "ES2", "2026.1", "T1", 5.0, 5.0);
-        frequenciaService.registrarFrequencia(professor, "A1", "ES2", "2026.1", "T1", LocalDate.of(2026, 3, 2),
+        frequenciaService.registrarFrequencia(professor, "A1", "ES2", "2026.1", "T1", "A01", LocalDate.of(2026, 3, 2),
                 StatusFrequencia.FALTA);
 
         PeriodoLetivo periodo = periodoRepository.buscarPorCodigo("2026.1");

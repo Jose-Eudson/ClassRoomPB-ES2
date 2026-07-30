@@ -58,9 +58,9 @@ public class FrequenciaRepository {
 
     /** Busca um registro pela chave unica composta. */
     public RegistroFrequencia buscarPorChaveUnica(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
-            String codigoTurma, LocalDate dataAula) {
+            String codigoTurma, LocalDate dataAula, String codigoAula) {
         String chave = matriculaAluno + "_" + codigoDisciplina + "_" + codigoPeriodo + "_" + codigoTurma + "_"
-                + dataAula;
+                + dataAula + "_" + codigoAula;
         return frequencias.stream().filter(f -> f.getChaveUnica().equalsIgnoreCase(chave)).findFirst().orElse(null);
     }
 
@@ -101,5 +101,11 @@ public class FrequenciaRepository {
         }
         throw new IllegalArgumentException(
                 "Registro de frequencia com chave " + atualizada.getChaveUnica() + " nao encontrado.");
+    }
+
+    public RegistroFrequencia buscarPorAlunoEAula(String matriculaAluno, String codigoAula) {
+
+        return frequencias.stream().filter(r -> r.getMatriculaAluno().equalsIgnoreCase(matriculaAluno))
+                .filter(r -> codigoAula.equalsIgnoreCase(r.getCodigoAula())).findFirst().orElse(null);
     }
 }

@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.classroompb.model.Aula;
+import com.classroompb.model.Diario;
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.Nota;
@@ -21,6 +23,8 @@ import com.classroompb.repository.MatriculaTurmaRepository;
 import com.classroompb.repository.NotaRepository;
 import com.classroompb.repository.TurmaRepository;
 import com.classroompb.repository.UsuarioRepository;
+import com.classroompb.repository.AulaRepository;
+import com.classroompb.repository.DiarioRepository;
 
 /**
  * RF27: Servico responsavel pelo registro de presenca/falta dos alunos por aula.
@@ -31,22 +35,30 @@ public class FrequenciaService {
     private final TurmaRepository turmaRepository;
     private final MatriculaTurmaRepository matriculaRepository;
     private final HistoricoService historicoService;
-    private final DiarioService diarioService;
     private final NotaRepository notaRepository;
     private final DisciplinaRepository disciplinaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AulaRepository aulaRepository;
+    private final DiarioRepository diarioRepository;
 
     private static final double FREQUENCIA_MINIMA = 75.0;
 
     public FrequenciaService(FrequenciaRepository frequenciaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository) {
-        this(frequenciaRepository, turmaRepository, matriculaRepository, null, null, null, null, null);
+        this(frequenciaRepository, turmaRepository, matriculaRepository, null, null, null, null, null, null);
+    }
+
+    public FrequenciaService(FrequenciaRepository frequenciaRepository, TurmaRepository turmaRepository,
+            MatriculaTurmaRepository matriculaRepository, AulaRepository aulaRepository,
+            DiarioRepository diarioRepository) {
+        this(frequenciaRepository, turmaRepository, matriculaRepository, null, null, null, null, aulaRepository,
+                diarioRepository);
     }
 
     public FrequenciaService(FrequenciaRepository frequenciaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository, HistoricoRepository historicoRepository,
             NotaRepository notaRepository, DisciplinaRepository disciplinaRepository,
-            UsuarioRepository usuarioRepository, DiarioService diarioService) {
+            UsuarioRepository usuarioRepository, AulaRepository aulaRepository, DiarioRepository diarioRepository) {
         this.frequenciaRepository = frequenciaRepository;
         this.turmaRepository = turmaRepository;
         this.matriculaRepository = matriculaRepository;
@@ -54,19 +66,44 @@ public class FrequenciaService {
         this.notaRepository = notaRepository;
         this.disciplinaRepository = disciplinaRepository;
         this.usuarioRepository = usuarioRepository;
-        this.diarioService = diarioService;
+        this.aulaRepository = aulaRepository;
+        this.diarioRepository = diarioRepository;
     }
 
     /**
      * Registra ou corrige a frequencia de um aluno em uma aula.
      */
     public RegistroFrequencia registrarFrequencia(Usuario professor, String matriculaAluno, String codigoDisciplina,
-            String codigoPeriodo, String codigoTurma, LocalDate dataAula, StatusFrequencia status) throws Exception {
+            String codigoPeriodo, String codigoTurma, String codigoAula, LocalDate dataAula, StatusFrequencia status)
+            throws Exception {
         validarProfessor(professor);
         String alunoNorm = validarCampoObrigatorio(matriculaAluno, "matricula do aluno");
         String discNorm = validarCampoObrigatorio(codigoDisciplina, "codigo da disciplina");
         String periodoNorm = validarCampoObrigatorio(codigoPeriodo, "codigo do periodo letivo");
         String turmaNorm = validarCampoObrigatorio(codigoTurma, "codigo da turma");
+        String codAula = validarCampoObrigatorio(codigoAula, "codigo da aula");
+
+        if (aulaRepository != null && diarioRepository != null) {
+            Aula aula = aulaRepository.buscarPorCodigo(codAula);
+
+            if (aula == null) {
+                throw new Exception("Erro: Aula inexistente.");
+            }
+
+            Diario diario = diarioRepository.buscarPorCodigo(aula.getCodigoDiario());
+
+            if (diario == null) {
+                throw new Exception("Erro: Diário inexistente.");
+            }
+
+            if (!diario.getCodigoTurma().equalsIgnoreCase(turmaNorm)) {
+                throw new Exception("Erro: A aula não pertence à turma informada.");
+            }
+
+            if (!diario.getMatriculaProfessor().equalsIgnoreCase(professor.getMatricula())) {
+                throw new Exception("Erro: Somente o professor responsável pelo diário pode registrar frequência.");
+            }
+        }
 
         if (dataAula == null) {
             throw new Exception("Erro: Data da aula nao pode ser vazia.");
@@ -81,10 +118,10 @@ public class FrequenciaService {
         validarMatriculaConfirmada(alunoNorm, discNorm, periodoNorm, turmaNorm);
 
         RegistroFrequencia frequencia = frequenciaRepository.buscarPorChaveUnica(alunoNorm, discNorm, periodoNorm,
-                turmaNorm, dataAula);
+                turmaNorm, dataAula, codAula);
 
         if (frequencia == null) {
-            frequencia = new RegistroFrequencia(alunoNorm, discNorm, periodoNorm, turmaNorm, dataAula, status,
+            frequencia = new RegistroFrequencia(alunoNorm, discNorm, periodoNorm, turmaNorm, codAula, dataAula, status,
                     professor.getMatricula());
             frequenciaRepository.salvar(frequencia);
         } else {
@@ -100,16 +137,18 @@ public class FrequenciaService {
 
     /** Registra presenca para um aluno em uma aula. */
     public RegistroFrequencia registrarPresenca(Usuario professor, String matriculaAluno, String codigoDisciplina,
-            String codigoPeriodo, String codigoTurma, LocalDate dataAula) throws Exception {
-        return registrarFrequencia(professor, matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma, dataAula,
-                StatusFrequencia.PRESENTE);
+            String codigoPeriodo, String codigoTurma, String codigoAula, LocalDate dataAula) throws Exception {
+        String codAula = validarCampoObrigatorio(codigoAula, "codigo da aula");
+        return registrarFrequencia(professor, matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma, codAula,
+                dataAula, StatusFrequencia.PRESENTE);
     }
 
     /** Registra falta para um aluno em uma aula. */
     public RegistroFrequencia registrarFalta(Usuario professor, String matriculaAluno, String codigoDisciplina,
-            String codigoPeriodo, String codigoTurma, LocalDate dataAula) throws Exception {
-        return registrarFrequencia(professor, matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma, dataAula,
-                StatusFrequencia.FALTA);
+            String codigoPeriodo, String codigoTurma, String codigoAula, LocalDate dataAula) throws Exception {
+        String codAula = validarCampoObrigatorio(codigoAula, "codigo da aula");
+        return registrarFrequencia(professor, matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma, codAula,
+                dataAula, StatusFrequencia.FALTA);
     }
 
     /** Lista a frequencia lancada para uma turma em uma aula. */
@@ -268,5 +307,4 @@ public class FrequenciaService {
 
         return registros;
     }
-
 }

@@ -32,6 +32,7 @@ public class FrequenciaRepositoryTest {
     private FrequenciaRepository repository;
 
     private static final LocalDate DATA_AULA = LocalDate.of(2026, 4, 10);
+    private static final String COD_AULA = "A01";
 
     @BeforeEach
     void setUp() {
@@ -39,7 +40,7 @@ public class FrequenciaRepositoryTest {
     }
 
     private RegistroFrequencia frequencia(String matriculaAluno, StatusFrequencia status) {
-        return new RegistroFrequencia(matriculaAluno, "MAT001", "2026.1", "T01", DATA_AULA, status, "P0001");
+        return new RegistroFrequencia(matriculaAluno, "MAT001", "2026.1", "T01", COD_AULA, DATA_AULA, status, "P0001");
     }
 
     @Test
@@ -58,7 +59,8 @@ public class FrequenciaRepositoryTest {
     void deveBuscarPorChaveUnica() {
         repository.salvar(frequencia("A0001", StatusFrequencia.FALTA));
 
-        RegistroFrequencia resultado = repository.buscarPorChaveUnica("A0001", "MAT001", "2026.1", "T01", DATA_AULA);
+        RegistroFrequencia resultado = repository.buscarPorChaveUnica("A0001", "MAT001", "2026.1", "T01", DATA_AULA,
+                COD_AULA);
 
         assertNotNull(resultado);
         assertEquals(StatusFrequencia.FALTA, resultado.getStatus());
@@ -73,7 +75,8 @@ public class FrequenciaRepositoryTest {
         registro.setStatus(StatusFrequencia.PRESENTE);
         repository.atualizar(registro);
 
-        RegistroFrequencia atualizado = repository.buscarPorChaveUnica("A0001", "MAT001", "2026.1", "T01", DATA_AULA);
+        RegistroFrequencia atualizado = repository.buscarPorChaveUnica("A0001", "MAT001", "2026.1", "T01", DATA_AULA,
+                COD_AULA);
         assertEquals(StatusFrequencia.PRESENTE, atualizado.getStatus());
         assertEquals(1, repository.listarTodas().size());
     }
@@ -83,7 +86,7 @@ public class FrequenciaRepositoryTest {
     void deveListarPorTurmaEData() {
         repository.salvar(frequencia("A0001", StatusFrequencia.PRESENTE));
         repository.salvar(frequencia("A0002", StatusFrequencia.FALTA));
-        repository.salvar(new RegistroFrequencia("A0003", "MAT001", "2026.1", "T01", DATA_AULA.plusDays(1),
+        repository.salvar(new RegistroFrequencia("A0003", "MAT001", "2026.1", "T01", COD_AULA, DATA_AULA.plusDays(1),
                 StatusFrequencia.PRESENTE, "P0001"));
 
         List<RegistroFrequencia> resultado = repository.listarPorTurmaEData("MAT001", "2026.1", "T01", DATA_AULA);
@@ -115,7 +118,8 @@ public class FrequenciaRepositoryTest {
     @Test
     @DisplayName("Deve retornar null ao buscar chave inexistente")
     void deveBuscarPorChaveUnicaRetornaNullQuandoNaoEncontrado() {
-        RegistroFrequencia resultado = repository.buscarPorChaveUnica("A9999", "MAT001", "2026.1", "T01", DATA_AULA);
+        RegistroFrequencia resultado = repository.buscarPorChaveUnica("A9999", "MAT001", "2026.1", "T01", DATA_AULA,
+                COD_AULA);
         assertNull(resultado);
     }
 
@@ -123,8 +127,8 @@ public class FrequenciaRepositoryTest {
     @DisplayName("Deve listar frequencias por aluno")
     void deveListarPorAluno() {
         repository.salvar(frequencia("A0001", StatusFrequencia.PRESENTE));
-        repository.salvar(
-                new RegistroFrequencia("A0002", "MAT001", "2026.1", "T01", DATA_AULA, StatusFrequencia.FALTA, "P0001"));
+        repository.salvar(new RegistroFrequencia("A0002", "MAT001", "2026.1", "T01", COD_AULA, DATA_AULA,
+                StatusFrequencia.FALTA, "P0001"));
 
         List<RegistroFrequencia> resultado = repository.listarPorAluno("A0001");
 
@@ -146,8 +150,8 @@ public class FrequenciaRepositoryTest {
     @DisplayName("Deve listar frequencias por aluno e turma")
     void deveListarPorAlunoETurma() {
         repository.salvar(frequencia("A0001", StatusFrequencia.PRESENTE));
-        repository.salvar(
-                new RegistroFrequencia("A0001", "FIS001", "2026.1", "T01", DATA_AULA, StatusFrequencia.FALTA, "P0001"));
+        repository.salvar(new RegistroFrequencia("A0001", "FIS001", "2026.1", "T01", COD_AULA, DATA_AULA,
+                StatusFrequencia.FALTA, "P0001"));
 
         List<RegistroFrequencia> resultado = repository.listarPorAlunoETurma("A0001", "MAT001", "2026.1", "T01");
 
@@ -167,7 +171,8 @@ public class FrequenciaRepositoryTest {
     void deveBuscarPorChaveUnicaCaseInsensitive() {
         repository.salvar(frequencia("A0001", StatusFrequencia.PRESENTE));
 
-        RegistroFrequencia resultado = repository.buscarPorChaveUnica("a0001", "mat001", "2026.1", "t01", DATA_AULA);
+        RegistroFrequencia resultado = repository.buscarPorChaveUnica("a0001", "mat001", "2026.1", "t01", DATA_AULA,
+                COD_AULA);
 
         assertNotNull(resultado);
         assertEquals(StatusFrequencia.PRESENTE, resultado.getStatus());
