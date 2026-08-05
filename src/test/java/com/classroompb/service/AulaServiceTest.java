@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import com.classroompb.model.Aula;
 import com.classroompb.model.Diario;
+import com.classroompb.model.Professor;
 import com.classroompb.model.SituacaoDiario;
 import com.classroompb.repository.AulaRepository;
 import com.classroompb.repository.DiarioRepository;
@@ -129,6 +130,38 @@ class AulaServiceTest {
                         mock(Aula.class)));
 
         assertEquals(3, service.quantidadeAulas("D01"));
+    }
+
+    @Test
+    void deveCadastrarDuracaoValida() throws Exception {
+        Diario diario = new Diario("D01", "T01", "Diario", "P001", "08:00", "Lab", 60,
+                SituacaoDiario.ATIVO);
+        when(diarioRepository.buscarPorCodigo("D01")).thenReturn(diario);
+        when(aulaRepository.buscarPorDiario("D01")).thenReturn(List.of());
+
+        service.cadastrarAula("A01", "D01", LocalDate.now(), "Conteudo", 2.5);
+
+        verify(aulaRepository).salvar(argThat(a -> a.getDuracaoHoras() == 2.5));
+    }
+
+    @Test
+    void naoDeveCadastrarDuracaoZeroOuNegativa() {
+        assertThrows(Exception.class,
+                () -> service.cadastrarAula("A01", "D01", LocalDate.now(), "Conteudo", 0.0));
+        assertThrows(Exception.class,
+                () -> service.cadastrarAula("A02", "D01", LocalDate.now(), "Conteudo", -1.0));
+    }
+
+    @Test
+    void naoDeveAlterarDuracaoDepoisDoFechamento() {
+        Professor professor = new Professor("P001", "Prof", "p@teste.com", "senha");
+        Diario diario = new Diario("D01", "T01", "Diario", "P001", "08:00", "Lab", 60,
+                SituacaoDiario.ENCERRADO);
+        Aula aula = new Aula("A01", "D01", LocalDate.now(), "Conteudo", 1, 2.0);
+        when(diarioRepository.buscarPorCodigo("D01")).thenReturn(diario);
+
+        assertThrows(Exception.class, () -> service.atualizarAula(professor, aula));
+        verify(aulaRepository, never()).atualizar(any());
     }
 
 }

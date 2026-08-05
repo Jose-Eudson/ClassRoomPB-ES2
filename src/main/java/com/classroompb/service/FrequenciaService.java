@@ -11,6 +11,8 @@ import com.classroompb.model.Disciplina;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.Nota;
 import com.classroompb.model.RegistroFrequencia;
+import com.classroompb.model.SituacaoDiario;
+import com.classroompb.model.SituacaoTurma;
 import com.classroompb.model.StatusFrequencia;
 import com.classroompb.model.StatusMatricula;
 import com.classroompb.model.TipoUsuario;
@@ -83,6 +85,7 @@ public class FrequenciaService {
         String turmaNorm = validarCampoObrigatorio(codigoTurma, "codigo da turma");
         String codAula = validarCampoObrigatorio(codigoAula, "codigo da aula");
 
+        Diario diarioContexto = null;
         if (aulaRepository != null && diarioRepository != null) {
             Aula aula = aulaRepository.buscarPorCodigo(codAula);
 
@@ -103,6 +106,13 @@ public class FrequenciaService {
             if (!diario.getMatriculaProfessor().equalsIgnoreCase(professor.getMatricula())) {
                 throw new Exception("Erro: Somente o professor responsável pelo diário pode registrar frequência.");
             }
+            if (diario.getSituacao() == SituacaoDiario.ENCERRADO) {
+                throw new Exception("Erro: Diario fechado nao permite registrar frequencia.");
+            }
+            if (dataAula != null && !dataAula.equals(aula.getData())) {
+                throw new Exception("Erro: A data informada nao corresponde a aula selecionada.");
+            }
+            diarioContexto = diario;
         }
 
         if (dataAula == null) {
@@ -113,15 +123,23 @@ public class FrequenciaService {
         }
 
         Turma turma = buscarTurmaOuFalhar(discNorm, periodoNorm, turmaNorm);
+        if (turma.getSituacao() == SituacaoTurma.ENCERRADA) {
+            throw new Exception("Erro: turma encerrada nao permite registrar frequencia.");
+        }
 
-        validarProfessorResponsavel(professor, turma);
+        if (diarioContexto == null) {
+            validarProfessorResponsavel(professor, turma);
+        }
         validarMatriculaConfirmada(alunoNorm, discNorm, periodoNorm, turmaNorm);
 
-        RegistroFrequencia frequencia = frequenciaRepository.buscarPorChaveUnica(alunoNorm, discNorm, periodoNorm,
-                turmaNorm, dataAula, codAula);
+        RegistroFrequencia frequencia = diarioContexto == null
+                ? frequenciaRepository.buscarPorChaveUnica(alunoNorm, discNorm, periodoNorm, turmaNorm, dataAula,
+                        codAula)
+                : frequenciaRepository.buscarPorAlunoDiarioEAula(alunoNorm, diarioContexto.getCodigo(), codAula);
 
         if (frequencia == null) {
-            frequencia = new RegistroFrequencia(alunoNorm, discNorm, periodoNorm, turmaNorm, codAula, dataAula, status,
+            frequencia = new RegistroFrequencia(alunoNorm, discNorm, periodoNorm, turmaNorm,
+                    diarioContexto == null ? null : diarioContexto.getCodigo(), codAula, dataAula, status,
                     professor.getMatricula());
             frequenciaRepository.salvar(frequencia);
         } else {
@@ -131,7 +149,9 @@ public class FrequenciaService {
             frequenciaRepository.atualizar(frequencia);
         }
 
-        sincronizarHistorico(alunoNorm, discNorm, periodoNorm, turmaNorm, turma);
+        if (diarioContexto == null) {
+            sincronizarHistorico(alunoNorm, discNorm, periodoNorm, turmaNorm, turma);
+        }
         return frequencia;
     }
 
@@ -169,6 +189,29 @@ public class FrequenciaService {
         return frequenciaRepository.listarPorTurmaEData(discNorm, periodoNorm, turmaNorm, dataAula);
     }
 
+    public List<RegistroFrequencia> listarFrequenciaDaAula(Usuario professor, String codigoDiario, String codigoAula)
+            throws Exception {
+        validarProfessor(professor);
+        String diarioCodigo = validarCampoObrigatorio(codigoDiario, "codigo do diario");
+        String aulaCodigo = validarCampoObrigatorio(codigoAula, "codigo da aula");
+        if (diarioRepository == null || aulaRepository == null) {
+            throw new Exception("Erro: Consulta por diario indisponivel.");
+        }
+        Diario diario = diarioRepository.buscarPorCodigo(diarioCodigo);
+        Aula aula = aulaRepository.buscarPorCodigo(aulaCodigo);
+        if (diario == null || aula == null || !diario.getCodigo().equalsIgnoreCase(aula.getCodigoDiario())) {
+            throw new Exception("Erro: Aula nao pertence ao diario informado.");
+        }
+        if (!diario.getMatriculaProfessor().equalsIgnoreCase(professor.getMatricula())) {
+            throw new Exception("Erro: Diario pertence a outro professor.");
+        }
+        return frequenciaRepository.listarPorDiarioEAula(diarioCodigo, aulaCodigo);
+    }
+
+    public List<RegistroFrequencia> listarPorAlunoEDiario(String matriculaAluno, String codigoDiario) {
+        return frequenciaRepository.listarPorAlunoEDiario(matriculaAluno, codigoDiario);
+    }
+
     /** Lista as turmas sob responsabilidade do professor informado. */
     public List<Turma> listarTurmasDoProfessor(Usuario professor) throws Exception {
         validarProfessor(professor);
@@ -196,6 +239,21 @@ public class FrequenciaService {
 
         return matriculaRepository.listarPorTurma(discNorm, periodoNorm, turmaNorm).stream()
                 .filter(m -> m.getStatus() == StatusMatricula.CONFIRMADA).collect(Collectors.toList());
+    }
+
+    public List<MatriculaTurma> listarMatriculasConfirmadasDoDiario(Usuario professor, String codigoDiario)
+            throws Exception {
+        validarProfessor(professor);
+        if (diarioRepository == null) {
+            throw new Exception("Erro: Consulta por diario indisponivel.");
+        }
+        Diario diario = diarioRepository.buscarPorCodigo(validarCampoObrigatorio(codigoDiario, "codigo do diario"));
+        if (diario == null || !professor.getMatricula().equalsIgnoreCase(diario.getMatriculaProfessor())) {
+            throw new Exception("Erro: Diario pertence a outro professor.");
+        }
+        return matriculaRepository
+                .listarPorTurma(diario.getCodigoDisciplina(), diario.getCodigoPeriodo(), diario.getCodigoTurma())
+                .stream().filter(m -> m.getStatus() == StatusMatricula.CONFIRMADA).collect(Collectors.toList());
     }
 
     public String obterAlertaFrequencia(double percentual) {

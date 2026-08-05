@@ -20,7 +20,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.classroompb.model.Aluno;
 import com.classroompb.model.Coordenador;
 import com.classroompb.model.PeriodoLetivo;
+import com.classroompb.model.SituacaoTurma;
+import com.classroompb.model.Turma;
 import com.classroompb.repository.PeriodoLetivoRepository;
+import com.classroompb.repository.TurmaRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Testes de PeriodoLetivoService")
@@ -184,6 +187,41 @@ public class PeriodoLetivoServiceTest {
         void naoDeveEncerrarPeriodoInexistente() {
             when(repository.buscarPorCodigo("XPTO")).thenReturn(null);
             assertThrows(Exception.class, () -> service.encerrarPeriodo(coordenador, "XPTO"));
+        }
+
+        @Test
+        void naoDeveEncerrarEnquantoExistirTurmaAberta() throws Exception {
+            ConsolidacaoAcademicaService consolidacao = mock(ConsolidacaoAcademicaService.class);
+            TurmaRepository turmas = mock(TurmaRepository.class);
+            when(consolidacao.getTurmaRepository()).thenReturn(turmas);
+            service = new PeriodoLetivoService(repository, consolidacao);
+            PeriodoLetivo periodo = new PeriodoLetivo();
+            Turma aberta = new Turma("T1", "ESW2", "2026.1", 20, null, null, null);
+            when(repository.buscarPorCodigo("2026.1")).thenReturn(periodo);
+            when(turmas.listarPorPeriodo("2026.1")).thenReturn(List.of(aberta));
+
+            assertThrows(Exception.class, () -> service.encerrarPeriodo(coordenador, "2026.1"));
+            assertFalse(periodo.isEncerrado());
+            verify(consolidacao, never()).consolidarPeriodo(any());
+        }
+
+        @Test
+        void deveEncerrarSemReconsolidarQuandoTodasAsTurmasEstiveremEncerradas() throws Exception {
+            ConsolidacaoAcademicaService consolidacao = mock(ConsolidacaoAcademicaService.class);
+            TurmaRepository turmas = mock(TurmaRepository.class);
+            when(consolidacao.getTurmaRepository()).thenReturn(turmas);
+            service = new PeriodoLetivoService(repository, consolidacao);
+            PeriodoLetivo periodo = new PeriodoLetivo();
+            periodo.setAtivo(true);
+            Turma encerrada = new Turma("T1", "ESW2", "2026.1", 20, null, null, null);
+            encerrada.setSituacao(SituacaoTurma.ENCERRADA);
+            when(repository.buscarPorCodigo("2026.1")).thenReturn(periodo);
+            when(turmas.listarPorPeriodo("2026.1")).thenReturn(List.of(encerrada));
+
+            service.encerrarPeriodo(coordenador, "2026.1");
+
+            assertTrue(periodo.isEncerrado());
+            verify(consolidacao, never()).consolidarPeriodo(any());
         }
     }
 

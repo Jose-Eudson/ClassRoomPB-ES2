@@ -103,6 +103,14 @@ public class FrequenciaServiceTest {
                 .thenReturn(null);
     }
 
+    private double calcularPercentualDoCenario(List<RegistroFrequencia> registros) {
+        when(frequenciaRepository.listarPorAlunoETurma(aluno.getMatricula(), "ES2", "2026.1", "T01"))
+                .thenReturn(registros);
+        double percentual = service.calcularPercentualFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01");
+        verify(frequenciaRepository).listarPorAlunoETurma(aluno.getMatricula(), "ES2", "2026.1", "T01");
+        return percentual;
+    }
+
     @Nested
     @DisplayName("Registro com sucesso")
     class RegistroComSucesso {
@@ -337,14 +345,7 @@ public class FrequenciaServiceTest {
                 new RegistroFrequencia(aluno.getMatricula(), "SO", "2026.1", "T03", COD_AULA, LocalDate.of(2026, 3, 2),
                         StatusFrequencia.FALTA, professor.getMatricula()));
 
-        when(frequenciaRepository.listarPorAlunoETurma(aluno.getMatricula(), "ES2", "2026.1", "T01"))
-                .thenReturn(List.of(registros.get(0)));
-
-        double percentual = service.calcularPercentualFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01");
-
-        assertEquals(100.0, percentual);
-
-        verify(frequenciaRepository).listarPorAlunoETurma(aluno.getMatricula(), "ES2", "2026.1", "T01");
+        assertEquals(100.0, calcularPercentualDoCenario(List.of(registros.get(0))));
     }
 
     @Test
@@ -359,14 +360,7 @@ public class FrequenciaServiceTest {
                 new RegistroFrequencia(outroAluno.getMatricula(), "ES2", "2026.1", "T01", COD_AULA,
                         LocalDate.of(2026, 3, 2), StatusFrequencia.FALTA, professor.getMatricula()));
 
-        when(frequenciaRepository.listarPorAlunoETurma(aluno.getMatricula(), "ES2", "2026.1", "T01"))
-                .thenReturn(List.of(registros.get(0)));
-
-        double percentual = service.calcularPercentualFrequencia(aluno.getMatricula(), "ES2", "2026.1", "T01");
-
-        assertEquals(100.0, percentual);
-
-        verify(frequenciaRepository).listarPorAlunoETurma(aluno.getMatricula(), "ES2", "2026.1", "T01");
+        assertEquals(100.0, calcularPercentualDoCenario(List.of(registros.get(0))));
     }
 
     @Test
@@ -721,7 +715,9 @@ public class FrequenciaServiceTest {
         @DisplayName("Deve registrar frequência por aula")
         void deveRegistrarFrequenciaPorAula() throws Exception {
             inicializarServicoComAulaEDiario();
-            mockCenarioValido();
+            when(turmaRepository.buscarPorChaveUnica(DISC, PER, TURMA)).thenReturn(turma);
+            when(matriculaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA))
+                    .thenReturn(matriculaConfirmada);
 
             Aula aula = new Aula(COD_AULA, "D01", DATA_AULA, "Conteudo", 1);
             Diario diario = new Diario("D01", TURMA, "Engenharia de Software", professor.getMatricula(), "08:00",
@@ -729,7 +725,7 @@ public class FrequenciaServiceTest {
 
             when(aulaRepository.buscarPorCodigo(COD_AULA)).thenReturn(aula);
             when(diarioRepository.buscarPorCodigo("D01")).thenReturn(diario);
-            when(frequenciaRepository.buscarPorChaveUnica(aluno.getMatricula(), DISC, PER, TURMA, DATA_AULA, COD_AULA))
+            when(frequenciaRepository.buscarPorAlunoDiarioEAula(aluno.getMatricula(), "D01", COD_AULA))
                     .thenReturn(null);
 
             service.registrarFrequencia(professor, aluno.getMatricula(), DISC, PER, TURMA, COD_AULA, DATA_AULA,

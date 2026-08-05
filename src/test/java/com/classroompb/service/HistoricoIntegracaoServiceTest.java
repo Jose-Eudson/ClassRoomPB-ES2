@@ -1,6 +1,5 @@
 package com.classroompb.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -15,7 +14,6 @@ import com.classroompb.model.Aluno;
 import com.classroompb.model.Aula;
 import com.classroompb.model.Diario;
 import com.classroompb.model.Disciplina;
-import com.classroompb.model.Historico;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.Professor;
@@ -85,33 +83,14 @@ class HistoricoIntegracaoServiceTest {
     }
 
     @Test
-    void notasEFrequenciaDevemCriarEAtualizarMesmoRegistroCompartilhado() throws Exception {
+    void notasEFrequenciaNaoDevemGerarHistoricoAntesDoFechamento() throws Exception {
         frequenciaService.registrarFrequencia(professor, "A1", "ES2", "2026.1", "T1", "A01", LocalDate.of(2026, 3, 1),
                 StatusFrequencia.PRESENTE);
         notaService.lancarNotas(professor, "A1", "ES2", "2026.1", "T1", 8.0, 9.0);
-
-        assertTrue(consultaService.consultarHistoricoAluno(aluno).isEmpty());
-        Historico historico = historicoRepository.buscarPorAluno("A1").get(0);
-        assertEquals(8.5, historico.getNotaFinal());
-        assertEquals(100.0, historico.getFrequencia());
-        assertEquals("APROVADO", historico.getSituacao());
-        assertEquals("Engenharia de Software II", historico.getNomeDisciplina());
-        assertEquals("Joao da Silva", historico.getNomeProfessor());
-
         notaService.alterarNotas(professor, "A1", "ES2", "2026.1", "T1", 5.0, 5.0);
-        frequenciaService.registrarFrequencia(professor, "A1", "ES2", "2026.1", "T1", "A01", LocalDate.of(2026, 3, 2),
+        frequenciaService.registrarFrequencia(professor, "A1", "ES2", "2026.1", "T1", "A01", LocalDate.of(2026, 3, 1),
                 StatusFrequencia.FALTA);
-
-        PeriodoLetivo periodo = periodoRepository.buscarPorCodigo("2026.1");
-        periodo.setAtivo(false);
-        periodo.setEncerrado(true);
-        periodoRepository.atualizarDados();
-
-        assertEquals(1, historicoRepository.buscarPorAluno("A1").size());
-        assertEquals(1, consultaService.consultarHistoricoAluno(aluno).size());
-        Historico atualizado = consultaService.consultarHistoricoAluno(aluno).get(0);
-        assertEquals(5.0, atualizado.getNotaFinal());
-        assertEquals(50.0, atualizado.getFrequencia());
-        assertEquals("REPROVADO POR FALTA", atualizado.getSituacao());
+        assertTrue(historicoRepository.buscarPorAluno("A1").isEmpty());
+        assertTrue(consultaService.consultarHistoricoAluno(aluno).isEmpty());
     }
 }

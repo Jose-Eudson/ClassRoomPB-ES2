@@ -76,6 +76,26 @@ class NotaServiceTest {
         matricula.setStatus(StatusMatricula.CONFIRMADA);
     }
 
+    private void configurarTurmaEMatricula(MatriculaTurma resultadoMatricula) {
+        when(turmaRepository.buscarPorChaveUnica("ES2", "2026.1", "T01")).thenReturn(turma);
+        when(matriculaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01"))
+                .thenReturn(resultadoMatricula);
+    }
+
+    private void configurarCenarioLegado(MatriculaTurma resultadoMatricula, Nota nota) {
+        configurarTurmaEMatricula(resultadoMatricula);
+        when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
+    }
+
+    private void verificarMatriculaRejeitada() {
+        Exception ex = assertThrows(Exception.class,
+                () -> service.lancarNotas(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", 8.0, 9.0));
+        assertEquals("Erro: O aluno não possui matrícula confirmada.", ex.getMessage());
+        verify(turmaRepository).buscarPorChaveUnica("ES2", "2026.1", "T01");
+        verify(matriculaRepository).buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01");
+        verifyNoInteractions(notaRepository);
+    }
+
     @Nested
     @DisplayName("Lançamento de notas")
     class LancamentoNotas {
@@ -84,25 +104,7 @@ class NotaServiceTest {
         @DisplayName("Deve lançar notas quando ainda não existir registro")
         void deveSalvarNovaNota() throws Exception {
 
-            when(turmaRepository.buscarPorChaveUnica(
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(
-                    "A0001",
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(matricula);
-
-            when(notaRepository.buscarPorChaveUnica(
-                    "A0001",
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(null);
+            configurarCenarioLegado(matricula, null);
 
             service.lancarNotas(
                     professor,
@@ -131,13 +133,7 @@ class NotaServiceTest {
 
             Nota nota = new Nota("A0001", "ES2", "2026.1", "T01");
 
-            when(turmaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString())).thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
-                    .thenReturn(matricula);
-
-            when(notaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
-                    .thenReturn(nota);
+            configurarCenarioLegado(matricula, nota);
 
             service.lancarNotas(professor, "A0001", "ES2", "2026.1", "T01", 7.0, 6.5);
 
@@ -155,25 +151,7 @@ class NotaServiceTest {
         @DisplayName("Não deve salvar e atualizar ao mesmo tempo")
         void naoDeveSalvarEAtualizarAoMesmoTempo() throws Exception {
 
-            when(turmaRepository.buscarPorChaveUnica(
-                    anyString(),
-                    anyString(),
-                    anyString()))
-                    .thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(
-                    anyString(),
-                    anyString(),
-                    anyString(),
-                    anyString()))
-                    .thenReturn(matricula);
-
-            when(notaRepository.buscarPorChaveUnica(
-                    anyString(),
-                    anyString(),
-                    anyString(),
-                    anyString()))
-                    .thenReturn(null);
+            configurarCenarioLegado(matricula, null);
 
             service.lancarNotas(
                     professor,
@@ -204,11 +182,7 @@ class NotaServiceTest {
                     null, null, null, periodoRepository);
 
             when(periodoRepository.buscarPorCodigo("2026.1")).thenReturn(periodo);
-            when(turmaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString())).thenReturn(turma);
-            when(matriculaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
-                    .thenReturn(matricula);
-            when(notaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
-                    .thenReturn(nota);
+            configurarCenarioLegado(matricula, nota);
 
             serviceComPeriodo.alterarNotas(professor, "A0001", "ES2", "2026.1", "T01", 7.5, 8.0);
 
@@ -255,13 +229,7 @@ class NotaServiceTest {
 
             Nota nota = new Nota("A0001", "ES2", "2026.1", "T01");
 
-            when(turmaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString())).thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
-                    .thenReturn(matricula);
-
-            when(notaRepository.buscarPorChaveUnica(anyString(), anyString(), anyString(), anyString()))
-                    .thenReturn(nota);
+            configurarCenarioLegado(matricula, nota);
 
             service.alterarNotas(professor, "A0001", "ES2", "2026.1", "T01", 7.5, 8.0);
 
@@ -356,45 +324,8 @@ class NotaServiceTest {
         @DisplayName("Deve lançar exceção quando matrícula não existir")
         void deveLancarExcecaoQuandoMatriculaNaoExistir() {
 
-            when(turmaRepository.buscarPorChaveUnica(
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(
-                    aluno.getMatricula(),
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(null);
-
-            Exception ex = assertThrows(Exception.class, () ->
-                    service.lancarNotas(
-                            professor,
-                            aluno.getMatricula(),
-                            "ES2",
-                            "2026.1",
-                            "T01",
-                            8.0,
-                            9.0));
-
-            assertEquals(
-                    "Erro: O aluno não possui matrícula confirmada.",
-                    ex.getMessage());
-
-            verify(turmaRepository).buscarPorChaveUnica(
-                    "ES2",
-                    "2026.1",
-                    "T01");
-
-            verify(matriculaRepository).buscarPorChaveUnica(
-                    aluno.getMatricula(),
-                    "ES2",
-                    "2026.1",
-                    "T01");
-
-            verifyNoInteractions(notaRepository);
+            configurarTurmaEMatricula(null);
+            verificarMatriculaRejeitada();
         }
 
         @Test
@@ -403,46 +334,15 @@ class NotaServiceTest {
 
             matricula.setStatus(StatusMatricula.PENDENTE);
 
-            when(turmaRepository.buscarPorChaveUnica("ES2", "2026.1", "T01")).thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01"))
-                    .thenReturn(matricula);
-
-            Exception ex = assertThrows(Exception.class,
-                    () -> service.lancarNotas(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", 8.0, 9.0));
-
-            assertEquals("Erro: O aluno não possui matrícula confirmada.", ex.getMessage());
-
-            verify(turmaRepository).buscarPorChaveUnica("ES2", "2026.1", "T01");
-
-            verify(matriculaRepository).buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01");
-
-            verifyNoInteractions(notaRepository);
+            configurarTurmaEMatricula(matricula);
+            verificarMatriculaRejeitada();
         }
 
         @Test
         @DisplayName("Deve permitir lançamento quando matrícula estiver confirmada")
         void devePermitirQuandoMatriculaConfirmada() throws Exception {
 
-            when(turmaRepository.buscarPorChaveUnica(
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(
-                    aluno.getMatricula(),
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(matricula);
-
-            when(notaRepository.buscarPorChaveUnica(
-                    aluno.getMatricula(),
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(null);
+            configurarCenarioLegado(matricula, null);
 
             service.lancarNotas(
                     professor,
@@ -518,12 +418,7 @@ class NotaServiceTest {
             nota.setEtapa1(5.0);
             nota.setEtapa2(6.0);
 
-            when(turmaRepository.buscarPorChaveUnica("ES2", "2026.1", "T01")).thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01"))
-                    .thenReturn(matricula);
-
-            when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
+            configurarCenarioLegado(matricula, nota);
 
             service.lancarNotas(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", 9.0, 8.5);
 
@@ -540,12 +435,7 @@ class NotaServiceTest {
 
             Nota nota = new Nota(aluno.getMatricula(), "ES2", "2026.1", "T01");
 
-            when(turmaRepository.buscarPorChaveUnica("ES2", "2026.1", "T01")).thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01"))
-                    .thenReturn(matricula);
-
-            when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
+            configurarCenarioLegado(matricula, nota);
 
             service.lancarNotas(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", 7.0, 8.0);
 
@@ -557,25 +447,7 @@ class NotaServiceTest {
         @DisplayName("Deve salvar nova nota quando ainda não existir")
         void deveSalvarNovaNotaQuandoNaoExistir() throws Exception {
 
-            when(turmaRepository.buscarPorChaveUnica(
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(
-                    aluno.getMatricula(),
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(matricula);
-
-            when(notaRepository.buscarPorChaveUnica(
-                    aluno.getMatricula(),
-                    "ES2",
-                    "2026.1",
-                    "T01"))
-                    .thenReturn(null);
+            configurarCenarioLegado(matricula, null);
 
             service.lancarNotas(
                     professor,
@@ -599,12 +471,7 @@ class NotaServiceTest {
             nota.setEtapa1(3.0);
             nota.setEtapa2(4.0);
 
-            when(turmaRepository.buscarPorChaveUnica("ES2", "2026.1", "T01")).thenReturn(turma);
-
-            when(matriculaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01"))
-                    .thenReturn(matricula);
-
-            when(notaRepository.buscarPorChaveUnica(aluno.getMatricula(), "ES2", "2026.1", "T01")).thenReturn(nota);
+            configurarCenarioLegado(matricula, nota);
 
             service.lancarNotas(professor, aluno.getMatricula(), "ES2", "2026.1", "T01", 8.75, 9.25);
 

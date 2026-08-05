@@ -47,6 +47,9 @@ public class FrequenciaRepository {
 
     /** Persiste um novo registro de frequencia. */
     public void salvar(RegistroFrequencia frequencia) {
+        if (frequencias.stream().anyMatch(f -> f.getChaveUnica().equalsIgnoreCase(frequencia.getChaveUnica()))) {
+            throw new IllegalArgumentException("Registro de frequência duplicado.");
+        }
         frequencias.add(frequencia);
         salvarDados();
     }
@@ -100,12 +103,37 @@ public class FrequenciaRepository {
             }
         }
         throw new IllegalArgumentException(
-                "Registro de frequencia com chave " + atualizada.getChaveUnica() + " nao encontrado.");
+                "Registro de frequência com chave " + atualizada.getChaveUnica() + " não encontrado.");
     }
 
     public RegistroFrequencia buscarPorAlunoEAula(String matriculaAluno, String codigoAula) {
 
         return frequencias.stream().filter(r -> r.getMatriculaAluno().equalsIgnoreCase(matriculaAluno))
                 .filter(r -> codigoAula.equalsIgnoreCase(r.getCodigoAula())).findFirst().orElse(null);
+    }
+
+    public RegistroFrequencia buscarPorAlunoDiarioEAula(String matriculaAluno, String codigoDiario,
+            String codigoAula) {
+        return frequencias.stream().filter(r -> iguais(r.getMatriculaAluno(), matriculaAluno))
+                .filter(r -> iguais(r.getCodigoDiario(), codigoDiario))
+                .filter(r -> iguais(r.getCodigoAula(), codigoAula)).findFirst().orElse(null);
+    }
+
+    public List<RegistroFrequencia> listarPorDiarioEAula(String codigoDiario, String codigoAula) {
+        return frequencias.stream().filter(r -> iguais(r.getCodigoDiario(), codigoDiario))
+                .filter(r -> iguais(r.getCodigoAula(), codigoAula)).collect(Collectors.toList());
+    }
+
+    public List<RegistroFrequencia> listarPorAlunoEDiario(String matriculaAluno, String codigoDiario) {
+        return frequencias.stream().filter(r -> iguais(r.getMatriculaAluno(), matriculaAluno))
+                .filter(r -> iguais(r.getCodigoDiario(), codigoDiario)).collect(Collectors.toList());
+    }
+
+    public List<RegistroFrequencia> listarPorDiario(String codigoDiario) {
+        return frequencias.stream().filter(r -> iguais(r.getCodigoDiario(), codigoDiario)).collect(Collectors.toList());
+    }
+
+    private boolean iguais(String primeiro, String segundo) {
+        return primeiro != null && segundo != null && primeiro.equalsIgnoreCase(segundo);
     }
 }

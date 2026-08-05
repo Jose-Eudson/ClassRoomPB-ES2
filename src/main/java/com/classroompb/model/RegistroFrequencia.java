@@ -20,6 +20,7 @@ public class RegistroFrequencia implements Serializable {
     private String codigoDisciplina;
     private String codigoPeriodo;
     private String codigoTurma;
+    private String codigoDiario;
     private String codigoAula;
     private LocalDate dataAula;
     private StatusFrequencia status;
@@ -33,14 +34,23 @@ public class RegistroFrequencia implements Serializable {
     /** Cria um registro de frequencia para uma aula. */
     public RegistroFrequencia(String matriculaAluno, String codigoDisciplina, String codigoPeriodo, String codigoTurma,
             String codigoAula, LocalDate dataAula, StatusFrequencia status, String matriculaProfessor) {
-        this.matriculaAluno = matriculaAluno;
-        this.codigoDisciplina = codigoDisciplina;
-        this.codigoPeriodo = codigoPeriodo;
-        this.codigoTurma = codigoTurma;
-        this.codigoAula = codigoAula;
-        this.dataAula = dataAula;
-        this.status = status;
-        this.matriculaProfessor = matriculaProfessor;
+        this(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma, null, codigoAula, dataAula, status,
+                matriculaProfessor);
+    }
+
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    public RegistroFrequencia(String matriculaAluno, String codigoDisciplina, String codigoPeriodo, String codigoTurma,
+            String codigoDiario, String codigoAula, LocalDate dataAula, StatusFrequencia status,
+            String matriculaProfessor) {
+        setMatriculaAluno(matriculaAluno);
+        setCodigoDisciplina(codigoDisciplina);
+        setCodigoPeriodo(codigoPeriodo);
+        setCodigoTurma(codigoTurma);
+        setCodigoDiario(codigoDiario);
+        setCodigoAula(codigoAula);
+        setDataAula(dataAula);
+        setStatus(status);
+        setMatriculaProfessor(matriculaProfessor);
         this.dataRegistro = LocalDateTime.now();
     }
 
@@ -50,6 +60,14 @@ public class RegistroFrequencia implements Serializable {
 
     public void setMatriculaAluno(String matriculaAluno) {
         this.matriculaAluno = matriculaAluno;
+    }
+
+    public String getCodigoDiario() {
+        return codigoDiario;
+    }
+
+    public void setCodigoDiario(String codigoDiario) {
+        this.codigoDiario = codigoDiario;
     }
 
     public String getCodigoDisciplina() {
@@ -121,8 +139,11 @@ public class RegistroFrequencia implements Serializable {
      */
     @JsonIgnore
     public String getChaveUnica() {
-        return matriculaAluno + "_" + codigoDisciplina + "_" + codigoPeriodo + "_" + codigoTurma + "_" + dataAula + "_"
-                + codigoAula;
+        if (codigoDiario != null && !codigoDiario.isBlank()) {
+            return matriculaAluno + "_" + codigoDiario + "_" + codigoAula;
+        }
+        return matriculaAluno + "_" + codigoDisciplina + "_" + codigoPeriodo + "_" + codigoTurma + "_" + dataAula
+                + "_" + codigoAula;
     }
 
     @Override

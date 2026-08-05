@@ -46,6 +46,9 @@ public class DiarioRepository {
     }
 
     public void salvar(Diario diario) {
+        if (existePorCodigo(diario.getCodigo())) {
+            throw new IllegalArgumentException("Diário com código " + diario.getCodigo() + " já existe.");
+        }
         diarios.add(diario);
         salvarDados();
     }
@@ -64,6 +67,11 @@ public class DiarioRepository {
 
     public List<Diario> buscarPorTurma(String codigoTurma) {
         return diarios.stream().filter(d -> d.getCodigoTurma().equalsIgnoreCase(codigoTurma))
+                .collect(Collectors.toList());
+    }
+
+    public List<Diario> buscarPorTurma(String codigoDisciplina, String codigoPeriodo, String codigoTurma) {
+        return diarios.stream().filter(d -> correspondeTurma(d, codigoDisciplina, codigoPeriodo, codigoTurma))
                 .collect(Collectors.toList());
     }
 
@@ -95,5 +103,17 @@ public class DiarioRepository {
         } else {
             throw new IllegalArgumentException("Diario com codigo " + codigo + " nao encontrado.");
         }
+    }
+
+    private boolean correspondeTurma(Diario diario, String codigoDisciplina, String codigoPeriodo,
+            String codigoTurma) {
+        if (!diario.getCodigoTurma().equalsIgnoreCase(codigoTurma)) {
+            return false;
+        }
+        boolean disciplinaCompativel = diario.getCodigoDisciplina() == null || codigoDisciplina == null
+                || diario.getCodigoDisciplina().equalsIgnoreCase(codigoDisciplina);
+        boolean periodoCompativel = diario.getCodigoPeriodo() == null || codigoPeriodo == null
+                || diario.getCodigoPeriodo().equalsIgnoreCase(codigoPeriodo);
+        return disciplinaCompativel && periodoCompativel;
     }
 }

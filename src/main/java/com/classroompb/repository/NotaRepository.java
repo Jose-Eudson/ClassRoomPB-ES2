@@ -40,6 +40,9 @@ public class NotaRepository {
     }
 
     public void salvar(Nota nota) {
+        if (notas.stream().anyMatch(n -> n.getChaveUnica().equalsIgnoreCase(nota.getChaveUnica()))) {
+            throw new IllegalArgumentException("Nota duplicada.");
+        }
         notas.add(nota);
         salvarDados();
     }
@@ -69,5 +72,25 @@ public class NotaRepository {
 
     public List<Nota> listarTodas() {
         return new ArrayList<>(notas);
+    }
+
+    public Nota buscarPorAlunoEAvaliacao(String matriculaAluno, String codigoAvaliacao) {
+        return notas.stream().filter(n -> n.getCodigoAvaliacao() != null)
+                .filter(n -> n.getMatriculaAluno().equalsIgnoreCase(matriculaAluno)
+                        && n.getCodigoAvaliacao().equalsIgnoreCase(codigoAvaliacao))
+                .findFirst().orElse(null);
+    }
+
+    public List<Nota> listarPorAlunoEDiario(String matriculaAluno, String codigoDiario) {
+        return notas.stream().filter(n -> n.getCodigoDiario() != null)
+                .filter(n -> n.getMatriculaAluno().equalsIgnoreCase(matriculaAluno)
+                        && n.getCodigoDiario().equalsIgnoreCase(codigoDiario))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public List<Nota> listarPorDiario(String codigoDiario) {
+        return notas.stream()
+                .filter(n -> n.getCodigoDiario() != null && n.getCodigoDiario().equalsIgnoreCase(codigoDiario))
+                .collect(java.util.stream.Collectors.toList());
     }
 }

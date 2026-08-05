@@ -37,12 +37,12 @@ public class MatriculaTurmaServiceRF41Test {
 
     @BeforeEach
     void setUp() {
-        matriculaRepository = new MatriculaTurmaRepository(tempDir.resolve("matriculas.json").toString());
-        turmaRepository = new TurmaRepository(tempDir.resolve("turmas.json").toString());
         PeriodoLetivoRepository periodoRepository = new PeriodoLetivoRepository(
                 tempDir.resolve("periodos.json").toString());
+        matriculaRepository = new MatriculaTurmaRepository(tempDir.resolve("matriculas.json").toString());
         DisciplinaRepository disciplinaRepository = new DisciplinaRepository(
                 tempDir.resolve("disciplinas.json").toString());
+        turmaRepository = new TurmaRepository(tempDir.resolve("turmas.json").toString());
         HistoricoRepository historicoRepository = new HistoricoRepository(
                 tempDir.resolve("historicos.json").toString());
 

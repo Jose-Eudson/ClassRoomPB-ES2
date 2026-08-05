@@ -2,6 +2,8 @@ package com.classroompb.model;
 
 public class Diario {
     private String codigo;
+    private String codigoDisciplina;
+    private String codigoPeriodo;
     private String codigoTurma;
     private String descricao;
     private String matriculaProfessor;
@@ -16,7 +18,15 @@ public class Diario {
 
     public Diario(String codigo, String codigoTurma, String descricao, String matriculaProfessor, String horario,
             String sala, int cargaHoraria, SituacaoDiario situacao) {
+        this(codigo, null, null, codigoTurma, descricao, matriculaProfessor, horario, sala, cargaHoraria, situacao);
+    }
+
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    public Diario(String codigo, String codigoDisciplina, String codigoPeriodo, String codigoTurma, String descricao,
+            String matriculaProfessor, String horario, String sala, int cargaHoraria, SituacaoDiario situacao) {
         this.codigo = codigo;
+        this.codigoDisciplina = codigoDisciplina;
+        this.codigoPeriodo = codigoPeriodo;
         this.codigoTurma = codigoTurma;
         this.descricao = descricao;
         this.matriculaProfessor = matriculaProfessor;
@@ -36,6 +46,22 @@ public class Diario {
 
     public String getCodigoTurma() {
         return codigoTurma;
+    }
+
+    public String getCodigoDisciplina() {
+        return codigoDisciplina;
+    }
+
+    public void setCodigoDisciplina(String codigoDisciplina) {
+        this.codigoDisciplina = codigoDisciplina;
+    }
+
+    public String getCodigoPeriodo() {
+        return codigoPeriodo;
+    }
+
+    public void setCodigoPeriodo(String codigoPeriodo) {
+        this.codigoPeriodo = codigoPeriodo;
     }
 
     public void setCodigoTurma(String codigoTurma) {

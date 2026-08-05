@@ -8,10 +8,13 @@ import java.util.Set;
 
 import com.classroompb.model.Disciplina;
 import com.classroompb.model.PeriodoLetivo;
+import com.classroompb.model.SituacaoDiario;
+import com.classroompb.model.SituacaoTurma;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.DisciplinaRepository;
+import com.classroompb.repository.DiarioRepository;
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
 import com.classroompb.repository.UsuarioRepository;
@@ -33,6 +36,8 @@ public class TurmaService {
     private final DisciplinaRepository disciplinaRepository;
     private final PeriodoLetivoRepository periodoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final DiarioRepository diarioRepository;
+    private final ConsolidacaoAcademicaService consolidacaoService;
 
     public TurmaService(TurmaRepository turmaRepository, DisciplinaRepository disciplinaRepository,
             PeriodoLetivoRepository periodoRepository) {
@@ -41,10 +46,18 @@ public class TurmaService {
 
     public TurmaService(TurmaRepository turmaRepository, DisciplinaRepository disciplinaRepository,
             PeriodoLetivoRepository periodoRepository, UsuarioRepository usuarioRepository) {
+        this(turmaRepository, disciplinaRepository, periodoRepository, usuarioRepository, null, null);
+    }
+
+    public TurmaService(TurmaRepository turmaRepository, DisciplinaRepository disciplinaRepository,
+            PeriodoLetivoRepository periodoRepository, UsuarioRepository usuarioRepository,
+            DiarioRepository diarioRepository, ConsolidacaoAcademicaService consolidacaoService) {
         this.turmaRepository = turmaRepository;
         this.disciplinaRepository = disciplinaRepository;
         this.periodoRepository = periodoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.diarioRepository = diarioRepository;
+        this.consolidacaoService = consolidacaoService;
     }
 
     /**
@@ -154,6 +167,29 @@ public class TurmaService {
         turmaRepository.salvar(turma);
     }
 
+    /** RF11 Release 4: cria somente a oferta; execucao academica pertence aos diarios. */
+    public void ofertarTurma(Usuario coordenador, String codigoDisciplina, String codigoPeriodo, String codigoTurma,
+            int vagas) throws Exception {
+        validarCoordenador(coordenador);
+        String disciplina = validarCampoObrigatorio(codigoDisciplina, "Codigo da disciplina");
+        String periodo = validarCampoObrigatorio(codigoPeriodo, "Codigo do periodo");
+        String turma = validarCampoObrigatorio(codigoTurma, "Codigo da turma");
+        if (vagas <= 0) {
+            throw new Exception("Erro: O numero de vagas deve ser positivo.");
+        }
+        if (disciplinaRepository.buscarPorCodigo(disciplina) == null) {
+            throw new Exception("Erro: Disciplina nao encontrada.");
+        }
+        PeriodoLetivo periodoLetivo = periodoRepository.buscarPorCodigo(periodo);
+        if (periodoLetivo == null || !periodoLetivo.isAtivo() || periodoLetivo.isEncerrado()) {
+            throw new Exception("Erro: Periodo letivo deve estar ativo.");
+        }
+        if (turmaRepository.existePorChaveUnica(disciplina, periodo, turma)) {
+            throw new Exception("Erro: Ja existe uma turma com essa identificacao.");
+        }
+        turmaRepository.salvar(new Turma(turma, disciplina, periodo, vagas, null, null, null));
+    }
+
     /**
      * Lista todas as turmas ofertadas em um determinado período letivo.
      *
@@ -251,6 +287,7 @@ public class TurmaService {
 
         // Localiza a turma — lança exceção se não existir
         Turma turma = buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+        validarTurmaAberta(turma);
 
         // ! RF14: Só é possível editar antes do início das aulas
         PeriodoLetivo periodoEditar = periodoRepository.buscarPorCodigo(codigoPeriodo);
@@ -324,7 +361,8 @@ public class TurmaService {
         }
 
         // Confirma existência antes de deletar
-        buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+        Turma turma = buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+        validarTurmaAberta(turma);
 
         // RF14: Só é possível cancelar antes do início das aulas
         PeriodoLetivo periodoExcluir = periodoRepository.buscarPorCodigo(codigoPeriodo);
@@ -335,6 +373,35 @@ public class TurmaService {
         }
 
         turmaRepository.deletar(codigoDisciplina, codigoPeriodo, codigoTurma);
+    }
+
+    /** Encerra individualmente a turma e gera o histórico consolidado como consequência da operação. */
+    public void encerrarTurma(Usuario coordenador, String codigoDisciplina, String codigoPeriodo, String codigoTurma)
+            throws Exception {
+        validarCoordenador(coordenador);
+        if (diarioRepository == null || consolidacaoService == null) {
+            throw new IllegalStateException("Dependencias para encerramento da turma indisponiveis.");
+        }
+        Turma turma = buscarTurma(codigoDisciplina, codigoPeriodo, codigoTurma);
+        validarTurmaAberta(turma);
+        List<com.classroompb.model.Diario> diarios = diarioRepository.buscarPorTurma(turma.getCodigoDisciplina(),
+                turma.getCodigoPeriodo(), turma.getCodigo());
+        if (diarios.isEmpty()) {
+            throw new Exception("Erro: RN15 - turma sem diario nao pode ser encerrada.");
+        }
+        if (diarios.stream().anyMatch(d -> d.getSituacao() != SituacaoDiario.ENCERRADO)) {
+            throw new Exception("Erro: todos os diarios da turma devem estar encerrados.");
+        }
+
+        consolidacaoService.consolidarTurma(turma);
+        turma.setSituacao(SituacaoTurma.ENCERRADA);
+        turmaRepository.atualizar(turma);
+    }
+
+    private void validarTurmaAberta(Turma turma) throws Exception {
+        if (turma != null && turma.getSituacao() == SituacaoTurma.ENCERRADA) {
+            throw new Exception("Erro: turma ja encerrada nao permite alteracoes academicas.");
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -365,7 +432,7 @@ public class TurmaService {
         }
     }
 
-    private static boolean horariosConflitam(String horarioA, String horarioB) {
+    public static boolean horariosConflitam(String horarioA, String horarioB) {
         String normalizadoA = normalizarHorario(horarioA);
         String normalizadoB = normalizarHorario(horarioB);
         if (normalizadoA.isEmpty() || normalizadoB.isEmpty()) {
@@ -512,6 +579,19 @@ public class TurmaService {
 
     private static String normalizarIdentificador(String valor) {
         return valor == null ? "" : valor.trim();
+    }
+
+    private void validarCoordenador(Usuario coordenador) throws Exception {
+        if (coordenador == null || coordenador.getTipo() != TipoUsuario.COORDENADOR) {
+            throw new Exception("Erro: Apenas coordenadores podem ofertar turmas.");
+        }
+    }
+
+    private String validarCampoObrigatorio(String valor, String campo) throws Exception {
+        if (valor == null || valor.trim().isEmpty()) {
+            throw new Exception("Erro: " + campo + " nao pode ser vazio.");
+        }
+        return valor.trim();
     }
 
     private static final class HorarioInfo {

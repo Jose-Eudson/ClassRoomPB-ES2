@@ -37,6 +37,9 @@ public class Turma implements Serializable {
     /** Matrícula do professor responsável pela turma (pode ser nulo). RF11. */
     private String matriculaProfessor;
 
+    /** Situação acadêmica da oferta. Ausente em JSONs antigos, permanece ABERTA. */
+    private SituacaoTurma situacao = SituacaoTurma.ABERTA;
+
     /** Construtor padrão necessário para desserialização JSON. */
     public Turma() {
     }
@@ -68,6 +71,7 @@ public class Turma implements Serializable {
         this.horario = horario;
         this.sala = sala;
         this.matriculaProfessor = matriculaProfessor;
+        this.situacao = SituacaoTurma.ABERTA;
     }
 
     // -------------------------------------------------------------------------
@@ -128,6 +132,14 @@ public class Turma implements Serializable {
 
     public void setMatriculaProfessor(String matriculaProfessor) {
         this.matriculaProfessor = matriculaProfessor;
+    }
+
+    public SituacaoTurma getSituacao() {
+        return situacao == null ? SituacaoTurma.ABERTA : situacao;
+    }
+
+    public void setSituacao(SituacaoTurma situacao) {
+        this.situacao = situacao == null ? SituacaoTurma.ABERTA : situacao;
     }
 
     // -------------------------------------------------------------------------

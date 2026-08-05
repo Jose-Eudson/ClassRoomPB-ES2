@@ -3,16 +3,24 @@ package com.classroompb.service;
 import java.time.LocalDate;
 
 import com.classroompb.model.PeriodoLetivo;
+import com.classroompb.model.SituacaoTurma;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.PeriodoLetivoRepository;
+import com.classroompb.repository.TurmaRepository;
 
 public class PeriodoLetivoService {
 
     private final PeriodoLetivoRepository repository;
+    private final TurmaRepository turmaRepository;
 
     public PeriodoLetivoService(PeriodoLetivoRepository repository) {
+        this(repository, null);
+    }
+
+    public PeriodoLetivoService(PeriodoLetivoRepository repository, ConsolidacaoAcademicaService consolidacaoService) {
         this.repository = repository;
+        this.turmaRepository = consolidacaoService == null ? null : consolidacaoService.getTurmaRepository();
     }
 
     public void cadastrarPeriodo(String codigo, int ano, int semestre, LocalDate dataInicio, LocalDate dataFim,
@@ -83,6 +91,11 @@ public class PeriodoLetivoService {
 
         if (periodo == null) {
             throw new Exception("Erro: Periodo nao encontrado.");
+        }
+
+        if (turmaRepository != null && turmaRepository.listarPorPeriodo(codigo).stream()
+                .anyMatch(t -> t.getSituacao() != SituacaoTurma.ENCERRADA)) {
+            throw new Exception("Erro: periodo possui turma aberta e nao pode ser encerrado.");
         }
 
         periodo.setAtivo(false);

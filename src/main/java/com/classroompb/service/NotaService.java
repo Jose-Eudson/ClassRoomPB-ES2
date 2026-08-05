@@ -1,14 +1,19 @@
 package com.classroompb.service;
 
-import com.classroompb.model.Disciplina;
+import com.classroompb.model.Avaliacao;
+import com.classroompb.model.Diario;
 import com.classroompb.model.MatriculaTurma;
 import com.classroompb.model.Nota;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.StatusMatricula;
+import com.classroompb.model.SituacaoDiario;
+import com.classroompb.model.SituacaoTurma;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Turma;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.DisciplinaRepository;
+import com.classroompb.repository.AvaliacaoRepository;
+import com.classroompb.repository.DiarioRepository;
 import com.classroompb.repository.FrequenciaRepository;
 import com.classroompb.repository.HistoricoRepository;
 import com.classroompb.repository.MatriculaTurmaRepository;
@@ -22,11 +27,13 @@ public class NotaService {
     private final NotaRepository notaRepository;
     private final TurmaRepository turmaRepository;
     private final MatriculaTurmaRepository matriculaRepository;
-    private final HistoricoService historicoService;
+    private final HistoricoRepository historicoRepository;
     private final FrequenciaRepository frequenciaRepository;
     private final DisciplinaRepository disciplinaRepository;
     private final UsuarioRepository usuarioRepository;
     private final PeriodoLetivoRepository periodoRepository;
+    private AvaliacaoRepository avaliacaoRepository;
+    private DiarioRepository diarioRepository;
 
     public NotaService(NotaRepository notaRepository, TurmaRepository turmaRepository,
             MatriculaTurmaRepository matriculaRepository) {
@@ -58,47 +65,131 @@ public class NotaService {
         this.notaRepository = notaRepository;
         this.turmaRepository = turmaRepository;
         this.matriculaRepository = matriculaRepository;
-        this.historicoService = new HistoricoService(
-                historicoRepository != null ? historicoRepository : new HistoricoRepository());
+        this.historicoRepository = historicoRepository;
         this.frequenciaRepository = frequenciaRepository;
         this.disciplinaRepository = disciplinaRepository;
         this.usuarioRepository = usuarioRepository;
         this.periodoRepository = periodoRepository;
     }
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    public NotaService(NotaRepository notaRepository, TurmaRepository turmaRepository,
+            MatriculaTurmaRepository matriculaRepository, HistoricoRepository historicoRepository,
+            FrequenciaRepository frequenciaRepository, DisciplinaRepository disciplinaRepository,
+            UsuarioRepository usuarioRepository, PeriodoLetivoRepository periodoRepository,
+            AvaliacaoRepository avaliacaoRepository, DiarioRepository diarioRepository) {
+        this(notaRepository, turmaRepository, matriculaRepository, historicoRepository, frequenciaRepository,
+                disciplinaRepository, usuarioRepository, periodoRepository);
+        this.avaliacaoRepository = avaliacaoRepository;
+        this.diarioRepository = diarioRepository;
+    }
+
+    public Nota lancarNotaAvaliacao(Usuario professor, String matriculaAluno, String codigoAvaliacao, Double valor)
+            throws Exception {
+        return salvarNotaAvaliacao(professor, matriculaAluno, codigoAvaliacao, valor, false);
+    }
+
+    public Nota alterarNotaAvaliacao(Usuario professor, String matriculaAluno, String codigoAvaliacao, Double valor)
+            throws Exception {
+        return salvarNotaAvaliacao(professor, matriculaAluno, codigoAvaliacao, valor, true);
+    }
+
+    public java.util.List<Nota> listarNotasPorAlunoEDiario(String matriculaAluno, String codigoDiario) {
+        return notaRepository.listarPorAlunoEDiario(matriculaAluno, codigoDiario);
+    }
+
+    /**
+     * Indica se o construtor legado recebeu o contexto acadêmico completo, sem consolidar histórico antecipadamente.
+     */
+    public boolean possuiContextoLegadoCompleto() {
+        return historicoRepository != null && frequenciaRepository != null && disciplinaRepository != null
+                && usuarioRepository != null;
+    }
+
+    /**
+     * Media parcial em escala 0-10: soma((valor/notaMaxima)*10*peso) / soma(pesos lancados).
+     */
+    public double calcularMediaParcial(String matriculaAluno, String codigoDiario) throws Exception {
+        validarDependenciasRelease4();
+        java.util.List<Avaliacao> avaliacoes = avaliacaoRepository.listarPorDiario(codigoDiario);
+        double somaPonderada = 0.0;
+        double somaPesos = 0.0;
+        for (Avaliacao avaliacao : avaliacoes) {
+            Nota nota = notaRepository.buscarPorAlunoEAvaliacao(matriculaAluno, avaliacao.getCodigo());
+            if (nota != null && nota.getValor() != null) {
+                somaPonderada += (nota.getValor() / avaliacao.getNotaMaxima()) * 10.0 * avaliacao.getPeso();
+                somaPesos += avaliacao.getPeso();
+            }
+        }
+        if (somaPesos == 0.0) {
+            throw new Exception("Erro: nenhuma nota lancada para o diario.");
+        }
+        return somaPonderada / somaPesos;
+    }
+
+    private Nota salvarNotaAvaliacao(Usuario professor, String matriculaAluno, String codigoAvaliacao, Double valor,
+            boolean exigirExistente) throws Exception {
+        validarDependenciasRelease4();
+        validarProfessor(professor);
+        String aluno = validarCampoObrigatorio(matriculaAluno, "matricula do aluno");
+        String codigo = validarCampoObrigatorio(codigoAvaliacao, "codigo da avaliacao");
+        Avaliacao avaliacao = avaliacaoRepository.buscarPorCodigo(codigo);
+        if (avaliacao == null) {
+            throw new Exception("Erro: avaliacao nao encontrada.");
+        }
+        Diario diario = diarioRepository.buscarPorCodigo(avaliacao.getCodigoDiario());
+        if (diario == null || !diario.getCodigo().equalsIgnoreCase(avaliacao.getCodigoDiario())) {
+            throw new Exception("Erro: avaliacao sem diario valido.");
+        }
+        if (!diario.getMatriculaProfessor().equalsIgnoreCase(professor.getMatricula())) {
+            throw new Exception("Erro: apenas o professor responsavel pelo diario pode lancar notas.");
+        }
+        if (diario.getSituacao() == SituacaoDiario.ENCERRADO) {
+            throw new Exception("Erro: diario fechado nao permite lancar ou alterar notas.");
+        }
+        Turma turma = turmaRepository.buscarPorChaveUnica(diario.getCodigoDisciplina(), diario.getCodigoPeriodo(),
+                diario.getCodigoTurma());
+        if (turma != null && turma.getSituacao() == SituacaoTurma.ENCERRADA) {
+            throw new Exception("Erro: turma encerrada nao permite lancar ou alterar notas.");
+        }
+        if (valor == null || valor < 0.0 || valor > avaliacao.getNotaMaxima()) {
+            throw new Exception("Erro: nota deve estar entre zero e a nota maxima da avaliacao.");
+        }
+        MatriculaTurma matricula = matriculaRepository.buscarPorChaveUnica(aluno, diario.getCodigoDisciplina(),
+                diario.getCodigoPeriodo(), diario.getCodigoTurma());
+        if (matricula == null || matricula.getStatus() != StatusMatricula.CONFIRMADA) {
+            throw new Exception("Erro: o aluno nao possui matricula confirmada na turma do diario.");
+        }
+        Nota nota = notaRepository.buscarPorAlunoEAvaliacao(aluno, codigo);
+        if (exigirExistente && nota == null) {
+            throw new Exception("Erro: nota nao encontrada.");
+        }
+        if (nota == null) {
+            nota = new Nota(aluno, diario.getCodigoDisciplina(), diario.getCodigoPeriodo(), diario.getCodigoTurma(),
+                    diario.getCodigo(), avaliacao.getCodigo(), valor, professor.getMatricula());
+            notaRepository.salvar(nota);
+        } else {
+            nota.setValor(valor);
+            nota.setMatriculaProfessor(professor.getMatricula());
+            notaRepository.atualizar(nota);
+        }
+        return nota;
+    }
+
+    private void validarDependenciasRelease4() {
+        if (avaliacaoRepository == null || diarioRepository == null) {
+            throw new IllegalStateException("Dependencias da Release 4 indisponiveis.");
+        }
+    }
+
     public void lancarNotas(Usuario professor, String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
             String codigoTurma, Double etapa1, Double etapa2) throws Exception {
-
-        validarProfessor(professor);
-
-        matriculaAluno = validarCampoObrigatorio(matriculaAluno, "matrícula do aluno");
-        codigoDisciplina = validarCampoObrigatorio(codigoDisciplina, "código da disciplina");
-        codigoPeriodo = validarCampoObrigatorio(codigoPeriodo, "código do período");
-        codigoTurma = validarCampoObrigatorio(codigoTurma, "código da turma");
-
-        validarPeriodoNaoEncerrado(codigoPeriodo);
-
-        validarNota(etapa1, "Etapa 1");
-        validarNota(etapa2, "Etapa 2");
-
-        Turma turma = turmaRepository.buscarPorChaveUnica(codigoDisciplina, codigoPeriodo, codigoTurma);
-
-        if (turma == null) {
-            throw new Exception("Erro: Turma não encontrada.");
-        }
-
-        if (!turma.getMatriculaProfessor().equalsIgnoreCase(professor.getMatricula())) {
-
-            throw new Exception("Erro: Apenas o professor responsável pode lançar notas.");
-        }
-
-        MatriculaTurma matricula = matriculaRepository.buscarPorChaveUnica(matriculaAluno, codigoDisciplina,
-                codigoPeriodo, codigoTurma);
-
-        if (matricula == null || matricula.getStatus() != StatusMatricula.CONFIRMADA) {
-
-            throw new Exception("Erro: O aluno não possui matrícula confirmada.");
-        }
+        String[] dados = validarOperacaoLegada(professor, matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma,
+                etapa1, etapa2, "lançar");
+        matriculaAluno = dados[0];
+        codigoDisciplina = dados[1];
+        codigoPeriodo = dados[2];
+        codigoTurma = dados[3];
 
         Nota nota = notaRepository.buscarPorChaveUnica(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
 
@@ -119,42 +210,16 @@ public class NotaService {
             notaRepository.atualizar(nota);
         }
 
-        if (nota.getEtapa1() != null && nota.getEtapa2() != null) {
-            sincronizarHistorico(nota, turma);
-        }
     }
 
     public void alterarNotas(Usuario professor, String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
             String codigoTurma, Double etapa1, Double etapa2) throws Exception {
-
-        validarProfessor(professor);
-
-        matriculaAluno = validarCampoObrigatorio(matriculaAluno, "matrícula do aluno");
-        codigoDisciplina = validarCampoObrigatorio(codigoDisciplina, "código da disciplina");
-        codigoPeriodo = validarCampoObrigatorio(codigoPeriodo, "código do período");
-        codigoTurma = validarCampoObrigatorio(codigoTurma, "código da turma");
-
-        validarPeriodoNaoEncerrado(codigoPeriodo);
-
-        validarNota(etapa1, "Etapa 1");
-        validarNota(etapa2, "Etapa 2");
-
-        Turma turma = turmaRepository.buscarPorChaveUnica(codigoDisciplina, codigoPeriodo, codigoTurma);
-
-        if (turma == null) {
-            throw new Exception("Erro: Turma não encontrada.");
-        }
-
-        if (!turma.getMatriculaProfessor().equalsIgnoreCase(professor.getMatricula())) {
-            throw new Exception("Erro: Apenas o professor responsável pode alterar notas.");
-        }
-
-        MatriculaTurma matricula = matriculaRepository.buscarPorChaveUnica(matriculaAluno, codigoDisciplina,
-                codigoPeriodo, codigoTurma);
-
-        if (matricula == null || matricula.getStatus() != StatusMatricula.CONFIRMADA) {
-            throw new Exception("Erro: O aluno não possui matrícula confirmada.");
-        }
+        String[] dados = validarOperacaoLegada(professor, matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma,
+                etapa1, etapa2, "alterar");
+        matriculaAluno = dados[0];
+        codigoDisciplina = dados[1];
+        codigoPeriodo = dados[2];
+        codigoTurma = dados[3];
 
         Nota nota = notaRepository.buscarPorChaveUnica(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
 
@@ -166,7 +231,31 @@ public class NotaService {
         nota.setEtapa2(etapa2);
         notaRepository.atualizar(nota);
 
-        sincronizarHistorico(nota, turma);
+    }
+
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    private String[] validarOperacaoLegada(Usuario professor, String matriculaAluno, String codigoDisciplina,
+            String codigoPeriodo, String codigoTurma, Double etapa1, Double etapa2, String acao) throws Exception {
+        validarProfessor(professor);
+        String aluno = validarCampoObrigatorio(matriculaAluno, "matrícula do aluno");
+        String disciplina = validarCampoObrigatorio(codigoDisciplina, "código da disciplina");
+        String periodo = validarCampoObrigatorio(codigoPeriodo, "código do período");
+        String turmaCodigo = validarCampoObrigatorio(codigoTurma, "código da turma");
+        validarPeriodoNaoEncerrado(periodo);
+        validarNota(etapa1, "Etapa 1");
+        validarNota(etapa2, "Etapa 2");
+        Turma turma = turmaRepository.buscarPorChaveUnica(disciplina, periodo, turmaCodigo);
+        if (turma == null) {
+            throw new Exception("Erro: Turma não encontrada.");
+        }
+        if (!turma.getMatriculaProfessor().equalsIgnoreCase(professor.getMatricula())) {
+            throw new Exception("Erro: Apenas o professor responsável pode " + acao + " notas.");
+        }
+        MatriculaTurma matricula = matriculaRepository.buscarPorChaveUnica(aluno, disciplina, periodo, turmaCodigo);
+        if (matricula == null || matricula.getStatus() != StatusMatricula.CONFIRMADA) {
+            throw new Exception("Erro: O aluno não possui matrícula confirmada.");
+        }
+        return new String[] { aluno, disciplina, periodo, turmaCodigo };
     }
 
     public Nota consultarNotas(String matriculaAluno, String codigoDisciplina, String codigoPeriodo, String codigoTurma)
@@ -225,39 +314,6 @@ public class NotaService {
         }
 
         return "REPROVADO POR NOTA";
-    }
-
-    private void sincronizarHistorico(Nota nota, Turma turma) {
-        String matriculaAluno = nota.getMatriculaAluno();
-        String codigoDisciplina = nota.getCodigoDisciplina();
-        String codigoPeriodo = nota.getCodigoPeriodo();
-        String codigoTurma = nota.getCodigoTurma();
-        double media = (nota.getEtapa1() + nota.getEtapa2()) / 2.0;
-        if (disciplinaRepository == null || usuarioRepository == null || frequenciaRepository == null) {
-            String situacao = calcularSituacao(media, Double.NaN);
-            historicoService.registrarHistorico(matriculaAluno, codigoDisciplina, media,
-                    "APROVADO".equalsIgnoreCase(situacao));
-            return;
-        }
-
-        double frequencia = calcularFrequencia(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
-        String situacao = calcularSituacao(media, frequencia);
-        Disciplina disciplina = disciplinaRepository.buscarPorCodigo(codigoDisciplina);
-        Usuario professor = usuarioRepository.buscarPorMatricula(turma.getMatriculaProfessor()).orElse(null);
-        historicoService.registrarHistoricoCompleto(matriculaAluno, codigoPeriodo, codigoDisciplina, codigoTurma, turma,
-                disciplina, professor, media, frequencia, situacao);
-    }
-
-    private double calcularFrequencia(String matriculaAluno, String codigoDisciplina, String codigoPeriodo,
-            String codigoTurma) {
-        java.util.List<com.classroompb.model.RegistroFrequencia> registros = frequenciaRepository
-                .listarPorAlunoETurma(matriculaAluno, codigoDisciplina, codigoPeriodo, codigoTurma);
-        if (registros.isEmpty()) {
-            return 0.0;
-        }
-        long presentes = registros.stream()
-                .filter(r -> r.getStatus() == com.classroompb.model.StatusFrequencia.PRESENTE).count();
-        return presentes * 100.0 / registros.size();
     }
 
     private void validarProfessor(Usuario professor) throws Exception {

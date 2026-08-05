@@ -30,10 +30,14 @@ import com.classroompb.model.Administrador;
 import com.classroompb.model.Aluno;
 import com.classroompb.model.Coordenador;
 import com.classroompb.model.Disciplina;
+import com.classroompb.model.Diario;
 import com.classroompb.model.PeriodoLetivo;
 import com.classroompb.model.Professor;
+import com.classroompb.model.SituacaoDiario;
+import com.classroompb.model.SituacaoTurma;
 import com.classroompb.model.Turma;
 import com.classroompb.repository.DisciplinaRepository;
+import com.classroompb.repository.DiarioRepository;
 import com.classroompb.repository.PeriodoLetivoRepository;
 import com.classroompb.repository.TurmaRepository;
 import com.classroompb.repository.UsuarioRepository;
@@ -62,6 +66,12 @@ public class TurmaServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
+    @Mock
+    private DiarioRepository diarioRepository;
+
+    @Mock
+    private ConsolidacaoAcademicaService consolidacaoService;
+
     private TurmaService service;
 
     // Fixtures reutilizadas entre grupos de testes
@@ -75,7 +85,8 @@ public class TurmaServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new TurmaService(turmaRepository, disciplinaRepository, periodoRepository, usuarioRepository);
+        service = new TurmaService(turmaRepository, disciplinaRepository, periodoRepository, usuarioRepository,
+                diarioRepository, consolidacaoService);
 
         coordenador = new Coordenador("C0001", "Coord Silva", "coord@email.com", "123");
         aluno = new Aluno("A0001", "João", "joao@email.com", "456");
@@ -1253,6 +1264,74 @@ public class TurmaServiceTest {
             service.excluirTurma(coordenador, "MAT001", "2026.1", "T01");
 
             verify(turmaRepository).deletar("MAT001", "2026.1", "T01");
+        }
+    }
+
+    @Nested
+    @DisplayName("Encerramento explícito da turma")
+    class EncerramentoTurma {
+        private Turma turma;
+
+        @BeforeEach
+        void prepararEncerramento() {
+            turma = new Turma("T01", "MAT001", "2026.1", 30, null, null, null);
+            lenient().when(turmaRepository.buscarPorChaveUnica("MAT001", "2026.1", "T01")).thenReturn(turma);
+        }
+
+        @Test
+        void deveEncerrarComTodosOsDiariosFechados() throws Exception {
+            when(diarioRepository.buscarPorTurma("MAT001", "2026.1", "T01"))
+                    .thenReturn(List.of(diario("D1", SituacaoDiario.ENCERRADO)));
+
+            service.encerrarTurma(coordenador, "MAT001", "2026.1", "T01");
+
+            assertEquals(SituacaoTurma.ENCERRADA, turma.getSituacao());
+            verify(consolidacaoService).consolidarTurma(turma);
+            verify(turmaRepository).atualizar(turma);
+        }
+
+        @Test
+        void naoDeveEncerrarSemDiario() throws Exception {
+            when(diarioRepository.buscarPorTurma("MAT001", "2026.1", "T01")).thenReturn(List.of());
+            assertThrows(Exception.class, () -> service.encerrarTurma(coordenador, "MAT001", "2026.1", "T01"));
+            verify(consolidacaoService, never()).consolidarTurma(any());
+        }
+
+        @Test
+        void naoDeveEncerrarComDiarioAberto() throws Exception {
+            when(diarioRepository.buscarPorTurma("MAT001", "2026.1", "T01"))
+                    .thenReturn(List.of(diario("D1", SituacaoDiario.ATIVO)));
+            assertThrows(Exception.class, () -> service.encerrarTurma(coordenador, "MAT001", "2026.1", "T01"));
+            verify(consolidacaoService, never()).consolidarTurma(any());
+        }
+
+        @Test
+        void naoDeveEncerrarNovamente() throws Exception {
+            turma.setSituacao(SituacaoTurma.ENCERRADA);
+            assertThrows(Exception.class, () -> service.encerrarTurma(coordenador, "MAT001", "2026.1", "T01"));
+            verify(consolidacaoService, never()).consolidarTurma(any());
+        }
+
+        @Test
+        void encerramentoIndividualNaoDeveAfetarOutraTurma() throws Exception {
+            Turma outra = new Turma("T02", "MAT001", "2026.1", 30, null, null, null);
+            when(diarioRepository.buscarPorTurma("MAT001", "2026.1", "T01"))
+                    .thenReturn(List.of(diario("D1", SituacaoDiario.ENCERRADO)));
+
+            service.encerrarTurma(coordenador, "MAT001", "2026.1", "T01");
+
+            assertEquals(SituacaoTurma.ENCERRADA, turma.getSituacao());
+            assertEquals(SituacaoTurma.ABERTA, outra.getSituacao());
+        }
+
+        @Test
+        void naoDevePermitirSolicitanteNaoCoordenador() {
+            assertThrows(Exception.class, () -> service.encerrarTurma(aluno, "MAT001", "2026.1", "T01"));
+        }
+
+        private Diario diario(String codigo, SituacaoDiario situacao) {
+            return new Diario(codigo, "MAT001", "2026.1", "T01", "Teoria", "P1", "SEG", "S1", 30,
+                    situacao);
         }
     }
 }

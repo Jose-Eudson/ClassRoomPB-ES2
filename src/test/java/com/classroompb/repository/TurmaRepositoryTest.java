@@ -2,6 +2,8 @@ package com.classroompb.repository;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.classroompb.model.Turma;
+import com.classroompb.model.SituacaoTurma;
 
 /**
  * Testes de integração para TurmaRepository (RF10).
@@ -63,6 +66,24 @@ public class TurmaRepositoryTest {
     // =========================================================================
     // Construtores e inicialização
     // =========================================================================
+
+    @Test
+    void deveLerTurmaAntigaComoAbertaEPersistirEncerramento() throws Exception {
+        Path arquivo = tempDir.resolve("turmas-legadas.json");
+        Files.writeString(arquivo,
+                "[{\"codigo\":\"T1\",\"codigoDisciplina\":\"ESW2\",\"codigoPeriodo\":\"2026.1\","
+                        + "\"vagas\":20}]",
+                StandardCharsets.UTF_8);
+        TurmaRepository legado = new TurmaRepository(arquivo.toString());
+        Turma turma = legado.buscarPorChaveUnica("ESW2", "2026.1", "T1");
+        assertEquals(SituacaoTurma.ABERTA, turma.getSituacao());
+
+        turma.setSituacao(SituacaoTurma.ENCERRADA);
+        legado.atualizar(turma);
+        TurmaRepository recarregado = new TurmaRepository(arquivo.toString());
+        assertEquals(SituacaoTurma.ENCERRADA,
+                recarregado.buscarPorChaveUnica("ESW2", "2026.1", "T1").getSituacao());
+    }
 
     @Nested
     @DisplayName("Construtores e inicialização")

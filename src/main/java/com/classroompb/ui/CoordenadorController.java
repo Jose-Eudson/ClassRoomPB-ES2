@@ -62,7 +62,7 @@ public class CoordenadorController {
         while (true) {
             List<String> opcoes = Arrays.asList("Gerenciar disciplinas", "Gerenciar período letivo", "Gerenciar turmas",
                     "Gerenciar solicitações de matrícula", "Relatórios", "Consultar histórico do aluno",
-                    "Cadastrar diário", "Logout");
+                    "Cadastrar diário", "Consultar diários da turma", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU COORDENADOR", opcoes);
 
             if (escolha == -1 || escolha == opcoes.size() - 1) {
@@ -91,6 +91,9 @@ public class CoordenadorController {
             case 6:
                 cadastrarDiario(usuario);
                 break;
+            case 7:
+                consultarDiariosDaTurma(usuario);
+                break;
             default:
                 ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
                 break;
@@ -105,10 +108,11 @@ public class CoordenadorController {
     private void gerenciarTurmas(Usuario usuario) {
         while (true) {
             List<String> opcoes = Arrays.asList("Ofertar turma", "Editar turma", "Excluir turma",
-                    "Listar turmas por período", "Listar turmas por disciplina e período", "Voltar");
+                    "Listar turmas por período", "Listar turmas por disciplina e período", "Encerrar turma",
+                    "Voltar");
             int escolha = ConsoleUI.exibirMenuInterativo("GERENCIAR TURMAS", opcoes);
 
-            if (escolha == 5 || escolha == -1) {
+            if (escolha == 6 || escolha == -1) {
                 break;
             }
 
@@ -128,6 +132,9 @@ public class CoordenadorController {
             case 4:
                 listarTurmasPorDisciplinaEPeriodo();
                 break;
+            case 5:
+                encerrarTurma(usuario);
+                break;
             }
         }
     }
@@ -140,12 +147,7 @@ public class CoordenadorController {
             String codigoPeriodo = ConsoleUI.lerEntrada("Código do período letivo (ex: 2026.1): ");
             String codigoTurma = ConsoleUI.lerEntrada("Código da turma (ex: T01): ");
             int vagas = Integer.parseInt(ConsoleUI.lerEntrada("Número de vagas: "));
-            String horario = ConsoleUI.lerEntrada("Horário (ex: Seg/Qua 10h-12h): ");
-            String sala = ConsoleUI.lerEntrada("Sala (ex: Bloco A - 101): ");
-            String professor = ConsoleUI.lerEntrada("Matrícula do professor responsável: ");
-
-            turmaService.ofertarTurma(usuario, codigoDisciplina, codigoPeriodo, codigoTurma, vagas, horario, sala,
-                    professor);
+            turmaService.ofertarTurma(usuario, codigoDisciplina, codigoPeriodo, codigoTurma, vagas);
 
             ConsoleUI.exibirMensagem("Turma ofertada com sucesso!", false);
         } catch (NumberFormatException e) {
@@ -974,11 +976,43 @@ public class CoordenadorController {
 
             int cargaHoraria = Integer.parseInt(ConsoleUI.lerEntrada("Carga horária: "));
 
-            diarioService.cadastrarDiario(codigoDiario, codigoTurma, codigoDisciplina, codigoPeriodo, descricao,
-                    matriculaProfessor, horario, sala, cargaHoraria);
+            diarioService.cadastrarDiario(usuario, codigoDiario, codigoTurma, codigoDisciplina, codigoPeriodo,
+                    descricao, matriculaProfessor, horario, sala, cargaHoraria);
 
             ConsoleUI.exibirMensagem("Diário cadastrado com sucesso!", false);
 
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void encerrarTurma(Usuario usuario) {
+        ConsoleUI.limparTela();
+        ConsoleUI.exibirCabecalho("ENCERRAR TURMA");
+        try {
+            String codigoDisciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
+            String codigoPeriodo = ConsoleUI.lerEntrada("Código do período: ").trim();
+            String codigoTurma = ConsoleUI.lerEntrada("Código da turma: ").trim();
+            turmaService.encerrarTurma(usuario, codigoDisciplina, codigoPeriodo, codigoTurma);
+            ConsoleUI.exibirMensagem("Turma encerrada e histórico consolidado com sucesso!", false);
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
+    }
+
+    private void consultarDiariosDaTurma(Usuario usuario) {
+        try {
+            String disciplina = ConsoleUI.lerEntrada("Código da disciplina: ").trim();
+            String periodo = ConsoleUI.lerEntrada("Código do período: ").trim();
+            String turma = ConsoleUI.lerEntrada("Código da turma: ").trim();
+            List<com.classroompb.model.Diario> diarios = diarioService.consultarDiariosDaTurma(usuario, disciplina,
+                    periodo, turma);
+            ConsoleUI.exibirTabela(
+                    new String[] { "Código", "Descrição", "Professor", "Horário", "Sala", "Carga", "Situação" },
+                    diarios.stream().map(d -> new String[] { d.getCodigo(), d.getDescricao(),
+                            d.getMatriculaProfessor(), d.getHorario(), d.getSala(), String.valueOf(d.getCargaHoraria()),
+                            d.getSituacao().name() }).collect(java.util.stream.Collectors.toList()));
+            ConsoleUI.aguardarEnter();
         } catch (Exception e) {
             ConsoleUI.exibirMensagem(e.getMessage(), true);
         }

@@ -32,6 +32,9 @@ public class AulaRepository {
     }
 
     public void salvar(Aula aula) {
+        if (existePorCodigo(aula.getCodigo())) {
+            throw new IllegalArgumentException("Aula com codigo " + aula.getCodigo() + " ja existe.");
+        }
         aulas.add(aula);
         salvarDados();
     }

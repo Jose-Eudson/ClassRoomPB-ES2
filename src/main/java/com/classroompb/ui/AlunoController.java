@@ -18,6 +18,7 @@ import com.classroompb.model.Usuario;
 import com.classroompb.service.DisciplinaService;
 import com.classroompb.service.FrequenciaService;
 import com.classroompb.service.HistoricoService;
+import com.classroompb.service.ConsultaAcademicaService;
 import com.classroompb.service.MatriculaTurmaService;
 import com.classroompb.service.NotaService;
 import com.classroompb.service.PerfilAcessoService;
@@ -39,27 +40,37 @@ public class AlunoController {
     private final FrequenciaService freqService;
     private final NotaService notaService;
     private final HistoricoService historicoService;
+    private final ConsultaAcademicaService consultaAcademicaService;
 
     public AlunoController(UsuarioService service) {
-        this(service, null, null, null, null, null, null, null);
+        this(service, null, null, null, null, null, null, null, null);
     }
 
     public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
             PeriodoLetivoService periodoLetivoService, TurmaService turmaService) {
-        this(service, disciplinaService, periodoLetivoService, turmaService, null, null, null, null);
+        this(service, disciplinaService, periodoLetivoService, turmaService, null, null, null, null, null);
     }
 
     public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
             PeriodoLetivoService periodoLetivoService, TurmaService turmaService,
             MatriculaTurmaService matriculaService, FrequenciaService freqService, NotaService notaService) {
         this(service, disciplinaService, periodoLetivoService, turmaService, matriculaService, freqService, notaService,
-                null);
+                null, null);
     }
 
     public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
             PeriodoLetivoService periodoLetivoService, TurmaService turmaService,
             MatriculaTurmaService matriculaService, FrequenciaService freqService, NotaService notaService,
             HistoricoService historicoService) {
+        this(service, disciplinaService, periodoLetivoService, turmaService, matriculaService, freqService, notaService,
+                historicoService, null);
+    }
+
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    public AlunoController(UsuarioService service, DisciplinaService disciplinaService,
+            PeriodoLetivoService periodoLetivoService, TurmaService turmaService,
+            MatriculaTurmaService matriculaService, FrequenciaService freqService, NotaService notaService,
+            HistoricoService historicoService, ConsultaAcademicaService consultaAcademicaService) {
         this.service = service;
         this.disciplinaService = disciplinaService;
         this.periodoLetivoService = periodoLetivoService;
@@ -68,6 +79,7 @@ public class AlunoController {
         this.freqService = freqService;
         this.notaService = notaService;
         this.historicoService = historicoService;
+        this.consultaAcademicaService = consultaAcademicaService;
     }
 
     /** Exibe o menu principal do aluno e permanece em loop até logout. */
@@ -82,7 +94,7 @@ public class AlunoController {
         while (true) {
             List<String> opcoes = Arrays.asList("Consultar disciplinas e turmas", "Solicitar matrícula em turma",
                     "Cancelar matrícula", "Minhas solicitações de matrícula", "Consultar frequência por disciplina",
-                    "Consultar notas", "Consultar histórico de disciplinas", "Logout");
+                    "Consultar notas", "Consultar histórico de disciplinas", "Consultar meus diários", "Logout");
             int escolha = ConsoleUI.exibirMenuInterativo("MENU ALUNO", opcoes);
 
             if (escolha == -1 || escolha == opcoes.size() - 1) {
@@ -110,6 +122,9 @@ public class AlunoController {
                 break;
             case 6:
                 consultarHistorico(usuario);
+                break;
+            case 7:
+                consultarMeusDiarios(usuario);
                 break;
             default:
                 ConsoleUI.exibirMensagem("Funcionalidade disponível na próxima release.", false);
@@ -655,6 +670,41 @@ public class AlunoController {
                     m.getStatus().toString(), data });
         }
         ConsoleUI.exibirTabela(colunas, linhas);
+    }
+
+    private void consultarMeusDiarios(Usuario aluno) {
+        if (consultaAcademicaService == null) {
+            ConsoleUI.exibirMensagem("Consulta de diarios indisponivel.", true);
+            return;
+        }
+        try {
+            List<com.classroompb.model.Diario> diarios = consultaAcademicaService.listarDiariosDoAluno(aluno);
+            if (diarios.isEmpty()) {
+                ConsoleUI.exibirMensagem("Voce nao possui diarios vinculados.", false);
+                return;
+            }
+            for (com.classroompb.model.Diario diario : diarios) {
+                System.out.println("\n" + diario.getCodigo() + " - " + diario.getDescricao());
+                System.out.println("Frequencias: "
+                        + consultaAcademicaService.listarFrequencia(aluno, diario.getCodigo()).size());
+                for (com.classroompb.model.Avaliacao avaliacao : consultaAcademicaService.listarAvaliacoes(aluno,
+                        diario.getCodigo())) {
+                    com.classroompb.model.Nota nota = consultaAcademicaService.listarNotas(aluno, diario.getCodigo())
+                            .stream().filter(n -> avaliacao.getCodigo().equalsIgnoreCase(n.getCodigoAvaliacao()))
+                            .findFirst().orElse(null);
+                    System.out.println(avaliacao.getDescricao() + ": " + (nota == null ? "-" : nota.getValor()));
+                }
+                try {
+                    System.out.printf("Media parcial: %.2f%n",
+                            consultaAcademicaService.calcularMediaParcial(aluno, diario.getCodigo()));
+                } catch (Exception e) {
+                    System.out.println("Media parcial: ainda nao disponivel");
+                }
+            }
+            ConsoleUI.aguardarEnter();
+        } catch (Exception e) {
+            ConsoleUI.exibirMensagem(e.getMessage(), true);
+        }
     }
 
     /**

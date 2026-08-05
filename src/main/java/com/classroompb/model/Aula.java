@@ -8,13 +8,23 @@ public class Aula {
     private LocalDate data;
     private String conteudo;
     private int numero;
+    private double duracaoHoras;
+
+    public Aula() {
+    }
 
     public Aula(String codigo, String codigoDiario, LocalDate data, String conteudo, int numero) {
+        this(codigo, codigoDiario, data, conteudo, numero, 0.0);
+    }
+
+    public Aula(String codigo, String codigoDiario, LocalDate data, String conteudo, int numero,
+            double duracaoHoras) {
         this.codigo = codigo;
         this.codigoDiario = codigoDiario;
         this.data = data;
         this.conteudo = conteudo;
         this.numero = numero;
+        this.duracaoHoras = duracaoHoras;
     }
 
     public String getCodigo() {
@@ -55,5 +65,13 @@ public class Aula {
 
     public void setNumero(int numero) {
         this.numero = numero;
+    }
+
+    public double getDuracaoHoras() {
+        return duracaoHoras;
+    }
+
+    public void setDuracaoHoras(double duracaoHoras) {
+        this.duracaoHoras = duracaoHoras;
     }
 }

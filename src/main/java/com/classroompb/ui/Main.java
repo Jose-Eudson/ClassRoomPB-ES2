@@ -6,6 +6,7 @@ import java.util.List;
 import com.classroompb.model.TipoUsuario;
 import com.classroompb.model.Usuario;
 import com.classroompb.repository.AulaRepository;
+import com.classroompb.repository.AvaliacaoRepository;
 import com.classroompb.repository.CursoRepository;
 import com.classroompb.repository.DisciplinaRepository;
 import com.classroompb.repository.FrequenciaRepository;
@@ -17,6 +18,9 @@ import com.classroompb.repository.TurmaRepository;
 import com.classroompb.repository.UsuarioRepository;
 import com.classroompb.repository.DiarioRepository;
 import com.classroompb.service.AulaService;
+import com.classroompb.service.AvaliacaoService;
+import com.classroompb.service.ConsolidacaoAcademicaService;
+import com.classroompb.service.ConsultaAcademicaService;
 import com.classroompb.service.CursoService;
 import com.classroompb.service.DisciplinaService;
 import com.classroompb.service.FrequenciaService;
@@ -63,26 +67,38 @@ public class Main {
         NotaRepository notaRepository = new NotaRepository();
         DiarioRepository diarioRepository = new DiarioRepository();
         AulaRepository aulaRepository = new AulaRepository();
+        AvaliacaoRepository avaliacaoRepository = new AvaliacaoRepository();
         service = new UsuarioService(repository, cursoRepository);
         cursoService = new CursoService(cursoRepository);
         disciplinaService = new DisciplinaService(disciplinaRepository);
-        periodoLetivoService = new PeriodoLetivoService(periodoLetivoRepository);
-        turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoLetivoRepository);
         freqService = new FrequenciaService(frequenciaRepository, turmaRepository, matriculaRepository,
                 historicoRepository, notaRepository, disciplinaRepository, repository, aulaRepository,
                 diarioRepository);
-        notaService = new NotaService(notaRepository, turmaRepository, matriculaRepository, historicoRepository,
-                frequenciaRepository, disciplinaRepository, repository, periodoLetivoRepository);
         HistoricoService historicoService = new HistoricoService(historicoRepository, repository,
                 periodoLetivoRepository);
+        notaService = new NotaService(notaRepository, turmaRepository, matriculaRepository, historicoRepository,
+                frequenciaRepository, disciplinaRepository, repository, periodoLetivoRepository, avaliacaoRepository,
+                diarioRepository);
+        ConsolidacaoAcademicaService consolidacaoService = new ConsolidacaoAcademicaService(turmaRepository,
+                diarioRepository, matriculaRepository, avaliacaoRepository, notaRepository, frequenciaRepository,
+                disciplinaRepository, repository, historicoService);
+        turmaService = new TurmaService(turmaRepository, disciplinaRepository, periodoLetivoRepository, repository,
+                diarioRepository, consolidacaoService);
+        periodoLetivoService = new PeriodoLetivoService(periodoLetivoRepository, consolidacaoService);
         matriculaService = new MatriculaTurmaService(matriculaRepository, turmaRepository, periodoLetivoRepository,
                 disciplinaRepository, historicoRepository);
-        diarioService = new DiarioService(diarioRepository, turmaRepository, repository);
-        aulaService = new AulaService(aulaRepository, diarioRepository);
+        diarioService = new DiarioService(diarioRepository, turmaRepository, repository, aulaRepository,
+                frequenciaRepository, avaliacaoRepository, notaRepository, matriculaRepository);
+        aulaService = new AulaService(aulaRepository, diarioRepository, turmaRepository);
+        AvaliacaoService avaliacaoService = new AvaliacaoService(avaliacaoRepository, diarioRepository,
+                turmaRepository);
+        ConsultaAcademicaService consultaService = new ConsultaAcademicaService(matriculaRepository, diarioRepository,
+                frequenciaRepository, avaliacaoRepository, notaRepository, notaService);
 
         alunoController = new AlunoController(service, disciplinaService, periodoLetivoService, turmaService,
-                matriculaService, freqService, notaService, historicoService);
-        professorController = new ProfessorController(service, freqService, notaService, diarioService, aulaService);
+                matriculaService, freqService, notaService, historicoService, consultaService);
+        professorController = new ProfessorController(service, freqService, notaService, diarioService, aulaService,
+                avaliacaoService);
         coordenadorController = new CoordenadorController(service, disciplinaService, periodoLetivoService,
                 turmaService, matriculaService, historicoService, diarioService);
         adminController = new AdminController(service, cursoService);

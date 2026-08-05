@@ -1,17 +1,13 @@
 package com.classroompb.repository;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,8 +35,8 @@ public class AulaRepositoryTest {
     @DisplayName("Deve iniciar repositorio vazio")
     void deveIniciarRepositorioVazio() {
         List<Aula> aulas = repository.listarTodas();
-        assertNotNull(aulas);
-        assertTrue(aulas.isEmpty());
+        Assertions.assertNotNull(aulas);
+        Assertions.assertTrue(aulas.isEmpty());
     }
 
     @Test
@@ -54,9 +50,9 @@ public class AulaRepositoryTest {
 
         List<Aula> aulas = repository.listarTodas();
 
-        assertEquals(2, aulas.size());
-        assertTrue(aulas.stream().anyMatch(a -> a.getCodigo().equals("A001")));
-        assertTrue(aulas.stream().anyMatch(a -> a.getCodigo().equals("A002")));
+        Assertions.assertEquals(2, aulas.size());
+        Assertions.assertTrue(aulas.stream().anyMatch(a -> a.getCodigo().equals("A001")));
+        Assertions.assertTrue(aulas.stream().anyMatch(a -> a.getCodigo().equals("A002")));
     }
 
     @Test
@@ -64,9 +60,9 @@ public class AulaRepositoryTest {
     void deveVerificarExistenciaPorCodigo() {
         repository.salvar(criarAula("A001", "D001", 1));
 
-        assertTrue(repository.existePorCodigo("A001"));
-        assertTrue(repository.existePorCodigo("a001"));
-        assertFalse(repository.existePorCodigo("A999"));
+        Assertions.assertTrue(repository.existePorCodigo("A001"));
+        Assertions.assertTrue(repository.existePorCodigo("a001"));
+        Assertions.assertFalse(repository.existePorCodigo("A999"));
     }
 
     @Test
@@ -77,9 +73,9 @@ public class AulaRepositoryTest {
         Aula encontrada = repository.buscarPorCodigo("A001");
         Aula inexistente = repository.buscarPorCodigo("A999");
 
-        assertNotNull(encontrada);
-        assertEquals("A001", encontrada.getCodigo());
-        assertNull(inexistente);
+        Assertions.assertNotNull(encontrada);
+        Assertions.assertEquals("A001", encontrada.getCodigo());
+        Assertions.assertNull(inexistente);
     }
 
     @Test
@@ -91,8 +87,8 @@ public class AulaRepositoryTest {
 
         List<Aula> resultados = repository.buscarPorDiario("D001");
 
-        assertEquals(2, resultados.size());
-        assertTrue(resultados.stream().allMatch(a -> a.getCodigoDiario().equals("D001")));
+        Assertions.assertEquals(2, resultados.size());
+        Assertions.assertTrue(resultados.stream().allMatch(a -> a.getCodigoDiario().equals("D001")));
     }
 
     @Test
@@ -103,9 +99,9 @@ public class AulaRepositoryTest {
 
         Aula resultado = repository.buscarPorDiarioENumero("D001", 2);
 
-        assertNotNull(resultado);
-        assertEquals("A002", resultado.getCodigo());
-        assertEquals(2, resultado.getNumero());
+        Assertions.assertNotNull(resultado);
+        Assertions.assertEquals("A002", resultado.getCodigo());
+        Assertions.assertEquals(2, resultado.getNumero());
     }
 
     @Test
@@ -117,8 +113,8 @@ public class AulaRepositoryTest {
         repository.atualizar(atualizada);
 
         Aula encontrada = repository.buscarPorCodigo("A001");
-        assertNotNull(encontrada);
-        assertEquals("Conteudo atualizado", encontrada.getConteudo());
+        Assertions.assertNotNull(encontrada);
+        Assertions.assertEquals("Conteudo atualizado", encontrada.getConteudo());
     }
 
     @Test
@@ -126,10 +122,10 @@ public class AulaRepositoryTest {
     void deveLancarExcecaoAoAtualizarAulaInexistente() {
         Aula inexistente = criarAula("A999", "D001", 1);
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class,
                 () -> repository.atualizar(inexistente));
 
-        assertTrue(exception.getMessage().contains("A999"));
+        Assertions.assertTrue(exception.getMessage().contains("A999"));
     }
 
     @Test
@@ -139,8 +135,25 @@ public class AulaRepositoryTest {
 
         repository.deletar("A001");
 
-        assertEquals(0, repository.listarTodas().size());
-        assertNull(repository.buscarPorCodigo("A001"));
+        Assertions.assertEquals(0, repository.listarTodas().size());
+        Assertions.assertNull(repository.buscarPorCodigo("A001"));
+    }
+
+    @Test
+    void devePersistirDuracaoDaAula() {
+        repository.salvar(new Aula("A001", "D001", criarData(), "Conteudo", 1, 2.5));
+        AulaRepository recarregado = new AulaRepository(arquivoTemporario.toString());
+        Assertions.assertEquals(2.5, recarregado.buscarPorCodigo("A001").getDuracaoHoras());
+    }
+
+    @Test
+    void deveLerJsonAntigoSemDuracao() throws Exception {
+        Files.writeString(arquivoTemporario,
+                "[{\"codigo\":\"A001\",\"codigoDiario\":\"D001\",\"data\":\"2026-08-01\","
+                        + "\"conteudo\":\"Legado\",\"numero\":1}]",
+                StandardCharsets.UTF_8);
+        AulaRepository legado = new AulaRepository(arquivoTemporario.toString());
+        Assertions.assertEquals(0.0, legado.buscarPorCodigo("A001").getDuracaoHoras());
     }
 
     private Aula criarAula(String codigo, String codigoDiario, int numero) {
